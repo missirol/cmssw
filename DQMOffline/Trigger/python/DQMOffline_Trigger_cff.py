@@ -4,6 +4,7 @@ import FWCore.ParameterSet.Config as cms
 from DQM.HLTEvF.HLTObjectsMonitor_cfi import *
 # HLT path monitoring (per PD)
 from DQMOffline.Trigger.HLTGeneralOffline_cfi import *
+from DQMOffline.Trigger.HLTGeneralOfflineTEST_cfi import *
 
 # lumi
 from DQMOffline.Trigger.DQMOffline_LumiMontiroring_cff import *
@@ -96,6 +97,7 @@ offlineHLTSourceOnMiniAOD = cms.Sequence(
 offlineHLTSourceOnAOD = cms.Sequence(
     dqmEnvHLT
     * hltResults
+    * hltResultsTEST
     * lumiMonitorHLTsequence
     * muonFullOfflineDQM
     * HLTTauDQMOffline
@@ -120,6 +122,7 @@ offlineHLTSourceOnAOD = cms.Sequence(
 ## w/ the RECO step on-the-fly (to be added to offlineHLTSourceOnAOD which should run anyhow)
 offlineHLTSourceWithRECO = cms.Sequence(
     hltResults
+    * hltResultsTEST
     * egHLTOffDQMSource       ## NEEDED in VALIDATION, not really in MONITORING
     * egHLTOffDQMSource_HEP17 ## NEEDED in VALIDATION, not really in MONITORING
     * jetMETHLTOfflineAnalyzer
