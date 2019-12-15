@@ -222,7 +222,7 @@ void MuonMonitor::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
 
   edm::ParameterSetDescription desc;
   desc.add<std::string>("FolderName", "HLT/Muon");
-  desc.add<bool>("requireValidHLTPaths", false);
+  desc.add<bool>("requireValidHLTPaths", true);
 
   desc.add<edm::InputTag>("met", edm::InputTag("pfMet"));
   desc.add<edm::InputTag>("muons", edm::InputTag("muons"));

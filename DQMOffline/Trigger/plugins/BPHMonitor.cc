@@ -1167,7 +1167,7 @@ void BPHMonitor::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
 
   edm::ParameterSetDescription desc;
   desc.add<std::string>("FolderName", "HLT/BPH/");
-  desc.add<bool>("requireValidHLTPaths", false);
+  desc.add<bool>("requireValidHLTPaths", true);
 
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
   desc.add<edm::InputTag>("photons", edm::InputTag("photons"));

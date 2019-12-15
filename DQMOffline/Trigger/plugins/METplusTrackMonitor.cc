@@ -285,7 +285,7 @@ void METplusTrackMonitor::fillDescriptions(edm::ConfigurationDescriptions& descr
 
   edm::ParameterSetDescription desc;
   desc.add<std::string>("FolderName", "HLT/MET");
-  desc.add<bool>("requireValidHLTPaths", false);
+  desc.add<bool>("requireValidHLTPaths", true);
 
   desc.add<edm::InputTag>("met", edm::InputTag("caloMet"));
   desc.add<edm::InputTag>("jets", edm::InputTag("ak4PFJetsCHS"));
