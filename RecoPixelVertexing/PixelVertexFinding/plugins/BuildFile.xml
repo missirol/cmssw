@@ -10,6 +10,7 @@
 <use name="DataFormats/TrackingRecHit"/>
 <use name="DataFormats/VertexReco"/>
 <use name="FWCore/Framework"/>
+<use name="FWCore/MessageLogger"/>
 <use name="FWCore/ParameterSet"/>
 <use name="FWCore/Utilities"/>
 <use name="Geometry/Records"/>
