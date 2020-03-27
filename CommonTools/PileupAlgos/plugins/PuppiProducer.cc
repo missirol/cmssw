@@ -22,6 +22,7 @@
 
 // ------------------------------------------------------------------------------------------
 PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
+  fUseVertexQualityCriteria = iConfig.getParameter<bool>("useVertexQualityCriteria");
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
   fPuppiForLeptons = iConfig.getParameter<bool>("puppiForLeptons");
   fUseFromPVLooseTight = iConfig.getParameter<bool>("UseFromPVLooseTight");
@@ -75,7 +76,8 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   int npv = 0;
   const reco::VertexCollection::const_iterator vtxEnd = pvCol->end();
   for (reco::VertexCollection::const_iterator vtxIter = pvCol->begin(); vtxEnd != vtxIter; ++vtxIter) {
-    if (!vtxIter->isFake() && vtxIter->ndof() >= fVtxNdofCut && std::abs(vtxIter->z()) <= fVtxZCut)
+    if ((not fUseVertexQualityCriteria) or
+        (!vtxIter->isFake() && vtxIter->ndof() >= fVtxNdofCut && std::abs(vtxIter->z()) <= fVtxZCut))
       npv++;
   }
 
@@ -348,6 +350,7 @@ void PuppiProducer::endJob() {}
 // ------------------------------------------------------------------------------------------
 void PuppiProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
+  desc.add<bool>("useVertexQualityCriteria", true);
   desc.add<bool>("puppiDiagnostics", false);
   desc.add<bool>("puppiForLeptons", false);
   desc.add<bool>("UseFromPVLooseTight", false);

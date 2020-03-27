@@ -45,6 +45,7 @@ private:
   std::string fPuppiName;
   std::string fPFName;
   std::string fPVName;
+  bool fUseVertexQualityCriteria;
   bool fPuppiDiagnostics;
   bool fPuppiForLeptons;
   bool fUseFromPVLooseTight;
