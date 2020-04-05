@@ -9,8 +9,6 @@ hltFiltersDQM = hltFiltersDQMonitor.clone(
   folderName = 'HLT/Filters',
   efficPlotNamePrefix = 'effic_',
   triggerResults = 'TriggerResults::HLT',
-  triggerSummaryAOD = 'hltTriggerSummaryAOD::HLT',
-  triggerSummaryRAW = 'hltTriggerSummaryRAW::HLT',
 )
 
 # Lumi
