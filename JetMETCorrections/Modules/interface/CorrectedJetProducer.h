@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 #include "CommonTools/Utils/interface/PtComparator.h"
 #include "DataFormats/Common/interface/Handle.h"
@@ -32,6 +33,7 @@ namespace reco {
 
   private:
     const edm::EDGetTokenT<JetCollection> mInput;
+    edm::EDGetTokenT<double> rhoToken_;
     const std::vector<edm::EDGetTokenT<reco::JetCorrector> > mCorrectorTokens;
     const bool mVerbose;
   };
@@ -48,6 +50,10 @@ namespace reco {
             edm::vector_transform(fConfig.getParameter<std::vector<edm::InputTag> >("correctors"),
                                   [this](edm::InputTag const& tag) { return consumes<reco::JetCorrector>(tag); })),
         mVerbose(fConfig.getUntrackedParameter<bool>("verbose", false)) {
+
+    if(mVerbose)
+      rhoToken_ = consumes<double>(edm::InputTag("hltFixedGridRhoFastjetAll"));
+
     std::string alias = fConfig.getUntrackedParameter<std::string>("alias", "");
     if (alias.empty())
       produces<JetCollection>();
@@ -57,6 +63,11 @@ namespace reco {
 
   template <class T>
   void CorrectedJetProducer<T>::produce(edm::StreamID, edm::Event& fEvent, const edm::EventSetup& fSetup) const {
+    if (mVerbose){
+      edm::Handle<double> rho;
+      fEvent.getByToken(rhoToken_, rho);
+      std::cout << std::fixed << std::setprecision(7) << "CorrectedJetProducer::produce-> rho = " << *rho << std::endl;
+    }
     // FIXME - use something more efficient instead of an std::vector
     std::vector<reco::JetCorrector const*> correctors(mCorrectorTokens.size(), nullptr);
 
@@ -75,8 +86,8 @@ namespace reco {
       int index = jet - jets->begin();
       edm::RefToBase<reco::Jet> jetRef(edm::Ref<JetCollection>(jets, index));
       T correctedJet = *jet;  //copy original jet
-      if (mVerbose)
-        std::cout << "CorrectedJetProducer::produce-> original jet: " << jet->print() << std::endl;
+                              //      if (mVerbose)
+      //        std::cout << "CorrectedJetProducer::produce-> original jet: " << jet->print() << std::endl;
       for (unsigned i = 0; i < mCorrectorTokens.size(); ++i) {
         if (!(correctors[i]->vectorialCorrection())) {
           // Scalar correction
@@ -86,8 +97,9 @@ namespace reco {
           else
             scale = correctors[i]->correction(*referenceJet, jetRef);
           if (mVerbose)
-            std::cout << "CorrectedJetProducer::produce-> Corrector # " << i << ", correction factor: " << scale
-                      << std::endl;
+            std::cout << std::fixed << std::setprecision(7) << "CorrectedJetProducer::produce-> Corrector # " << i
+                      << ", pT = " << correctedJet.pt() << ", eta = " << correctedJet.eta()
+                      << ", jetArea = " << correctedJet.jetArea() << ", correction factor: " << scale << std::endl;
           correctedJet.scaleEnergy(scale);  // apply scalar correction
           referenceJet = &correctedJet;
         } else {
@@ -101,8 +113,8 @@ namespace reco {
           referenceJet = &correctedJet;
         }
       }
-      if (mVerbose)
-        std::cout << "CorrectedJetProducer::produce-> corrected jet: " << correctedJet.print() << std::endl;
+      //      if (mVerbose)
+      //        std::cout << "CorrectedJetProducer::produce-> corrected jet: " << correctedJet.print() << std::endl;
       result->push_back(correctedJet);
     }
     NumericSafeGreaterByPt<T> compJets;
