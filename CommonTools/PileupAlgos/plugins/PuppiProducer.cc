@@ -135,6 +135,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           }
           pVtxId++;
         }
+        bool isFromPUVtx1or2(false);
         int tmpFromPV = 0;
         // mocking the miniAOD definitions
         if (std::abs(pReco.charge) > 0) {
@@ -142,6 +143,8 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
             tmpFromPV = 0;
           if (closestVtx != nullptr && pVtxId == 0)
             tmpFromPV = 3;
+          if (closestVtx != nullptr && ((pVtxId == 1) || (pVtxId == 2)))
+            isFromPUVtx1or2 = true;
           if (closestVtx == nullptr && closestVtxForUnassociateds == 0)
             tmpFromPV = 2;
           if (closestVtx == nullptr && closestVtxForUnassociateds != 0)
@@ -156,7 +159,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           if (fPuppiNoLep && isLepton)
             pReco.id = 3;
           else if (tmpFromPV == 0) {
-            pReco.id = 2;
+            pReco.id = (isFromPUVtx1or2 && (std::abs(pDZ) < 0.2)) ? 1 : 2;
           }  // 0 is associated to PU vertex
           else if (tmpFromPV == 3) {
             pReco.id = 1;
@@ -185,11 +188,17 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           pReco.id = 0;
         }
         if (std::abs(pReco.charge) > 0) {
-          if (fPuppiNoLep && isLepton)
+          if (fPuppiNoLep && isLepton){
             pReco.id = 3;
-          else if (lPack->fromPV() == 0) {
-            pReco.id = 2;
-          }  // 0 is associated to PU vertex
+          }
+          else if (lPack->fromPV() == 0){
+            if((std::abs(pDZ) < 0.2) && (((pvCol->size() >= 2) && (lPack->fromPV(1) >= 2)) || ((pvCol->size() >= 3) && (lPack->fromPV(2) >= 2)))){
+              pReco.id = 1;
+            }
+            else {
+              pReco.id = 2;
+            }
+          }
           else if (lPack->fromPV() == (pat::PackedCandidate::PVUsedInFit)) {
             pReco.id = 1;
           } else if (lPack->fromPV() == (pat::PackedCandidate::PVTight) ||
