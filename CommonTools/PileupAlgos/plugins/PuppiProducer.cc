@@ -99,8 +99,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       const reco::Vertex* closestVtx = nullptr;
       double pDZ = -9999;
       double pD0 = -9999;
-      int pVtxId = -9999;
-      bool lFirst = true;
+      uint pVtxId = 0;
       bool isLepton = ((std::abs(pReco.pdgId) == 11) || (std::abs(pReco.pdgId) == 13));
       const pat::PackedCandidate* lPack = dynamic_cast<const pat::PackedCandidate*>(&aPF);
       if (lPack == nullptr) {
@@ -108,6 +107,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         double curdz = 9999;
         int closestVtxForUnassociateds = -9999;
         const reco::TrackRef aTrackRef = pPF->trackRef();
+        bool lFirst = true;
         for (auto const& aV : *pvCol) {
           if (lFirst) {
             if (aTrackRef.isNonnull()) {
