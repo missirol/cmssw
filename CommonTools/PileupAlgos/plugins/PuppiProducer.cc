@@ -32,6 +32,8 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   fEtaMaxCharged = iConfig.getParameter<double>("EtaMaxCharged");
   fPtMaxPhotons = iConfig.getParameter<double>("PtMaxPhotons");
   fEtaMaxPhotons = iConfig.getParameter<double>("EtaMaxPhotons");
+  fXXX = iConfig.getParameter<uint>("XXX");
+  fXXXDZCut = iConfig.getParameter<double>("XXXDZCut");
   fUseExistingWeights = iConfig.getParameter<bool>("useExistingWeights");
   fClonePackedCands = iConfig.getParameter<bool>("clonePackedCands");
   fVtxNdofCut = iConfig.getParameter<int>("vtxNdofCut");
@@ -135,7 +137,6 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           }
           pVtxId++;
         }
-        bool isFromPUVtx1or2(false);
         int tmpFromPV = 0;
         // mocking the miniAOD definitions
         if (std::abs(pReco.charge) > 0) {
@@ -143,8 +144,6 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
             tmpFromPV = 0;
           if (closestVtx != nullptr && pVtxId == 0)
             tmpFromPV = 3;
-          if (closestVtx != nullptr && ((pVtxId == 1) || (pVtxId == 2)))
-            isFromPUVtx1or2 = true;
           if (closestVtx == nullptr && closestVtxForUnassociateds == 0)
             tmpFromPV = 2;
           if (closestVtx == nullptr && closestVtxForUnassociateds != 0)
@@ -159,7 +158,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           if (fPuppiNoLep && isLepton)
             pReco.id = 3;
           else if (tmpFromPV == 0) {
-            pReco.id = (isFromPUVtx1or2 && (std::abs(pDZ) < 0.2)) ? 1 : 2;
+            pReco.id = ((pVtxId <= fXXX) and (std::abs(pDZ) < fXXXDZCut)) ? 1 : 2;
           }  // 0 is associated to PU vertex
           else if (tmpFromPV == 3) {
             pReco.id = 1;
@@ -188,18 +187,19 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           pReco.id = 0;
         }
         if (std::abs(pReco.charge) > 0) {
-          if (fPuppiNoLep && isLepton){
+          if (fPuppiNoLep && isLepton) {
             pReco.id = 3;
-          }
-          else if (lPack->fromPV() == 0){
-            if((std::abs(pDZ) < 0.2) && (((pvCol->size() >= 2) && (lPack->fromPV(1) >= 2)) || ((pvCol->size() >= 3) && (lPack->fromPV(2) >= 2)))){
-              pReco.id = 1;
+          } else if (lPack->fromPV() == 0) {
+            pReco.id = 2;
+            if ((fXXX > 0) and (std::abs(pDZ) < fXXXDZCut)) {
+              for (size_t puVtx_idx = 1; puVtx_idx <= fXXX; ++puVtx_idx) {
+                if (lPack->fromPV(puVtx_idx) >= 2) {
+                  pReco.id = 1;
+                  break;
+                }
+              }
             }
-            else {
-              pReco.id = 2;
-            }
-          }
-          else if (lPack->fromPV() == (pat::PackedCandidate::PVUsedInFit)) {
+          } else if (lPack->fromPV() == (pat::PackedCandidate::PVUsedInFit)) {
             pReco.id = 1;
           } else if (lPack->fromPV() == (pat::PackedCandidate::PVTight) ||
                      lPack->fromPV() == (pat::PackedCandidate::PVLoose)) {
@@ -382,6 +382,8 @@ void PuppiProducer::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<double>("EtaMaxPhotons", 2.5);
   desc.add<double>("PtMaxNeutrals", 200.);
   desc.add<double>("PtMaxNeutralsStartSlope", 0.);
+  desc.add<uint>("XXX", 0);
+  desc.add<double>("XXXDZCut", 0.2);
   desc.add<bool>("useExistingWeights", false);
   desc.add<bool>("clonePackedCands", false);
   desc.add<int>("vtxNdofCut", 4);

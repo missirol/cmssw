@@ -62,7 +62,9 @@ private:
   bool fPuppiNoLep;
   bool fUseFromPVLooseTight;
   bool fUseDZ;
-  float fDZCut;
+  double fDZCut;
+  bool fXXX;
+  double fXXXDZCut;
   double fEtaMinUseDZ;
   double fPtMaxCharged;
   double fEtaMaxCharged;
