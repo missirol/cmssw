@@ -63,13 +63,13 @@ private:
   bool fUseFromPVLooseTight;
   bool fUseDZ;
   double fDZCut;
-  bool fXXX;
-  double fXXXDZCut;
   double fEtaMinUseDZ;
   double fPtMaxCharged;
   double fEtaMaxCharged;
   double fPtMaxPhotons;
   double fEtaMaxPhotons;
+  bool fNumOfPUVtxsForCharged;
+  double fDZCutForChargedFromPUVtxs;
   bool fUseExistingWeights;
   bool fClonePackedCands;
   int fVtxNdofCut;
