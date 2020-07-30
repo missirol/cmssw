@@ -192,7 +192,9 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
             pReco.id = 2;
             if ((fNumOfPUVtxsForCharged > 0) and (std::abs(pDZ) < fDZCutForChargedFromPUVtxs)) {
               for (size_t puVtx_idx = 1; puVtx_idx <= fNumOfPUVtxsForCharged; ++puVtx_idx) {
-                if (lPack->fromPV(puVtx_idx) >= 2) {
+                if(puVtx_idx >= pvCol->size()){
+                  break;
+                } else if (lPack->fromPV(puVtx_idx) >= 2) {
                   pReco.id = 1;
                   break;
                 }
