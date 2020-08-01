@@ -27,7 +27,7 @@ PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
 
 PuppiContainer::~PuppiContainer() {}
 
-void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
+void PuppiContainer::initialize(std::vector<PuppiCandidate> const& puppiCandidates) {
   //Clear everything
   fPFParticles.resize(0);
   fChargedPV.resize(0);
@@ -40,13 +40,11 @@ void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
   //Link to the RecoObjects
   fPVFrac = 0.;
   fNPV = 1.;
-  fRecoParticles = &iRecoObjects;
-  for (auto const &rParticle : *fRecoParticles) {
-    PuppiCandidate const curPseudoJet(rParticle.pt, rParticle.eta, rParticle.phi, rParticle.id);
-    fPFParticles.emplace_back(curPseudoJet);
+  for (auto const &pParticle : puppiCandidates) {
+    fPFParticles.emplace_back(pParticle);
     //Take Charged particles associated to PV
-    if (std::abs(rParticle.id) == 1)
-      fChargedPV.emplace_back(curPseudoJet);
+    if (std::abs(pParticle.id) == 1)
+      fChargedPV.emplace_back(pParticle);
   }
 }
 
@@ -221,7 +219,7 @@ float PuppiContainer::getChi2FromdZ(float const iDZ) {
   return lChi2PU;
 }
 std::vector<float> const &PuppiContainer::puppiWeights() {
-  int lNParticles = fRecoParticles->size();
+  int lNParticles = fPFParticles.size();
 
   fWeights.clear();
   fWeights.reserve(lNParticles);
@@ -247,7 +245,7 @@ std::vector<float> const &PuppiContainer::puppiWeights() {
     pVals.clear();
     float pWeight = 1;
     //Get the Puppi Id and if ill defined move on
-    const auto &rParticle = (*fRecoParticles)[i0];
+    const auto &rParticle = fPFParticles.at(i0);
     int pPupId = getPuppiId(rParticle.pt, rParticle.eta);
     if (pPupId == -1) {
       fWeights.push_back(0);

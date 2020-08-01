@@ -7,11 +7,8 @@
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/Math/interface/PtEtaPhiMass.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
@@ -73,6 +70,5 @@ private:
   int fVtxNdofCut;
   double fVtxZCut;
   std::unique_ptr<PuppiContainer> fPuppiContainer;
-  std::vector<RecoObj> fRecoObjCollection;
 };
 #endif

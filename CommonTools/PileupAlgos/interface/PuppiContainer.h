@@ -1,27 +1,27 @@
-#ifndef COMMONTOOLS_PUPPI_PUPPICONTAINER_H_
-#define COMMONTOOLS_PUPPI_PUPPICONTAINER_H_
+#ifndef COMMONTOOLS_PUPPI_PUPPICONTAINER_H
+#define COMMONTOOLS_PUPPI_PUPPICONTAINER_H
+
+#include <vector>
 
 #include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
-#include "CommonTools/PileupAlgos/interface/RecoObj.h"
 #include "CommonTools/PileupAlgos/interface/PuppiCandidate.h"
 
 class PuppiContainer {
 public:
-  PuppiContainer(const edm::ParameterSet &iConfig);
+  PuppiContainer(edm::ParameterSet const& iConfig);
   ~PuppiContainer();
-  void initialize(const std::vector<RecoObj> &iRecoObjects);
+  void initialize(std::vector<PuppiCandidate> const& iRecoObjects);
   void setNPV(int iNPV) { fNPV = iNPV; }
 
   std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
   std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
-  std::vector<float> const &puppiWeights();
-  const std::vector<float> &puppiRawAlphas() { return fRawAlphas; }
-  const std::vector<float> &puppiAlphas() { return fVals; }
-  // const std::vector<float> puppiAlpha   () {return fAlpha;}
-  const std::vector<float> &puppiAlphasMed() { return fAlphaMed; }
-  const std::vector<float> &puppiAlphasRMS() { return fAlphaRMS; }
+  std::vector<float> const& puppiWeights();
+  const std::vector<float> &puppiRawAlphas() const { return fRawAlphas; }
+  const std::vector<float> &puppiAlphas() const { return fVals; }
+  const std::vector<float> &puppiAlphasMed() const { return fAlphaMed; }
+  const std::vector<float> &puppiAlphasRMS() const { return fAlphaRMS; }
 
-  int puppiNAlgos() { return fNAlgos; }
+  int puppiNAlgos() const { return fNAlgos; }
 
 protected:
   float goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int iOpt, const float iRCone);
@@ -41,7 +41,6 @@ protected:
                       const float R);
 
   bool fPuppiDiagnostics;
-  const std::vector<RecoObj> *fRecoParticles;
   std::vector<PuppiCandidate> fPFParticles;
   std::vector<PuppiCandidate> fChargedPV;
   std::vector<float> fWeights;
