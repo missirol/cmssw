@@ -7,8 +7,6 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/isFinite.h"
 
-using namespace std;
-
 PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
   fApplyCHS = iConfig.getParameter<bool>("applyCHS");
@@ -27,6 +25,8 @@ PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
   }
 }
 
+PuppiContainer::~PuppiContainer() {}
+
 void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
   //Clear everything
   fPFParticles.resize(0);
@@ -42,28 +42,13 @@ void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
   fNPV = 1.;
   fRecoParticles = &iRecoObjects;
   for (auto const &rParticle : *fRecoParticles) {
-    PuppiCandidate curPseudoJet;
-    // float nom = sqrt((rParticle.m)*(rParticle.m) + (rParticle.pt)*(rParticle.pt)*(cosh(rParticle.eta))*(cosh(rParticle.eta))) + (rParticle.pt)*sinh(rParticle.eta);//hacked
-    // float denom = sqrt((rParticle.m)*(rParticle.m) + (rParticle.pt)*(rParticle.pt));//hacked
-    // float rapidity = log(nom/denom);//hacked
-    if (edm::isFinite(rParticle.rapidity)) {
-      curPseudoJet.reset_PtYPhiM(rParticle.pt, rParticle.rapidity, rParticle.phi, rParticle.m);  //hacked
-    } else {
-      curPseudoJet.reset_PtYPhiM(0, 99., 0, 0);  //skipping may have been a better choice
-    }
-    //curPseudoJet.reset_PtYPhiM(rParticle.pt,rParticle.eta,rParticle.phi,rParticle.m);
-    // fill puppi_register
-    curPseudoJet.set_info(rParticle.id);
-    // fill vector of pseudojets for internal references
-    fPFParticles.push_back(curPseudoJet);
+    PuppiCandidate const curPseudoJet(rParticle.pt, rParticle.eta, rParticle.phi, rParticle.id);
+    fPFParticles.emplace_back(curPseudoJet);
     //Take Charged particles associated to PV
     if (std::abs(rParticle.id) == 1)
-      fChargedPV.push_back(curPseudoJet);
-    //if(rParticle.id == 3) _chargedNoPV.push_back(curPseudoJet);
-    // if(fNPV < rParticle.vtxId) fNPV = rParticle.vtxId;
+      fChargedPV.emplace_back(curPseudoJet);
   }
 }
-PuppiContainer::~PuppiContainer() {}
 
 double PuppiContainer::goodVar(PuppiCandidate const &iPart,
                                std::vector<PuppiCandidate> const &iParts,
@@ -73,7 +58,7 @@ double PuppiContainer::goodVar(PuppiCandidate const &iPart,
 }
 
 double PuppiContainer::var_within_R(int iId,
-                                    const vector<PuppiCandidate> &particles,
+                                    const std::vector<PuppiCandidate> &particles,
                                     const PuppiCandidate &centre,
                                     const double R) {
   if (iId == -1)
@@ -86,18 +71,21 @@ double PuppiContainer::var_within_R(int iId,
   //the original code used Selector infrastructure: it is too heavy here
   //logic of SelectorCircle is preserved below
 
-  vector<double> near_dR2s;
+  std::vector<double> near_dR2s;
   near_dR2s.reserve(std::min(50UL, particles.size()));
-  vector<double> near_pts;
+  std::vector<double> near_pts;
   near_pts.reserve(std::min(50UL, particles.size()));
   const double r2 = R * R;
   for (auto const &part : particles) {
-    if (part.puppi_register() == 3)
+    if (part.id == 3)
       continue;
     //squared_distance is in (y,phi) coords: rap() has faster access -> check it first
-    if (std::abs(part.rap() - centre.rap()) < R && part.squared_distance(centre) < r2) {
-      near_dR2s.push_back(reco::deltaR2(part, centre));
-      near_pts.push_back(part.pt());
+    if (std::abs(part.eta - centre.eta) < R) {
+      auto const dr2(reco::deltaR2(part.eta, part.phi, centre.eta, centre.phi));
+      if(dr2 < r2){
+        near_dR2s.push_back(dr2);
+        near_pts.push_back(part.pt);
+      }
     }
   }
   double var = 0;
@@ -123,7 +111,7 @@ double PuppiContainer::var_within_R(int iId,
       var += (pt * pt / dr2);
   }
   if (iId == 1)
-    var += centre.pt();  //Sum in a cone
+    var += centre.pt;  //Sum in a cone
   else if (iId == 0 && var != 0)
     var = log(var);
   else if (iId == 3 && var != 0)
@@ -140,7 +128,7 @@ void PuppiContainer::getRMSAvg(int iOpt,
   for (unsigned int i0 = 0; i0 < iConstits.size(); i0++) {
     double pVal = -1;
     //Calculate the Puppi Algo to use
-    int pPupId = getPuppiId(iConstits[i0].pt(), iConstits[i0].eta());
+    int pPupId = getPuppiId(iConstits[i0].pt, iConstits[i0].eta);
     if (pPupId == -1 || fPuppiAlgo[pPupId].numAlgos() <= iOpt) {
       fVals.push_back(-1);
       continue;
@@ -155,10 +143,10 @@ void PuppiContainer::getRMSAvg(int iOpt,
     if (pCharged)
       pVal = goodVar(iConstits[i0], iChargedParticles, pAlgo, pCone);
     fVals.push_back(pVal);
-    //if(std::isnan(pVal) || std::isinf(pVal)) cerr << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt() << " -- " << iConstits[i0].eta() << endl;
+
     if (!edm::isFinite(pVal)) {
-      LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt() << " -- "
-                           << iConstits[i0].eta() << endl;
+      LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt << " -- "
+                           << iConstits[i0].eta;
       continue;
     }
 
@@ -177,7 +165,7 @@ void PuppiContainer::getRMSAvg(int iOpt,
       } else {  //no need to repeat the computation
         curVal = pVal;
       }
-      //std::cout << "i1 = " << i1 << ", curVal = " << curVal << ", eta = " << iConstits[i0].eta() << ", pupID = " << pPupId << std::endl;
+
       fPuppiAlgo[i1].add(iConstits[i0], curVal, iOpt);
     }
   }
@@ -203,13 +191,14 @@ void PuppiContainer::getRawAlphas(int iOpt,
         pVal = goodVar(iConstits[i0], iChargedParticles, pAlgo, pCone);
       fRawAlphas.push_back(pVal);
       if (!edm::isFinite(pVal)) {
-        LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt() << " -- "
-                             << iConstits[i0].eta() << endl;
+        LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt << " -- "
+                             << iConstits[i0].eta;
         continue;
       }
     }
   }
 }
+
 int PuppiContainer::getPuppiId(float iPt, float iEta) {
   int lId = -1;
   for (int i0 = 0; i0 < fNAlgos; i0++) {
@@ -227,6 +216,7 @@ int PuppiContainer::getPuppiId(float iPt, float iEta) {
   //if(lId == -1) std::cerr << "Error : Full fiducial range is not defined " << std::endl;
   return lId;
 }
+
 double PuppiContainer::getChi2FromdZ(double iDZ) {
   //We need to obtain prob of PU + (1-Prob of LV)
   // Prob(LV) = Gaus(dZ,sigma) where sigma = 1.5mm  (its really more like 1mm)
@@ -306,26 +296,25 @@ std::vector<double> const &PuppiContainer::puppiWeights() {
       pWeight = 0.0;
       LogDebug("PuppiWeightError") << "====> Weight is nan : " << pWeight << " : pt " << rParticle.pt
                                    << " -- eta : " << rParticle.eta << " -- Value" << fVals[i0]
-                                   << " -- id :  " << rParticle.id << " --  NAlgos: " << lNAlgos << std::endl;
+                                   << " -- id :  " << rParticle.id << " --  NAlgos: " << lNAlgos;
     }
     //Basic Cuts
-    if (pWeight * fPFParticles[i0].pt() < fPuppiAlgo[pPupId].neutralPt(fNPV) && rParticle.id == 0)
+    if (pWeight * fPFParticles[i0].pt < fPuppiAlgo[pPupId].neutralPt(fNPV) && rParticle.id == 0)
       pWeight = 0;  //threshold cut on the neutral Pt
     // Protect high pT photons (important for gamma to hadronic recoil balance)
-    if ((fPtMaxPhotons > 0) && (rParticle.pdgId == 22) && (std::abs(fPFParticles[i0].eta()) < fEtaMaxPhotons) &&
-        (fPFParticles[i0].pt() > fPtMaxPhotons))
+    if ((fPtMaxPhotons > 0) && (rParticle.pdgId == 22) && (std::abs(fPFParticles[i0].eta) < fEtaMaxPhotons) &&
+        (fPFParticles[i0].pt > fPtMaxPhotons))
       pWeight = 1.;
     // Protect high pT neutrals
     else if ((fPtMaxNeutrals > 0) && (rParticle.id == 0))
       pWeight =
-          std::clamp((fPFParticles[i0].pt() - fPtMaxNeutralsStartSlope) / (fPtMaxNeutrals - fPtMaxNeutralsStartSlope),
+          std::clamp((fPFParticles[i0].pt - fPtMaxNeutralsStartSlope) / (fPtMaxNeutrals - fPtMaxNeutralsStartSlope),
                      pWeight,
                      1.);
     if (pWeight < fPuppiWeightCut)
       pWeight = 0;  //==> Elminate the low Weight stuff
     if (fInvert)
       pWeight = 1. - pWeight;
-    //std::cout << "rParticle.pt = " <<  rParticle.pt << ", rParticle.charge = " << rParticle.charge << ", rParticle.id = " << rParticle.id << ", weight = " << pWeight << std::endl;
 
     fWeights.push_back(pWeight);
     fAlphaMed.push_back(fPuppiAlgo[pPupId].median());
