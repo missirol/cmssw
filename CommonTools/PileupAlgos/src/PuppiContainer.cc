@@ -70,46 +70,32 @@ float PuppiContainer::var_within_R(int iId,
   //sel.set_reference(centre);
   //the original code used Selector infrastructure: it is too heavy here
   //logic of SelectorCircle is preserved below
-
-  std::vector<float> near_dR2s;
-  near_dR2s.reserve(std::min(50UL, particles.size()));
-  std::vector<float> near_pts;
-  near_pts.reserve(std::min(50UL, particles.size()));
-  const float r2 = R * R;
+  float const r2(R * R);
+  float var(0.);
   for (auto const &part : particles) {
     if (part.id == 3)
       continue;
     //squared_distance is in (y,phi) coords: rap() has faster access -> check it first
     if (std::abs(part.eta - centre.eta) < R) {
       auto const dr2(reco::deltaR2(part.eta, part.phi, centre.eta, centre.phi));
-      if(dr2 < r2){
-        near_dR2s.push_back(dr2);
-        near_pts.push_back(part.pt);
+      if((dr2 < r2) and (dr2 > 0.0001)){
+        auto const pt(part.pt);
+        if (iId == 0)
+          var += (pt / dr2);
+        else if (iId == 1)
+          var += pt;
+        else if (iId == 2)
+          var += (1. / dr2);
+        else if (iId == 3)
+          var += (1. / dr2);
+        else if (iId == 4)
+          var += pt;
+        else if (iId == 5)
+          var += (pt * pt / dr2);
       }
     }
   }
-  float var = 0;
-  //float lSumPt = 0;
-  //if(iId == 1) for(auto  pt : near_pts) lSumPt += pt;
-  auto nParts = near_dR2s.size();
-  for (auto i = 0UL; i < nParts; ++i) {
-    auto dr2 = near_dR2s[i];
-    auto pt = near_pts[i];
-    if (dr2 < 0.0001)
-      continue;
-    if (iId == 0)
-      var += (pt / dr2);
-    else if (iId == 1)
-      var += pt;
-    else if (iId == 2)
-      var += (1. / dr2);
-    else if (iId == 3)
-      var += (1. / dr2);
-    else if (iId == 4)
-      var += pt;
-    else if (iId == 5)
-      var += (pt * pt / dr2);
-  }
+
   if (iId == 1)
     var += centre.pt;  //Sum in a cone
   else if (iId == 0 && var != 0)
@@ -118,8 +104,10 @@ float PuppiContainer::var_within_R(int iId,
     var = log(var);
   else if (iId == 5 && var != 0)
     var = log(var);
+
   return var;
 }
+
 //In fact takes the median not the average
 void PuppiContainer::getRMSAvg(int iOpt,
                                std::vector<PuppiCandidate> const &iConstits,
