@@ -53,10 +53,10 @@ private:
   double cur_RMS;
   double cur_Med;
 
-  std::vector<double> fRMS;                          // this is the raw RMS per algo
-  std::vector<double> fMedian;                       // this is the raw Median per algo
-  std::vector<std::vector<double> > fRMS_perEta;     // this is the final RMS used after eta corrections
-  std::vector<std::vector<double> > fMedian_perEta;  // this is the final Med used after eta corrections
+  std::vector<double> fRMS;                          // raw RMS per algo
+  std::vector<double> fMedian;                       // raw Median per algo
+  std::vector<std::vector<double> > fRMS_perEta;     // final RMS used after eta corrections
+  std::vector<std::vector<double> > fMedian_perEta;  // final Med used after eta corrections
 
   std::vector<float> fPups;
   std::vector<float> fPupsPV;

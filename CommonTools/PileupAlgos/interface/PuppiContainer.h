@@ -10,11 +10,10 @@ public:
   PuppiContainer(const edm::ParameterSet &iConfig);
   ~PuppiContainer();
   void initialize(const std::vector<RecoObj> &iRecoObjects);
-  void setNPV(int iNPV) { fNPV = iNPV; }
 
   std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
   std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
-  std::vector<double> const &puppiWeights();
+  std::vector<double> const &puppiWeights(const int);
   const std::vector<double> &puppiRawAlphas() { return fRawAlphas; }
   const std::vector<double> &puppiAlphas() { return fVals; }
   // const std::vector<double> puppiAlpha   () {return fAlpha;}
@@ -24,7 +23,8 @@ public:
   int puppiNAlgos() { return fNAlgos; }
 
 protected:
-  double goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int iOpt, const double iRCone);
+  double cached_dr2(uint, uint) const;
+  double goodVar(const uint, std::vector<PuppiCandidate> const &iParts, int iOpt, const double iRCone);
   void getRMSAvg(int iOpt,
                  std::vector<PuppiCandidate> const &iConstits,
                  std::vector<PuppiCandidate> const &iParticles,
@@ -35,10 +35,7 @@ protected:
                     std::vector<PuppiCandidate> const &iChargeParticles);
   double getChi2FromdZ(double iDZ);
   int getPuppiId(float iPt, float iEta);
-  double var_within_R(int iId,
-                      const std::vector<PuppiCandidate> &particles,
-                      const PuppiCandidate &centre,
-                      const double R);
+  double var_within_R(int iId, const std::vector<PuppiCandidate> &particles, const uint, const double R);
 
   bool fPuppiDiagnostics;
   const std::vector<RecoObj> *fRecoParticles;
@@ -49,6 +46,7 @@ protected:
   std::vector<double> fRawAlphas;
   std::vector<double> fAlphaMed;
   std::vector<double> fAlphaRMS;
+  std::vector<double> fDeltaR2;
 
   bool fApplyCHS;
   bool fInvert;
@@ -61,8 +59,6 @@ protected:
   double fPtMaxNeutrals;
   double fPtMaxNeutralsStartSlope;
   int fNAlgos;
-  int fNPV;
-  double fPVFrac;
   std::vector<PuppiAlgo> fPuppiAlgo;
 };
 #endif

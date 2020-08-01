@@ -1,13 +1,12 @@
+#include <cmath>
+#include <string_view>
+
 #include "CommonTools/PileupAlgos/interface/PuppiContainer.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "Math/ProbFunc.h"
 #include "TMath.h"
-#include <iostream>
-#include <cmath>
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/isFinite.h"
-
-using namespace std;
 
 PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
@@ -21,25 +20,26 @@ PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
   fPtMaxNeutralsStartSlope = iConfig.getParameter<double>("PtMaxNeutralsStartSlope");
   std::vector<edm::ParameterSet> lAlgos = iConfig.getParameter<std::vector<edm::ParameterSet> >("algos");
   fNAlgos = lAlgos.size();
-  for (unsigned int i0 = 0; i0 < lAlgos.size(); i0++) {
+  for (uint i0 = 0; i0 < lAlgos.size(); i0++) {
     PuppiAlgo pPuppiConfig(lAlgos[i0]);
     fPuppiAlgo.push_back(pPuppiConfig);
   }
 }
 
+PuppiContainer::~PuppiContainer() {}
+
 void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
   //Clear everything
-  fPFParticles.resize(0);
-  fChargedPV.resize(0);
-  fWeights.resize(0);
-  fVals.resize(0);
-  fRawAlphas.resize(0);
-  fAlphaMed.resize(0);
-  fAlphaRMS.resize(0);
-  //fChargedNoPV.resize(0);
+  fPFParticles.clear();
+  fChargedPV.clear();
+  fWeights.clear();
+  fVals.clear();
+  fRawAlphas.clear();
+  fAlphaMed.clear();
+  fAlphaRMS.clear();
   //Link to the RecoObjects
-  fPVFrac = 0.;
-  fNPV = 1.;
+  fPFParticles.reserve(iRecoObjects.size());
+  fChargedPV.reserve(iRecoObjects.size());
   fRecoParticles = &iRecoObjects;
   for (auto const &rParticle : *fRecoParticles) {
     PuppiCandidate curPseudoJet;
@@ -59,23 +59,34 @@ void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
     //Take Charged particles associated to PV
     if (std::abs(rParticle.id) == 1)
       fChargedPV.push_back(curPseudoJet);
-    //if(rParticle.id == 3) _chargedNoPV.push_back(curPseudoJet);
-    // if(fNPV < rParticle.vtxId) fNPV = rParticle.vtxId;
   }
-}
-PuppiContainer::~PuppiContainer() {}
 
-double PuppiContainer::goodVar(PuppiCandidate const &iPart,
-                               std::vector<PuppiCandidate> const &iParts,
-                               int iOpt,
-                               const double iRCone) {
-  return var_within_R(iOpt, iParts, iPart, iRCone);
+//  fDeltaR2.clear();
+//  fDeltaR2.reserve(fPFParticles.size()*(fPFParticles.size() - 1)/2);
+//  for(uint i0=0; i0<fPFParticles.size(); ++i0){
+//    for(uint i1=i0+1; i1<fPFParticles.size(); ++i1){
+//      if(std::abs(fPFParticles.at(i0).rap() - fPFParticles.at(i1).rap()) < 0.4)
+//        fDeltaR2.emplace_back(reco::deltaR2(fPFParticles.at(i0), fPFParticles.at(i1)));
+//      else
+//        fDeltaR2.emplace_back(-1.0);
+//    }
+//  }
 }
 
-double PuppiContainer::var_within_R(int iId,
-                                    const vector<PuppiCandidate> &particles,
-                                    const PuppiCandidate &centre,
-                                    const double R) {
+double PuppiContainer::goodVar(const uint iPartIdx, std::vector<PuppiCandidate> const &iParts, int iOpt, const double iRCone) {
+  return var_within_R(iOpt, iParts, iPartIdx, iRCone);
+}
+
+double PuppiContainer::cached_dr2(uint i0, uint i1) const {
+  return 0.1;//!!
+//!!  if(i0 == i1) return 0.;
+//!!  else if(i0 > i1) std::swap(i0, i1);
+//!!  int const dr2_idx(i1-1+i0*(fPFParticles.size()-2-(i0-1)/2.));
+//!!  //!! check
+//!!  return fDeltaR2.at(dr2_idx);
+}
+
+double PuppiContainer::var_within_R(int iId, const std::vector<PuppiCandidate> &particles, const uint partIdx, const double R) {
   if (iId == -1)
     return 1;
 
@@ -85,59 +96,50 @@ double PuppiContainer::var_within_R(int iId,
   //sel.set_reference(centre);
   //the original code used Selector infrastructure: it is too heavy here
   //logic of SelectorCircle is preserved below
-
-  vector<double> near_dR2s;
-  near_dR2s.reserve(std::min(50UL, particles.size()));
-  vector<double> near_pts;
-  near_pts.reserve(std::min(50UL, particles.size()));
-  const double r2 = R * R;
-  for (auto const &part : particles) {
+  const double r2(R * R);
+  double var(0.);
+  for (uint i1=0; i1<particles.size(); ++i1) {
+    if(i1 == partIdx) continue;
+    auto const& part(particles.at(i1));
     if (part.puppi_register() == 3)
       continue;
     //squared_distance is in (y,phi) coords: rap() has faster access -> check it first
-    if (std::abs(part.rap() - centre.rap()) < R && part.squared_distance(centre) < r2) {
-      near_dR2s.push_back(reco::deltaR2(part, centre));
-      near_pts.push_back(part.pt());
+    auto dr2(cached_dr2(partIdx, i1));
+    if ((dr2 > 0.0001) and (dr2 < r2)) {
+      auto pt(part.pt());
+      if (iId == 0)
+        var += (pt / dr2);
+      else if (iId == 1)
+        var += pt;
+      else if (iId == 2)
+        var += (1. / dr2);
+      else if (iId == 3)
+        var += (1. / dr2);
+      else if (iId == 4)
+        var += pt;
+      else if (iId == 5)
+        var += (pt * pt / dr2);
     }
   }
-  double var = 0;
-  //double lSumPt = 0;
-  //if(iId == 1) for(auto  pt : near_pts) lSumPt += pt;
-  auto nParts = near_dR2s.size();
-  for (auto i = 0UL; i < nParts; ++i) {
-    auto dr2 = near_dR2s[i];
-    auto pt = near_pts[i];
-    if (dr2 < 0.0001)
-      continue;
-    if (iId == 0)
-      var += (pt / dr2);
-    else if (iId == 1)
-      var += pt;
-    else if (iId == 2)
-      var += (1. / dr2);
-    else if (iId == 3)
-      var += (1. / dr2);
-    else if (iId == 4)
-      var += pt;
-    else if (iId == 5)
-      var += (pt * pt / dr2);
-  }
+
   if (iId == 1)
-    var += centre.pt();  //Sum in a cone
+    var += fPFParticles.at(partIdx).pt();  //Sum in a cone
   else if (iId == 0 && var != 0)
     var = log(var);
   else if (iId == 3 && var != 0)
     var = log(var);
   else if (iId == 5 && var != 0)
     var = log(var);
+
   return var;
 }
+
 //In fact takes the median not the average
 void PuppiContainer::getRMSAvg(int iOpt,
                                std::vector<PuppiCandidate> const &iConstits,
                                std::vector<PuppiCandidate> const &iParticles,
                                std::vector<PuppiCandidate> const &iChargedParticles) {
-  for (unsigned int i0 = 0; i0 < iConstits.size(); i0++) {
+  for (uint i0 = 0; i0 < iConstits.size(); i0++) {
     double pVal = -1;
     //Calculate the Puppi Algo to use
     int pPupId = getPuppiId(iConstits[i0].pt(), iConstits[i0].eta());
@@ -151,14 +153,14 @@ void PuppiContainer::getRMSAvg(int iOpt,
     double pCone = fPuppiAlgo[pPupId].coneSize(iOpt);
     //Compute the Puppi Metric
     if (!pCharged)
-      pVal = goodVar(iConstits[i0], iParticles, pAlgo, pCone);
+      pVal = goodVar(i0, iParticles, pAlgo, pCone);
     if (pCharged)
-      pVal = goodVar(iConstits[i0], iChargedParticles, pAlgo, pCone);
+      pVal = goodVar(i0, iChargedParticles, pAlgo, pCone);
     fVals.push_back(pVal);
     //if(std::isnan(pVal) || std::isinf(pVal)) cerr << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt() << " -- " << iConstits[i0].eta() << endl;
     if (!edm::isFinite(pVal)) {
       LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt() << " -- "
-                           << iConstits[i0].eta() << endl;
+                           << iConstits[i0].eta();
       continue;
     }
 
@@ -171,26 +173,27 @@ void PuppiContainer::getRMSAvg(int iOpt,
       double curVal = -1;
       if (i1 != pPupId) {
         if (!pCharged)
-          curVal = goodVar(iConstits[i0], iParticles, pAlgo, pCone);
+          curVal = goodVar(i0, iParticles, pAlgo, pCone);
         if (pCharged)
-          curVal = goodVar(iConstits[i0], iChargedParticles, pAlgo, pCone);
+          curVal = goodVar(i0, iChargedParticles, pAlgo, pCone);
       } else {  //no need to repeat the computation
         curVal = pVal;
       }
-      //std::cout << "i1 = " << i1 << ", curVal = " << curVal << ", eta = " << iConstits[i0].eta() << ", pupID = " << pPupId << std::endl;
+
       fPuppiAlgo[i1].add(iConstits[i0], curVal, iOpt);
     }
   }
   for (int i0 = 0; i0 < fNAlgos; i0++)
     fPuppiAlgo[i0].computeMedRMS(iOpt);
 }
+
 //In fact takes the median not the average
 void PuppiContainer::getRawAlphas(int iOpt,
                                   std::vector<PuppiCandidate> const &iConstits,
                                   std::vector<PuppiCandidate> const &iParticles,
                                   std::vector<PuppiCandidate> const &iChargedParticles) {
   for (int j0 = 0; j0 < fNAlgos; j0++) {
-    for (unsigned int i0 = 0; i0 < iConstits.size(); i0++) {
+    for (uint i0 = 0; i0 < iConstits.size(); i0++) {
       double pVal = -1;
       //Get the Puppi Sub Algo (given iteration)
       int pAlgo = fPuppiAlgo[j0].algoId(iOpt);
@@ -198,18 +201,19 @@ void PuppiContainer::getRawAlphas(int iOpt,
       double pCone = fPuppiAlgo[j0].coneSize(iOpt);
       //Compute the Puppi Metric
       if (!pCharged)
-        pVal = goodVar(iConstits[i0], iParticles, pAlgo, pCone);
+        pVal = goodVar(i0, iParticles, pAlgo, pCone);
       if (pCharged)
-        pVal = goodVar(iConstits[i0], iChargedParticles, pAlgo, pCone);
+        pVal = goodVar(i0, iChargedParticles, pAlgo, pCone);
       fRawAlphas.push_back(pVal);
       if (!edm::isFinite(pVal)) {
         LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iConstits[i0].pt() << " -- "
-                             << iConstits[i0].eta() << endl;
+                             << iConstits[i0].eta();
         continue;
       }
     }
   }
 }
+
 int PuppiContainer::getPuppiId(float iPt, float iEta) {
   int lId = -1;
   for (int i0 = 0; i0 < fNAlgos; i0++) {
@@ -227,6 +231,7 @@ int PuppiContainer::getPuppiId(float iPt, float iEta) {
   //if(lId == -1) std::cerr << "Error : Full fiducial range is not defined " << std::endl;
   return lId;
 }
+
 double PuppiContainer::getChi2FromdZ(double iDZ) {
   //We need to obtain prob of PU + (1-Prob of LV)
   // Prob(LV) = Gaus(dZ,sigma) where sigma = 1.5mm  (its really more like 1mm)
@@ -242,7 +247,8 @@ double PuppiContainer::getChi2FromdZ(double iDZ) {
   lChi2PU *= lChi2PU;
   return lChi2PU;
 }
-std::vector<double> const &PuppiContainer::puppiWeights() {
+
+std::vector<double> const &PuppiContainer::puppiWeights(const int nPV) {
   int lNParticles = fRecoParticles->size();
 
   fWeights.clear();
@@ -306,10 +312,10 @@ std::vector<double> const &PuppiContainer::puppiWeights() {
       pWeight = 0.0;
       LogDebug("PuppiWeightError") << "====> Weight is nan : " << pWeight << " : pt " << rParticle.pt
                                    << " -- eta : " << rParticle.eta << " -- Value" << fVals[i0]
-                                   << " -- id :  " << rParticle.id << " --  NAlgos: " << lNAlgos << std::endl;
+                                   << " -- id :  " << rParticle.id << " --  NAlgos: " << lNAlgos;
     }
     //Basic Cuts
-    if (pWeight * fPFParticles[i0].pt() < fPuppiAlgo[pPupId].neutralPt(fNPV) && rParticle.id == 0)
+    if (pWeight * fPFParticles[i0].pt() < fPuppiAlgo[pPupId].neutralPt(nPV) && rParticle.id == 0)
       pWeight = 0;  //threshold cut on the neutral Pt
     // Protect high pT photons (important for gamma to hadronic recoil balance)
     if ((fPtMaxPhotons > 0) && (rParticle.pdgId == 22) && (std::abs(fPFParticles[i0].eta()) < fEtaMaxPhotons) &&
@@ -325,7 +331,6 @@ std::vector<double> const &PuppiContainer::puppiWeights() {
       pWeight = 0;  //==> Elminate the low Weight stuff
     if (fInvert)
       pWeight = 1. - pWeight;
-    //std::cout << "rParticle.pt = " <<  rParticle.pt << ", rParticle.charge = " << rParticle.charge << ", rParticle.id = " << rParticle.id << ", weight = " << pWeight << std::endl;
 
     fWeights.push_back(pWeight);
     fAlphaMed.push_back(fPuppiAlgo[pPupId].median());
