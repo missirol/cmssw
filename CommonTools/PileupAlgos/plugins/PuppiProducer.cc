@@ -52,11 +52,11 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   }
 
   if (fPuppiDiagnostics) {
-    ptokenNalgos_ = produces<double>("PuppiNAlgos");
-    ptokenRawAlphas_ = produces<std::vector<double>>("PuppiRawAlphas");
-    ptokenAlphas_ = produces<std::vector<double>>("PuppiAlphas");
-    ptokenAlphasMed_ = produces<std::vector<double>>("PuppiAlphasMed");
-    ptokenAlphasRms_ = produces<std::vector<double>>("PuppiAlphasRms");
+    ptokenNalgos_ = produces<float>("PuppiNAlgos");
+    ptokenRawAlphas_ = produces<std::vector<float>>("PuppiRawAlphas");
+    ptokenAlphas_ = produces<std::vector<float>>("PuppiAlphas");
+    ptokenAlphasMed_ = produces<std::vector<float>>("PuppiAlphasMed");
+    ptokenAlphasRms_ = produces<std::vector<float>>("PuppiAlphasRms");
   }
 }
 // ------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       npv++;
   }
 
-  std::vector<double> lWeights;
+  std::vector<float> lWeights;
   if (!fUseExistingWeights) {
     //Fill the reco objects
     fRecoObjCollection.clear();
@@ -95,15 +95,15 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       pReco.charge = aPF.charge();
       pReco.pdgId = aPF.pdgId();
       const reco::Vertex* closestVtx = nullptr;
-      double pDZ = -9999;
-      double pD0 = -9999;
+      float pDZ = -9999;
+      float pD0 = -9999;
       int pVtxId = -9999;
       bool lFirst = true;
       bool isLepton = ((std::abs(pReco.pdgId) == 11) || (std::abs(pReco.pdgId) == 13));
       const pat::PackedCandidate* lPack = dynamic_cast<const pat::PackedCandidate*>(&aPF);
       if (lPack == nullptr) {
         const reco::PFCandidate* pPF = dynamic_cast<const reco::PFCandidate*>(&aPF);
-        double curdz = 9999;
+        float curdz = 9999;
         int closestVtxForUnassociateds = -9999;
         const reco::TrackRef aTrackRef = pPF->trackRef();
         for (auto const& aV : *pvCol) {
@@ -124,7 +124,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
             break;
           }
           // in case it's unassocciated, keep more info
-          double tmpdz = 99999;
+          float tmpdz = 99999;
           if (aTrackRef.isNonnull())
             tmpdz = aTrackRef->dz(aV.position());
           else if (pPF->gsfTrackRef().isNonnull())
@@ -340,11 +340,11 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   if (fPuppiDiagnostics && !fUseExistingWeights) {
     // all the different alphas per particle
     // THE alpha per particle
-    std::vector<double> theAlphas(fPuppiContainer->puppiAlphas());
-    std::vector<double> theAlphasMed(fPuppiContainer->puppiAlphasMed());
-    std::vector<double> theAlphasRms(fPuppiContainer->puppiAlphasRMS());
-    std::vector<double> alphas(fPuppiContainer->puppiRawAlphas());
-    double nalgos(fPuppiContainer->puppiNAlgos());
+    std::vector<float> theAlphas(fPuppiContainer->puppiAlphas());
+    std::vector<float> theAlphasMed(fPuppiContainer->puppiAlphasMed());
+    std::vector<float> theAlphasRms(fPuppiContainer->puppiAlphasRMS());
+    std::vector<float> alphas(fPuppiContainer->puppiRawAlphas());
+    float nalgos(fPuppiContainer->puppiNAlgos());
 
     iEvent.emplace(ptokenRawAlphas_, alphas);
     iEvent.emplace(ptokenNalgos_, nalgos);

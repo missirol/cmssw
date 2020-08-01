@@ -50,11 +50,11 @@ private:
   edm::EDPutTokenT<edm::ValueMap<reco::CandidatePtr>> ptokenValues_;
   edm::EDPutTokenT<pat::PackedCandidateCollection> ptokenPackedPuppiCandidates_;
   edm::EDPutTokenT<reco::PFCandidateCollection> ptokenPuppiCandidates_;
-  edm::EDPutTokenT<double> ptokenNalgos_;
-  edm::EDPutTokenT<std::vector<double>> ptokenRawAlphas_;
-  edm::EDPutTokenT<std::vector<double>> ptokenAlphas_;
-  edm::EDPutTokenT<std::vector<double>> ptokenAlphasMed_;
-  edm::EDPutTokenT<std::vector<double>> ptokenAlphasRms_;
+  edm::EDPutTokenT<float> ptokenNalgos_;
+  edm::EDPutTokenT<std::vector<float>> ptokenRawAlphas_;
+  edm::EDPutTokenT<std::vector<float>> ptokenAlphas_;
+  edm::EDPutTokenT<std::vector<float>> ptokenAlphasMed_;
+  edm::EDPutTokenT<std::vector<float>> ptokenAlphasRms_;
   std::string fPuppiName;
   std::string fPFName;
   std::string fPVName;
@@ -62,7 +62,7 @@ private:
   bool fPuppiNoLep;
   bool fUseFromPVLooseTight;
   bool fUseDZ;
-  float fDZCut;
+  double fDZCut;
   double fEtaMinUseDZ;
   double fPtMaxCharged;
   double fEtaMaxCharged;

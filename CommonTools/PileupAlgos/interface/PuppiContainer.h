@@ -14,17 +14,17 @@ public:
 
   std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
   std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
-  std::vector<double> const &puppiWeights();
-  const std::vector<double> &puppiRawAlphas() { return fRawAlphas; }
-  const std::vector<double> &puppiAlphas() { return fVals; }
-  // const std::vector<double> puppiAlpha   () {return fAlpha;}
-  const std::vector<double> &puppiAlphasMed() { return fAlphaMed; }
-  const std::vector<double> &puppiAlphasRMS() { return fAlphaRMS; }
+  std::vector<float> const &puppiWeights();
+  const std::vector<float> &puppiRawAlphas() { return fRawAlphas; }
+  const std::vector<float> &puppiAlphas() { return fVals; }
+  // const std::vector<float> puppiAlpha   () {return fAlpha;}
+  const std::vector<float> &puppiAlphasMed() { return fAlphaMed; }
+  const std::vector<float> &puppiAlphasRMS() { return fAlphaRMS; }
 
   int puppiNAlgos() { return fNAlgos; }
 
 protected:
-  double goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int iOpt, const double iRCone);
+  float goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int iOpt, const float iRCone);
   void getRMSAvg(int iOpt,
                  std::vector<PuppiCandidate> const &iConstits,
                  std::vector<PuppiCandidate> const &iParticles,
@@ -33,36 +33,36 @@ protected:
                     std::vector<PuppiCandidate> const &iConstits,
                     std::vector<PuppiCandidate> const &iParticles,
                     std::vector<PuppiCandidate> const &iChargeParticles);
-  double getChi2FromdZ(double iDZ);
+  float getChi2FromdZ(float const iDZ);
   int getPuppiId(float iPt, float iEta);
-  double var_within_R(int iId,
+  float var_within_R(int iId,
                       const std::vector<PuppiCandidate> &particles,
                       const PuppiCandidate &centre,
-                      const double R);
+                      const float R);
 
   bool fPuppiDiagnostics;
   const std::vector<RecoObj> *fRecoParticles;
   std::vector<PuppiCandidate> fPFParticles;
   std::vector<PuppiCandidate> fChargedPV;
-  std::vector<double> fWeights;
-  std::vector<double> fVals;
-  std::vector<double> fRawAlphas;
-  std::vector<double> fAlphaMed;
-  std::vector<double> fAlphaRMS;
+  std::vector<float> fWeights;
+  std::vector<float> fVals;
+  std::vector<float> fRawAlphas;
+  std::vector<float> fAlphaMed;
+  std::vector<float> fAlphaRMS;
 
   bool fApplyCHS;
   bool fInvert;
   bool fUseExp;
-  double fNeutralMinPt;
-  double fNeutralSlope;
-  double fPuppiWeightCut;
-  double fPtMaxPhotons;
-  double fEtaMaxPhotons;
-  double fPtMaxNeutrals;
-  double fPtMaxNeutralsStartSlope;
+  float fNeutralMinPt;
+  float fNeutralSlope;
+  float fPuppiWeightCut;
+  float fPtMaxPhotons;
+  float fEtaMaxPhotons;
+  float fPtMaxNeutrals;
+  float fPtMaxNeutralsStartSlope;
   int fNAlgos;
   int fNPV;
-  double fPVFrac;
+  float fPVFrac;
   std::vector<PuppiAlgo> fPuppiAlgo;
 };
 #endif
