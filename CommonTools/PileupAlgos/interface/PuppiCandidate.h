@@ -4,7 +4,7 @@
 #include <cstdint>
 
 struct PuppiCandidate {
- public:
+public:
   PuppiCandidate() {
     pt = 0.f;
     eta = 0.f;

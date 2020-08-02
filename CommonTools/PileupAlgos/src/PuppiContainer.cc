@@ -7,7 +7,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/isFinite.h"
 
-PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
+PuppiContainer::PuppiContainer(const edm::ParameterSet& iConfig) {
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
   fApplyCHS = iConfig.getParameter<bool>("applyCHS");
   fInvert = iConfig.getParameter<bool>("invertPuppi");
@@ -40,7 +40,7 @@ void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandida
   fNPV = 1.;
   fPFParticles.reserve(iPuppiCandidates.size());
   fChargedPV.reserve(iPuppiCandidates.size());
-  for (auto const &pParticle : iPuppiCandidates) {
+  for (auto const& pParticle : iPuppiCandidates) {
     fPFParticles.emplace_back(pParticle);
     //charged particles associated to PV
     if (pParticle.id == 1)
@@ -48,7 +48,10 @@ void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandida
   }
 }
 
-float PuppiContainer::goodVar(PuppiCandidate const& iPart0, std::vector<PuppiCandidate> const& iParticles, int const iId, float const iRCone) const {
+float PuppiContainer::goodVar(PuppiCandidate const& iPart0,
+                              std::vector<PuppiCandidate> const& iParticles,
+                              int const iId,
+                              float const iRCone) const {
   if (iId == -1)
     return 1.f;
 
@@ -60,7 +63,7 @@ float PuppiContainer::goodVar(PuppiCandidate const& iPart0, std::vector<PuppiCan
       continue;
     if (std::abs(part.eta - iPart0.eta) < iRCone) {
       auto const dr2(reco::deltaR2(part.eta, part.phi, iPart0.eta, iPart0.phi));
-      if((dr2 < r2) and (dr2 > 0.0001)){
+      if ((dr2 < r2) and (dr2 > 0.0001)) {
         auto const pt(part.pt);
         if (iId == 5)
           var += (pt * pt / dr2);
@@ -78,7 +81,7 @@ float PuppiContainer::goodVar(PuppiCandidate const& iPart0, std::vector<PuppiCan
     }
   }
 
-  if((var != 0) and ((iId == 0) or (iId == 3) or (iId == 5)))
+  if ((var != 0) and ((iId == 0) or (iId == 3) or (iId == 5)))
     var = log(var);
 
   return var;
@@ -86,8 +89,8 @@ float PuppiContainer::goodVar(PuppiCandidate const& iPart0, std::vector<PuppiCan
 
 //In fact takes the median not the average
 void PuppiContainer::getRMSAvg(int const iOpt,
-                               std::vector<PuppiCandidate> const &iParticles,
-                               std::vector<PuppiCandidate> const &iChargedParticles) {
+                               std::vector<PuppiCandidate> const& iParticles,
+                               std::vector<PuppiCandidate> const& iChargedParticles) {
   for (uint i0 = 0; i0 < iParticles.size(); i0++) {
     auto const& iPart(iParticles.at(i0));
     float pVal = -1;
@@ -109,8 +112,7 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     fVals.push_back(pVal);
 
     if (!edm::isFinite(pVal)) {
-      LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iPart.pt << " -- "
-                           << iPart.eta;
+      LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iPart.pt << " -- " << iPart.eta;
       continue;
     }
 
@@ -140,8 +142,8 @@ void PuppiContainer::getRMSAvg(int const iOpt,
 
 //In fact takes the median not the average
 void PuppiContainer::getRawAlphas(int const iOpt,
-                                  std::vector<PuppiCandidate> const &iParticles,
-                                  std::vector<PuppiCandidate> const &iChargedParticles) {
+                                  std::vector<PuppiCandidate> const& iParticles,
+                                  std::vector<PuppiCandidate> const& iChargedParticles) {
   for (int j0 = 0; j0 < fNAlgos; j0++) {
     for (auto const& iPart : iParticles) {
       float pVal = -1;
@@ -156,8 +158,7 @@ void PuppiContainer::getRawAlphas(int const iOpt,
         pVal = goodVar(iPart, iChargedParticles, pAlgo, pCone);
       fRawAlphas.push_back(pVal);
       if (!edm::isFinite(pVal)) {
-        LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iPart.pt << " -- "
-                             << iPart.eta;
+        LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iPart.pt << " -- " << iPart.eta;
         continue;
       }
     }
@@ -197,7 +198,7 @@ float PuppiContainer::getChi2FromdZ(float const iDZ) const {
   lChi2PU *= lChi2PU;
   return lChi2PU;
 }
-std::vector<float> const &PuppiContainer::puppiWeights() {
+std::vector<float> const& PuppiContainer::puppiWeights() {
   int const lNParticles = fPFParticles.size();
 
   fWeights.clear();
@@ -267,8 +268,8 @@ std::vector<float> const &PuppiContainer::puppiWeights() {
     if (!edm::isFinite(pWeight)) {
       pWeight = 0.0;
       LogDebug("PuppiWeightError") << "====> Weight is nan : " << pWeight << " : pt " << rPart.pt
-                                   << " -- eta : " << rPart.eta << " -- Value" << fVals[i0]
-                                   << " -- id :  " << rPart.id << " --  NAlgos: " << lNAlgos;
+                                   << " -- eta : " << rPart.eta << " -- Value" << fVals[i0] << " -- id :  " << rPart.id
+                                   << " --  NAlgos: " << lNAlgos;
     }
     //Basic Cuts
     if (pWeight * rPart.pt < fPuppiAlgo[pPupId].neutralPt(fNPV) && rPart.id == 0)
@@ -279,7 +280,8 @@ std::vector<float> const &PuppiContainer::puppiWeights() {
       pWeight = 1.;
     // Protect high pT neutrals
     else if ((fPtMaxNeutrals > 0) && (rPart.id == 0))
-      pWeight = std::clamp((rPart.pt - fPtMaxNeutralsStartSlope) / (fPtMaxNeutrals - fPtMaxNeutralsStartSlope), pWeight, 1.f);
+      pWeight =
+          std::clamp((rPart.pt - fPtMaxNeutralsStartSlope) / (fPtMaxNeutrals - fPtMaxNeutralsStartSlope), pWeight, 1.f);
 
     if (pWeight < fPuppiWeightCut)
       pWeight = 0;  //==> Eliminate the low Weight stuff

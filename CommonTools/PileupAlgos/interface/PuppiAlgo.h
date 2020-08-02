@@ -15,10 +15,10 @@ public:
   //Computing Mean and RMS
   void reset();
   void fixAlgoEtaBin(int i_eta);
-  void add(const PuppiCandidate& iParticle, const float iVal, const unsigned int iAlgo);
+  void add(const PuppiCandidate &iParticle, const float iVal, const unsigned int iAlgo);
   void computeMedRMS(const uint iAlgo);
   //Get the Weight
-  float compute(std::vector<float> const& iVals, const float iChi2) const;
+  float compute(std::vector<float> const &iVals, const float iChi2) const;
   const std::vector<float> &alphas() const { return fPups; }
   //Helpers
   inline int etaBins() const { return fEtaMin.size(); }

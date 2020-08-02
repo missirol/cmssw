@@ -25,7 +25,7 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
     int pAlgoId = lAlgos[i0].getParameter<int>("algoId");
     bool pCharged = lAlgos[i0].getParameter<bool>("useCharged");
     bool pWeight0 = lAlgos[i0].getParameter<bool>("applyLowPUCorr");
-    int pComb = lAlgos[i0].getParameter<int>("combOpt");                // 0=> add in chi2/1=>Multiply p-values
+    int pComb = lAlgos[i0].getParameter<int>("combOpt");               // 0=> add in chi2/1=>Multiply p-values
     float pConeSize = lAlgos[i0].getParameter<double>("cone");         // Min Pt when computing pt and rms
     float pRMSPtMin = lAlgos[i0].getParameter<double>("rmsPtMin");     // Min Pt when computing pt and rms
     float pRMSSF = lAlgos[i0].getParameter<double>("rmsScaleFactor");  // Additional Tuning parameter for Jokers
@@ -90,7 +90,8 @@ void PuppiAlgo::add(const PuppiCandidate &iParticle, const float iVal, const uns
 
   int const puppi_id = iParticle.id;
   if (puppi_id < 0) {
-    throw cms::Exception("PuppiRegisterNotSet") << "The puppi register is not set. This must be set before use:" << puppi_id;
+    throw cms::Exception("PuppiRegisterNotSet")
+        << "The puppi register is not set. This must be set before use:" << puppi_id;
   }
 
   // added by Nhan -- for all eta regions, compute mean/RMS from the central charged PU
