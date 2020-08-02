@@ -10,16 +10,14 @@ class PuppiContainer {
 public:
   PuppiContainer(edm::ParameterSet const& iConfig);
   ~PuppiContainer();
-  void initialize(std::vector<PuppiCandidate> const& iPuppiCandidates);
-  void setNPV(int iNPV) { fNPV = iNPV; }
+  void initialize(std::vector<PuppiCandidate> const& iPuppiCandidates, int const iNPV);
 
-  std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
   std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
-  std::vector<float> const& puppiWeights();
-  const std::vector<float> &puppiRawAlphas() const { return fRawAlphas; }
-  const std::vector<float> &puppiAlphas() const { return fVals; }
-  const std::vector<float> &puppiAlphasMed() const { return fAlphaMed; }
-  const std::vector<float> &puppiAlphasRMS() const { return fAlphaRMS; }
+  std::vector<float> const& puppiWeights() const { return fWeights; }
+  std::vector<float> const& puppiRawAlphas() const { return fRawAlphas; }
+  std::vector<float> const& puppiAlphas() const { return fVals; }
+  std::vector<float> const& puppiAlphasMed() const { return fAlphaMed; }
+  std::vector<float> const& puppiAlphasRMS() const { return fAlphaRMS; }
 
   int puppiNAlgos() const { return fNAlgos; }
 
@@ -31,7 +29,6 @@ protected:
   int getPuppiId(float iPt, float iEta);
 
   bool fPuppiDiagnostics;
-  std::vector<PuppiCandidate> fPFParticles;
   std::vector<PuppiCandidate> fChargedPV;
   std::vector<float> fWeights;
   std::vector<float> fVals;
@@ -48,7 +45,6 @@ protected:
   float fPtMaxNeutrals;
   float fPtMaxNeutralsStartSlope;
   int fNAlgos;
-  int fNPV;
   bool fApplyCHS;
   bool fInvert;
   bool fUseExp;
