@@ -24,8 +24,8 @@ public:
   int puppiNAlgos() const { return fNAlgos; }
 
 protected:
-  float goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int iOpt, const float iRCone);
-  void getRMSAvg(int iOpt,
+  float goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int const iOpt, float const iRCone) const;
+  void getRMSAvg(int const iOpt,
                  std::vector<PuppiCandidate> const &iConstits,
                  std::vector<PuppiCandidate> const &iParticles,
                  std::vector<PuppiCandidate> const &iChargeParticles);
@@ -35,10 +35,10 @@ protected:
                     std::vector<PuppiCandidate> const &iChargeParticles);
   float getChi2FromdZ(float const iDZ);
   int getPuppiId(float iPt, float iEta);
-  float var_within_R(int iId,
-                      const std::vector<PuppiCandidate> &particles,
-                      const PuppiCandidate &centre,
-                      const float R);
+  float var_within_R(int const iId,
+                     std::vector<PuppiCandidate> const& particles,
+                     PuppiCandidate const& centre,
+                     float const R) const;
 
   bool fPuppiDiagnostics;
   std::vector<PuppiCandidate> fPFParticles;
@@ -61,7 +61,6 @@ protected:
   float fPtMaxNeutralsStartSlope;
   int fNAlgos;
   int fNPV;
-  float fPVFrac;
   std::vector<PuppiAlgo> fPuppiAlgo;
 };
 #endif

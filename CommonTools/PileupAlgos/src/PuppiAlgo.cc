@@ -87,13 +87,10 @@ void PuppiAlgo::fixAlgoEtaBin(int i_eta) {
 void PuppiAlgo::add(const PuppiCandidate &iParticle, const float iVal, const unsigned int iAlgo) {
   if (iParticle.pt < fRMSPtMin[iAlgo])
     return;
-  // Change from SRR : Previously used fastjet::PseudoJet::user_index to decide the particle type.
-  // In CMSSW we use the user_index to specify the index in the input collection, so I invented
-  // a new mechanism using the fastjet UserInfo functionality. Of course, it's still just an integer
-  // but that interface could be changed (or augmented) if desired / needed.
-  int puppi_id = iParticle.id;
-  if (puppi_id == std::numeric_limits<int>::lowest()) {
-    throw cms::Exception("PuppiRegisterNotSet") << "The puppi register is not set. This must be set before use.\n";
+
+  int const puppi_id = iParticle.id;
+  if (puppi_id < 0) {
+    throw cms::Exception("PuppiRegisterNotSet") << "The puppi register is not set. This must be set before use:" << puppi_id;
   }
 
   // added by Nhan -- for all eta regions, compute mean/RMS from the central charged PU
@@ -225,7 +222,7 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   puppialgos.add<double>("cone", .4);
   puppialgos.add<double>("rmsPtMin", .1);
   puppialgos.add<double>("rmsScaleFactor", 1.0);
-  std::vector<edm::ParameterSet> VPSetPuppiAlgos;
+
   edm::ParameterSet puppiset;
   puppiset.addParameter<int>("algoId", 5);
   puppiset.addParameter<bool>("useCharged", false);
@@ -234,12 +231,10 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   puppiset.addParameter<double>("cone", .4);
   puppiset.addParameter<double>("rmsPtMin", .1);
   puppiset.addParameter<double>("rmsScaleFactor", 1.0);
-  VPSetPuppiAlgos.push_back(puppiset);
+  std::vector<edm::ParameterSet> VPSetPuppiAlgos({puppiset});
 
   edm::ParameterSetDescription algos;
   algos.addVPSet("puppiAlgos", puppialgos, VPSetPuppiAlgos);
-  std::vector<edm::ParameterSet> VPSetAlgos;
-  edm::ParameterSet algosset;
   algos.add<std::vector<double>>("etaMin", {0.});
   algos.add<std::vector<double>>("etaMax", {2.5});
   algos.add<std::vector<double>>("ptMin", {0.});
@@ -248,6 +243,8 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   algos.add<std::vector<double>>("RMSEtaSF", {1.0});
   algos.add<std::vector<double>>("MedEtaSF", {1.0});
   algos.add<double>("EtaMaxExtrap", 2.0);
+
+  edm::ParameterSet algosset;
   algosset.addParameter<std::vector<double>>("etaMin", {0.});
   algosset.addParameter<std::vector<double>>("etaMax", {2.5});
   algosset.addParameter<std::vector<double>>("ptMin", {0.});
@@ -257,6 +254,5 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   algosset.addParameter<std::vector<double>>("MedEtaSF", {1.0});
   algosset.addParameter<double>("EtaMaxExtrap", 2.0);
   algosset.addParameter<std::vector<edm::ParameterSet>>("puppiAlgos", VPSetPuppiAlgos);
-  VPSetAlgos.push_back(algosset);
-  desc.addVPSet("algos", algos, VPSetAlgos);
+  desc.addVPSet("algos", algos, {algosset});
 }
