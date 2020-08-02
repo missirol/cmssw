@@ -1,13 +1,9 @@
-// system include files
 #include <memory>
 
-// user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "DataFormats/Common/interface/ValueMap.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/Common/interface/View.h"
@@ -16,7 +12,7 @@
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
 #include "DataFormats/Common/interface/Association.h"
-//Main File
+
 #include "CommonTools/PileupAlgos/plugins/PuppiProducer.h"
 #include "CommonTools/PileupAlgos/interface/PuppiCandidate.h"
 
@@ -52,16 +48,16 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   }
 
   if (fPuppiDiagnostics) {
-    ptokenNalgos_ = produces<double>("PuppiNAlgos");
+    ptokenNalgos_ = produces<int>("PuppiNAlgos");
     ptokenRawAlphas_ = produces<std::vector<double>>("PuppiRawAlphas");
     ptokenAlphas_ = produces<std::vector<double>>("PuppiAlphas");
     ptokenAlphasMed_ = produces<std::vector<double>>("PuppiAlphasMed");
     ptokenAlphasRms_ = produces<std::vector<double>>("PuppiAlphasRms");
   }
 }
-// ------------------------------------------------------------------------------------------
+
 PuppiProducer::~PuppiProducer() {}
-// ------------------------------------------------------------------------------------------
+
 void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // Get PFCandidate Collection
   edm::Handle<CandidateView> hPFProduct;
@@ -82,29 +78,27 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
   std::vector<double> lWeights;
   if (!fUseExistingWeights) {
-    //Fill the reco objects
-    fRecoObjCollection.clear();
-    fRecoObjCollection.reserve(pfCol->size());
+    std::vector<PuppiCandidate> fPuppiCandCollection;
+    fPuppiCandCollection.reserve(pfCol->size());
     for (auto const& aPF : *pfCol) {
-      RecoObj pReco;
-      pReco.pt = aPF.pt();
-      pReco.eta = aPF.eta();
-      pReco.phi = aPF.phi();
-      pReco.m = aPF.mass();
-      pReco.rapidity = aPF.rapidity();
-      pReco.charge = aPF.charge();
-      pReco.pdgId = aPF.pdgId();
+      PuppiCandidate puppiCand;
+      puppiCand.pt = aPF.pt();
+      puppiCand.eta = aPF.eta();
+      puppiCand.phi = aPF.phi();
+      puppiCand.mass = aPF.mass();
+      puppiCand.charge = aPF.charge();
+      puppiCand.pdgId = aPF.pdgId();
+      bool const isLepton = ((std::abs(aPF.pdgId()) == 11) || (std::abs(aPF.pdgId()) == 13));
       const reco::Vertex* closestVtx = nullptr;
       double pDZ = -9999;
       double pD0 = -9999;
       int pVtxId = -9999;
-      bool lFirst = true;
-      bool isLepton = ((std::abs(pReco.pdgId) == 11) || (std::abs(pReco.pdgId) == 13));
       const pat::PackedCandidate* lPack = dynamic_cast<const pat::PackedCandidate*>(&aPF);
       if (lPack == nullptr) {
         const reco::PFCandidate* pPF = dynamic_cast<const reco::PFCandidate*>(&aPF);
         double curdz = 9999;
         int closestVtxForUnassociateds = -9999;
+        bool lFirst = true;
         const reco::TrackRef aTrackRef = pPF->trackRef();
         for (auto const& aV : *pvCol) {
           if (lFirst) {
@@ -137,7 +131,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         }
         int tmpFromPV = 0;
         // mocking the miniAOD definitions
-        if (std::abs(pReco.charge) > 0) {
+        if (std::abs(puppiCand.charge) > 0) {
           if (closestVtx != nullptr && pVtxId > 0)
             tmpFromPV = 0;
           if (closestVtx != nullptr && pVtxId == 0)
@@ -147,72 +141,72 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           if (closestVtx == nullptr && closestVtxForUnassociateds != 0)
             tmpFromPV = 1;
         }
-        pReco.dZ = pDZ;
-        pReco.d0 = pD0;
-        pReco.id = 0;
-        if (std::abs(pReco.charge) == 0) {
-          pReco.id = 0;
+        puppiCand.dZ = pDZ;
+        puppiCand.d0 = pD0;
+        puppiCand.id = 0;
+        if (std::abs(puppiCand.charge) == 0) {
+          puppiCand.id = 0;
         } else {
           if (fPuppiNoLep && isLepton)
-            pReco.id = 3;
+            puppiCand.id = 3;
           else if (tmpFromPV == 0) {
-            pReco.id = 2;
+            puppiCand.id = 2;
           }  // 0 is associated to PU vertex
           else if (tmpFromPV == 3) {
-            pReco.id = 1;
+            puppiCand.id = 1;
           } else if (tmpFromPV == 1 || tmpFromPV == 2) {
-            pReco.id = 0;
-            if ((fPtMaxCharged > 0) and (pReco.pt > fPtMaxCharged))
-              pReco.id = 1;
-            else if (std::abs(pReco.eta) > fEtaMaxCharged)
-              pReco.id = 1;
-            else if ((fUseDZ) && (std::abs(pReco.eta) >= fEtaMinUseDZ))
-              pReco.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
+            puppiCand.id = 0;
+            if ((fPtMaxCharged > 0) and (puppiCand.pt > fPtMaxCharged))
+              puppiCand.id = 1;
+            else if (std::abs(puppiCand.eta) > fEtaMaxCharged)
+              puppiCand.id = 1;
+            else if ((fUseDZ) && (std::abs(puppiCand.eta) >= fEtaMinUseDZ))
+              puppiCand.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
             else if (fUseFromPVLooseTight && tmpFromPV == 1)
-              pReco.id = 2;
+              puppiCand.id = 2;
             else if (fUseFromPVLooseTight && tmpFromPV == 2)
-              pReco.id = 1;
+              puppiCand.id = 1;
           }
         }
       } else if (lPack->vertexRef().isNonnull()) {
         pDZ = lPack->dz();
         pD0 = lPack->dxy();
-        pReco.dZ = pDZ;
-        pReco.d0 = pD0;
+        puppiCand.dZ = pDZ;
+        puppiCand.d0 = pD0;
 
-        pReco.id = 0;
-        if (std::abs(pReco.charge) == 0) {
-          pReco.id = 0;
+        puppiCand.id = 0;
+        if (std::abs(puppiCand.charge) == 0) {
+          puppiCand.id = 0;
         }
-        if (std::abs(pReco.charge) > 0) {
+        if (std::abs(puppiCand.charge) > 0) {
           if (fPuppiNoLep && isLepton)
-            pReco.id = 3;
+            puppiCand.id = 3;
           else if (lPack->fromPV() == 0) {
-            pReco.id = 2;
+            puppiCand.id = 2;
           }  // 0 is associated to PU vertex
           else if (lPack->fromPV() == (pat::PackedCandidate::PVUsedInFit)) {
-            pReco.id = 1;
+            puppiCand.id = 1;
           } else if (lPack->fromPV() == (pat::PackedCandidate::PVTight) ||
                      lPack->fromPV() == (pat::PackedCandidate::PVLoose)) {
-            pReco.id = 0;
-            if ((fPtMaxCharged > 0) and (pReco.pt > fPtMaxCharged))
-              pReco.id = 1;
-            else if (std::abs(pReco.eta) > fEtaMaxCharged)
-              pReco.id = 1;
-            else if ((fUseDZ) && (std::abs(pReco.eta) >= fEtaMinUseDZ))
-              pReco.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
+            puppiCand.id = 0;
+            if ((fPtMaxCharged > 0) and (puppiCand.pt > fPtMaxCharged))
+              puppiCand.id = 1;
+            else if (std::abs(puppiCand.eta) > fEtaMaxCharged)
+              puppiCand.id = 1;
+            else if ((fUseDZ) && (std::abs(puppiCand.eta) >= fEtaMinUseDZ))
+              puppiCand.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
             else if (fUseFromPVLooseTight && lPack->fromPV() == (pat::PackedCandidate::PVLoose))
-              pReco.id = 2;
+              puppiCand.id = 2;
             else if (fUseFromPVLooseTight && lPack->fromPV() == (pat::PackedCandidate::PVTight))
-              pReco.id = 1;
+              puppiCand.id = 1;
           }
         }
       }
 
-      fRecoObjCollection.push_back(pReco);
+      fPuppiCandCollection.push_back(puppiCand);
     }
 
-    fPuppiContainer->initialize(fRecoObjCollection);
+    fPuppiContainer->initialize(fPuppiCandCollection);
     fPuppiContainer->setNPV(npv);
 
     //Compute the weights and get the particles
@@ -319,13 +313,13 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   if (fUseExistingWeights || fClonePackedCands) {
     edm::OrphanHandle<pat::PackedCandidateCollection> oh =
         iEvent.emplace(ptokenPackedPuppiCandidates_, fPackedPuppiCandidates);
-    for (unsigned int ic = 0, nc = oh->size(); ic < nc; ++ic) {
+    for (uint ic = 0, nc = oh->size(); ic < nc; ++ic) {
       reco::CandidatePtr pkref(oh, ic);
       values[ic] = pkref;
     }
   } else {
     edm::OrphanHandle<reco::PFCandidateCollection> oh = iEvent.emplace(ptokenPuppiCandidates_, fPuppiCandidates);
-    for (unsigned int ic = 0, nc = oh->size(); ic < nc; ++ic) {
+    for (uint ic = 0, nc = oh->size(); ic < nc; ++ic) {
       reco::CandidatePtr pkref(oh, ic);
       values[ic] = pkref;
     }
@@ -344,7 +338,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     std::vector<double> theAlphasMed(fPuppiContainer->puppiAlphasMed());
     std::vector<double> theAlphasRms(fPuppiContainer->puppiAlphasRMS());
     std::vector<double> alphas(fPuppiContainer->puppiRawAlphas());
-    double nalgos(fPuppiContainer->puppiNAlgos());
+    int nalgos(fPuppiContainer->puppiNAlgos());
 
     iEvent.emplace(ptokenRawAlphas_, alphas);
     iEvent.emplace(ptokenNalgos_, nalgos);

@@ -1,17 +1,13 @@
-#ifndef CommonTools_Puppi_PuppiProducer_h_
-#define CommonTools_Puppi_PuppiProducer_h_
-// system include files
+#ifndef CommonTools_Puppi_PuppiProducer_h
+#define CommonTools_Puppi_PuppiProducer_h
+
 #include <memory>
 
-// user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/Math/interface/PtEtaPhiMass.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
@@ -19,7 +15,6 @@
 #include "CommonTools/PileupAlgos/interface/PuppiContainer.h"
 #include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
 
-// ------------------------------------------------------------------------------------------
 class PuppiProducer : public edm::stream::EDProducer<> {
 public:
   explicit PuppiProducer(const edm::ParameterSet&);
@@ -50,19 +45,16 @@ private:
   edm::EDPutTokenT<edm::ValueMap<reco::CandidatePtr>> ptokenValues_;
   edm::EDPutTokenT<pat::PackedCandidateCollection> ptokenPackedPuppiCandidates_;
   edm::EDPutTokenT<reco::PFCandidateCollection> ptokenPuppiCandidates_;
-  edm::EDPutTokenT<double> ptokenNalgos_;
+  edm::EDPutTokenT<int> ptokenNalgos_;
   edm::EDPutTokenT<std::vector<double>> ptokenRawAlphas_;
   edm::EDPutTokenT<std::vector<double>> ptokenAlphas_;
   edm::EDPutTokenT<std::vector<double>> ptokenAlphasMed_;
   edm::EDPutTokenT<std::vector<double>> ptokenAlphasRms_;
-  std::string fPuppiName;
-  std::string fPFName;
-  std::string fPVName;
   bool fPuppiDiagnostics;
   bool fPuppiNoLep;
   bool fUseFromPVLooseTight;
   bool fUseDZ;
-  float fDZCut;
+  double fDZCut;
   double fEtaMinUseDZ;
   double fPtMaxCharged;
   double fEtaMaxCharged;
@@ -73,6 +65,6 @@ private:
   int fVtxNdofCut;
   double fVtxZCut;
   std::unique_ptr<PuppiContainer> fPuppiContainer;
-  std::vector<RecoObj> fRecoObjCollection;
 };
+
 #endif

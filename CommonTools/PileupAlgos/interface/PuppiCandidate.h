@@ -1,29 +1,35 @@
-#ifndef CommonTools_PileupAlgos_PuppiCandidate
-#define CommonTools_PileupAlgos_PuppiCandidate
+#ifndef CommonTools_PileupAlgos_PuppiCandidate_h
+#define CommonTools_PileupAlgos_PuppiCandidate_h
 
-#include "fastjet/PseudoJet.hh"
+#include <cstdint>
 
-// Extension of fastjet::PseudoJet that caches eta and some other info
-// Puppi uses register to decide between NHs, PV CHs, and PU CHs.
-class PuppiCandidate : public fastjet::PseudoJet {
+struct PuppiCandidate {
 public:
-  using fastjet::PseudoJet::PseudoJet;
-  double pseudorapidity() const {
-    _ensure_valid_eta();
-    return _eta;
+  PuppiCandidate() {
+    pt = 0.;
+    eta = 0.;
+    phi = 0.;
+    mass = 0.;
+    time = 0.;
+    depth = 0.;
+    dZ = 0.;
+    d0 = 0.;
+    charge = 0;
+    pdgId = 0;
+    id = -1;
   }
-  double eta() const { return pseudorapidity(); }
-  void _ensure_valid_eta() const {
-    if (_eta == fastjet::pseudojet_invalid_rap)
-      _eta = fastjet::PseudoJet::pseudorapidity();
-  }
-  void set_info(int puppi_register) { _puppi_register = puppi_register; }
-  inline int puppi_register() const { return _puppi_register; }
 
-private:
-  // variable names in fastjet style
-  mutable double _eta = fastjet::pseudojet_invalid_rap;
-  int _puppi_register;
+  double pt;
+  double eta;
+  double phi;
+  double mass;
+  double time;
+  double depth;
+  double dZ;
+  double d0;
+  int charge;
+  int pdgId;
+  int8_t id;
 };
 
 #endif
