@@ -10,7 +10,7 @@ class PuppiContainer {
 public:
   PuppiContainer(edm::ParameterSet const& iConfig);
   ~PuppiContainer();
-  void initialize(std::vector<PuppiCandidate> const& iRecoObjects);
+  void initialize(std::vector<PuppiCandidate> const& iPuppiCandidates);
   void setNPV(int iNPV) { fNPV = iNPV; }
 
   std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
@@ -29,11 +29,11 @@ protected:
                  std::vector<PuppiCandidate> const &iConstits,
                  std::vector<PuppiCandidate> const &iParticles,
                  std::vector<PuppiCandidate> const &iChargeParticles);
-  void getRawAlphas(int iOpt,
+  void getRawAlphas(int const iOpt,
                     std::vector<PuppiCandidate> const &iConstits,
                     std::vector<PuppiCandidate> const &iParticles,
                     std::vector<PuppiCandidate> const &iChargeParticles);
-  float getChi2FromdZ(float const iDZ);
+  float getChi2FromdZ(float const iDZ) const;
   int getPuppiId(float iPt, float iEta);
   float var_within_R(int const iId,
                      std::vector<PuppiCandidate> const& particles,
@@ -48,10 +48,8 @@ protected:
   std::vector<float> fRawAlphas;
   std::vector<float> fAlphaMed;
   std::vector<float> fAlphaRMS;
+  std::vector<PuppiAlgo> fPuppiAlgo;
 
-  bool fApplyCHS;
-  bool fInvert;
-  bool fUseExp;
   float fNeutralMinPt;
   float fNeutralSlope;
   float fPuppiWeightCut;
@@ -61,6 +59,8 @@ protected:
   float fPtMaxNeutralsStartSlope;
   int fNAlgos;
   int fNPV;
-  std::vector<PuppiAlgo> fPuppiAlgo;
+  bool fApplyCHS;
+  bool fInvert;
+  bool fUseExp;
 };
 #endif

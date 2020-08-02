@@ -27,7 +27,7 @@ PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
 
 PuppiContainer::~PuppiContainer() {}
 
-void PuppiContainer::initialize(std::vector<PuppiCandidate> const& puppiCandidates) {
+void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandidates) {
   //Clear everything
   fPFParticles.clear();
   fChargedPV.clear();
@@ -36,12 +36,11 @@ void PuppiContainer::initialize(std::vector<PuppiCandidate> const& puppiCandidat
   fRawAlphas.clear();
   fAlphaMed.clear();
   fAlphaRMS.clear();
-  //Link to the RecoObjects
   fNPV = 1.;
-  for (auto const &pParticle : puppiCandidates) {
+  for (auto const &pParticle : iPuppiCandidates) {
     fPFParticles.emplace_back(pParticle);
-    //Take Charged particles associated to PV
-    if (std::abs(pParticle.id) == 1)
+    //charged particles associated to PV
+    if (pParticle.id == 1)
       fChargedPV.emplace_back(pParticle);
   }
 }
@@ -150,7 +149,7 @@ void PuppiContainer::getRMSAvg(int iOpt,
 }
 
 //In fact takes the median not the average
-void PuppiContainer::getRawAlphas(int iOpt,
+void PuppiContainer::getRawAlphas(int const iOpt,
                                   std::vector<PuppiCandidate> const &iConstits,
                                   std::vector<PuppiCandidate> const &iParticles,
                                   std::vector<PuppiCandidate> const &iChargedParticles) {
@@ -194,7 +193,7 @@ int PuppiContainer::getPuppiId(float iPt, float iEta) {
   return lId;
 }
 
-float PuppiContainer::getChi2FromdZ(float const iDZ) {
+float PuppiContainer::getChi2FromdZ(float const iDZ) const {
   //We need to obtain prob of PU + (1-Prob of LV)
   // Prob(LV) = Gaus(dZ,sigma) where sigma = 1.5mm  (its really more like 1mm)
   //float lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ),0.2)*2.; //*2 is to do it double sided
