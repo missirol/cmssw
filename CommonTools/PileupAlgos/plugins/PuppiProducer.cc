@@ -206,10 +206,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       fPuppiCandCollection.push_back(puppiCand);
     }
 
-    fPuppiContainer->initialize(fPuppiCandCollection);
-    fPuppiContainer->setNPV(npv);
-
-    //Compute the weights and get the particles
+    fPuppiContainer->run(fPuppiCandCollection, npv);
     lWeights = fPuppiContainer->puppiWeights();
   } else {
     //Use the existing weights
