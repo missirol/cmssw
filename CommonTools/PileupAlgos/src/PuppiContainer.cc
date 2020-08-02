@@ -19,6 +19,7 @@ PuppiContainer::PuppiContainer(const edm::ParameterSet &iConfig) {
   fPtMaxNeutralsStartSlope = iConfig.getParameter<double>("PtMaxNeutralsStartSlope");
   std::vector<edm::ParameterSet> lAlgos = iConfig.getParameter<std::vector<edm::ParameterSet> >("algos");
   fNAlgos = lAlgos.size();
+  fPuppiAlgo.reserve(lAlgos.size());
   for (uint i0 = 0; i0 < lAlgos.size(); i0++) {
     PuppiAlgo pPuppiConfig(lAlgos[i0]);
     fPuppiAlgo.push_back(pPuppiConfig);
@@ -227,7 +228,7 @@ std::vector<float> const &PuppiContainer::puppiWeights() {
   for (int i0 = 0; i0 < lNParticles; i0++) {
     //Refresh
     pVals.clear();
-    float pWeight = 1;
+
     //Get the Puppi Id and if ill defined move on
     auto const& rPart(fPFParticles.at(i0));
     int pPupId = getPuppiId(rPart.pt, rPart.eta);
@@ -253,7 +254,7 @@ std::vector<float> const &PuppiContainer::puppiWeights() {
     for (int i1 = 0; i1 < lNAlgos; i1++)
       pVals.push_back(fVals[lNParticles * i1 + i0]);
 
-    pWeight = fPuppiAlgo[pPupId].compute(pVals, pChi2);
+    float pWeight = fPuppiAlgo[pPupId].compute(pVals, pChi2);
     //Apply weight of 1 for leptons if puppiNoLep
     if (rPart.id == 3)
       pWeight = 1;
