@@ -24,21 +24,11 @@ public:
   int puppiNAlgos() const { return fNAlgos; }
 
 protected:
-  float goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int const iOpt, float const iRCone) const;
-  void getRMSAvg(int const iOpt,
-                 std::vector<PuppiCandidate> const &iConstits,
-                 std::vector<PuppiCandidate> const &iParticles,
-                 std::vector<PuppiCandidate> const &iChargeParticles);
-  void getRawAlphas(int const iOpt,
-                    std::vector<PuppiCandidate> const &iConstits,
-                    std::vector<PuppiCandidate> const &iParticles,
-                    std::vector<PuppiCandidate> const &iChargeParticles);
+  float goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParticles, int const iOpt, float const iRCone) const;
+  void getRMSAvg(int const iOpt, std::vector<PuppiCandidate> const &iParticles, std::vector<PuppiCandidate> const &iChargeParticles);
+  void getRawAlphas(int const iOpt, std::vector<PuppiCandidate> const &iParticles, std::vector<PuppiCandidate> const &iChargeParticles);
   float getChi2FromdZ(float const iDZ) const;
   int getPuppiId(float iPt, float iEta);
-  float var_within_R(int const iId,
-                     std::vector<PuppiCandidate> const& particles,
-                     PuppiCandidate const& centre,
-                     float const R) const;
 
   bool fPuppiDiagnostics;
   std::vector<PuppiCandidate> fPFParticles;
