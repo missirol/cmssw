@@ -48,15 +48,15 @@ void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandida
   }
 }
 
-double PuppiContainer::goodVar(PuppiCandidate const& iPart0,
+float PuppiContainer::goodVar(PuppiCandidate const& iPart0,
                                std::vector<PuppiCandidate> const& iParticles,
                                int const iId,
-                               double const iRCone) const {
+                               float const iRCone) const {
   if (iId == -1)
     return 1.;
 
-  double const r2(iRCone * iRCone);
-  double var((iId == 1) ? iPart0.pt : 0.);
+  float const r2(iRCone * iRCone);
+  float var((iId == 1) ? iPart0.pt : 0.);
 
   for (auto const& part : iParticles) {
     if (part.id == 3)
@@ -103,9 +103,9 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     //Get the Puppi Sub Algo (given iteration)
     int pAlgo = fPuppiAlgo[pPupId].algoId(iOpt);
     bool pCharged = fPuppiAlgo[pPupId].isCharged(iOpt);
-    double pCone = fPuppiAlgo[pPupId].coneSize(iOpt);
+    float pCone = fPuppiAlgo[pPupId].coneSize(iOpt);
     //Compute the Puppi Metric
-    double pVal(-1.);
+    float pVal(-1.);
     // calculate goodVar only for candidates that (1) will not be assigned a predefined weight (e.g 0, 1),
     // or (2) are required for computations inside puppi-algos (see call to PuppiAlgo::add below)
     if (((not(fApplyCHS and ((iPart.id == 1) or (iPart.id == 2)))) and (iPart.id != 3)) or
@@ -133,7 +133,7 @@ void PuppiContainer::getRMSAvg(int const iOpt,
       pAlgo = fPuppiAlgo[i1].algoId(iOpt);
       pCharged = fPuppiAlgo[i1].isCharged(iOpt);
       pCone = fPuppiAlgo[i1].coneSize(iOpt);
-      double curVal = -1;
+      float curVal = -1;
       if (i1 != pPupId) {
         if (!pCharged)
           curVal = goodVar(iPart, iParticles, pAlgo, pCone);
@@ -156,11 +156,11 @@ void PuppiContainer::getRawAlphas(int const iOpt,
                                   std::vector<PuppiCandidate> const& iChargedParticles) {
   for (int j0 = 0; j0 < fNAlgos; j0++) {
     for (auto const& iPart : iParticles) {
-      double pVal = -1;
+      float pVal = -1;
       //Get the Puppi Sub Algo (given iteration)
       int pAlgo = fPuppiAlgo[j0].algoId(iOpt);
       bool pCharged = fPuppiAlgo[j0].isCharged(iOpt);
-      double pCone = fPuppiAlgo[j0].coneSize(iOpt);
+      float pCone = fPuppiAlgo[j0].coneSize(iOpt);
       //Compute the Puppi Metric
       if (!pCharged)
         pVal = goodVar(iPart, iParticles, pAlgo, pCone);
@@ -175,7 +175,7 @@ void PuppiContainer::getRawAlphas(int const iOpt,
   }
 }
 
-int PuppiContainer::getPuppiId(double const iPt, double const iEta) {
+int PuppiContainer::getPuppiId(float const iPt, float const iEta) {
   int lId = -1;
   for (int i0 = 0; i0 < fNAlgos; i0++) {
     int nEtaBinsPerAlgo = fPuppiAlgo[i0].etaBins();
@@ -193,23 +193,23 @@ int PuppiContainer::getPuppiId(double const iPt, double const iEta) {
   return lId;
 }
 
-double PuppiContainer::getChi2FromdZ(double const iDZ) const {
+float PuppiContainer::getChi2FromdZ(float const iDZ) const {
   //We need to obtain prob of PU + (1-Prob of LV)
   // Prob(LV) = Gaus(dZ,sigma) where sigma = 1.5mm  (its really more like 1mm)
-  //double lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ),0.2)*2.; //*2 is to do it double sided
+  //float lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ),0.2)*2.; //*2 is to do it double sided
   //Take iDZ to be corrected by sigma already
-  double lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ), 1.) * 2.;  //*2 is to do it double sided
-  double lProbPU = 1 - lProbLV;
+  float lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ), 1.) * 2.;  //*2 is to do it double sided
+  float lProbPU = 1 - lProbLV;
   if (lProbPU <= 0)
     lProbPU = 1e-16;  //Quick Trick to through out infs
   if (lProbPU >= 0)
     lProbPU = 1 - 1e-16;  //Ditto
-  double lChi2PU = TMath::ChisquareQuantile(lProbPU, 1);
+  float lChi2PU = TMath::ChisquareQuantile(lProbPU, 1);
   lChi2PU *= lChi2PU;
   return lChi2PU;
 }
 
-std::vector<double> const& PuppiContainer::puppiWeights() {
+std::vector<float> const& PuppiContainer::puppiWeights() {
   int const lNParticles = fPFParticles.size();
 
   fWeights.clear();
@@ -247,7 +247,7 @@ std::vector<double> const& PuppiContainer::puppiWeights() {
       continue;
     }
 
-    double pWeight(1.);
+    float pWeight(1.);
     //Apply weight of 1 for leptons if puppiNoLep
     if (rPart.id == 3)
       pWeight = 1;
@@ -258,7 +258,7 @@ std::vector<double> const& PuppiContainer::puppiWeights() {
       pWeight = 0;
     else {
       // fill the p-values
-      double pChi2 = 0;
+      float pChi2 = 0;
       if (fUseExp) {
         //Compute an Experimental Puppi Weight with delta Z info (very simple example)
         pChi2 = getChi2FromdZ(rPart.dZ);
@@ -266,7 +266,7 @@ std::vector<double> const& PuppiContainer::puppiWeights() {
         if ((std::abs(rPart.pdgId) == 22) || (std::abs(rPart.pdgId) == 130))
           pChi2 = 0;
       }
-      std::vector<double> pVals;
+      std::vector<float> pVals;
       int lNAlgos = fPuppiAlgo[pPupId].numAlgos();
       pVals.reserve(lNAlgos);
       for (int i1 = 0; i1 < lNAlgos; i1++) {
@@ -295,7 +295,7 @@ std::vector<double> const& PuppiContainer::puppiWeights() {
     // Protect high pT neutrals
     else if ((fPtMaxNeutrals > 0) && (rPart.id == 0))
       pWeight =
-          std::clamp((rPart.pt - fPtMaxNeutralsStartSlope) / (fPtMaxNeutrals - fPtMaxNeutralsStartSlope), pWeight, 1.);
+          std::clamp((rPart.pt - fPtMaxNeutralsStartSlope) / (fPtMaxNeutrals - fPtMaxNeutralsStartSlope), pWeight, 1.f);
 
     // Eliminate the low Weight stuff
     if (pWeight < fPuppiWeightCut)

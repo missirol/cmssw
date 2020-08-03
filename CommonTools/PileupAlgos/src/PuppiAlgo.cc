@@ -18,17 +18,17 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   std::vector<edm::ParameterSet> lAlgos = iConfig.getParameter<std::vector<edm::ParameterSet>>("puppiAlgos");
   fNAlgos = lAlgos.size();
   //Uber Configurable Puppi
-  std::vector<double> tmprms;
-  std::vector<double> tmpmed;
+  std::vector<float> tmprms;
+  std::vector<float> tmpmed;
 
   for (uint i0 = 0; i0 < lAlgos.size(); i0++) {
     int pAlgoId = lAlgos[i0].getParameter<int>("algoId");
     bool pCharged = lAlgos[i0].getParameter<bool>("useCharged");
     bool pWeight0 = lAlgos[i0].getParameter<bool>("applyLowPUCorr");
     int pComb = lAlgos[i0].getParameter<int>("combOpt");                // 0=> add in chi2/1=>Multiply p-values
-    double pConeSize = lAlgos[i0].getParameter<double>("cone");         // Min Pt when computing pt and rms
-    double pRMSPtMin = lAlgos[i0].getParameter<double>("rmsPtMin");     // Min Pt when computing pt and rms
-    double pRMSSF = lAlgos[i0].getParameter<double>("rmsScaleFactor");  // Additional Tuning parameter for Jokers
+    float pConeSize = lAlgos[i0].getParameter<double>("cone");         // Min Pt when computing pt and rms
+    float pRMSPtMin = lAlgos[i0].getParameter<double>("rmsPtMin");     // Min Pt when computing pt and rms
+    float pRMSSF = lAlgos[i0].getParameter<double>("rmsScaleFactor");  // Additional Tuning parameter for Jokers
     fAlgoId.push_back(pAlgoId);
     fCharged.push_back(pCharged);
     fAdjust.push_back(pWeight0);
@@ -36,9 +36,9 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
     fConeSize.push_back(pConeSize);
     fRMSPtMin.push_back(pRMSPtMin);
     fRMSScaleFactor.push_back(pRMSSF);
-    double pRMS = 0;
-    double pMed = 0;
-    double pMean = 0;
+    float pRMS = 0;
+    float pMed = 0;
+    float pMean = 0;
     int pNCount = 0;
     fRMS.push_back(pRMS);
     fMedian.push_back(pMed);
@@ -86,7 +86,7 @@ void PuppiAlgo::fixAlgoEtaBin(int i_eta) {
   cur_Med = fMedian_perEta[0][i_eta];  // 0 is number of algos within this eta bin
 }
 
-void PuppiAlgo::add(PuppiCandidate const &iParticle, double const iVal, uint const iAlgo) {
+void PuppiAlgo::add(PuppiCandidate const &iParticle, float const iVal, uint const iAlgo) {
   if (iParticle.pt < fRMSPtMin[iAlgo])
     return;
 
@@ -130,7 +130,7 @@ void PuppiAlgo::computeMedRMS(uint const iAlgo) {
   // compute median, removed lCorr for now
   int lNHalfway = lNBefore + lNum0 + int((fNCount[iAlgo] - lNum0) * 0.5);
   fMedian[iAlgo] = fPups[lNHalfway];
-  double const lMed = fMedian[iAlgo];  //Just to make the readability easier
+  float const lMed = fMedian[iAlgo];  //Just to make the readability easier
 
   int lNRMS = 0;
   for (int i0 = lNBefore; i0 < lNBefore + fNCount[iAlgo]; i0++) {
@@ -159,7 +159,7 @@ void PuppiAlgo::computeMedRMS(uint const iAlgo) {
     for (uint i0 = 0; i0 < fPupsPV.size(); i0++)
       if (fPupsPV[i0] <= lMed)
         lNPV++;
-    double lAdjust = double(lNPV) / double(lNPV + 0.5 * fNCount[iAlgo]);
+    float lAdjust = float(lNPV) / float(lNPV + 0.5 * fNCount[iAlgo]);
     if (lAdjust > 0) {
       fMedian[iAlgo] -= sqrt(ROOT::Math::chisquared_quantile(lAdjust, 1.) * fRMS[iAlgo]);
       fRMS[iAlgo] -= sqrt(ROOT::Math::chisquared_quantile(lAdjust, 1.) * fRMS[iAlgo]);
@@ -176,22 +176,22 @@ void PuppiAlgo::computeMedRMS(uint const iAlgo) {
 }
 
 //This code is probably a bit confusing
-double PuppiAlgo::compute(std::vector<double> const &iVals, double const iChi2) const {
+float PuppiAlgo::compute(std::vector<float> const &iVals, float const iChi2) const {
   if (fAlgoId[0] == -1)
     return 1;
-  double lVal = 0.;
-  double lPVal = 1.;
+  float lVal = 0.;
+  float lPVal = 1.;
   int lNDOF = 0;
   for (uint i0 = 0; i0 < fNAlgos; i0++) {
     if (fNCount[i0] == 0)
       return 1.;                       //in the NoPU case return 1.
     if (fCombId[i0] == 1 && i0 > 0) {  //Compute the previous p-value so that p-values can be multiplieed
-      double pPVal = ROOT::Math::chisquared_cdf(lVal, lNDOF);
+      float pPVal = ROOT::Math::chisquared_cdf(lVal, lNDOF);
       lPVal *= pPVal;
       lNDOF = 0;
       lVal = 0;
     }
-    double pVal = iVals[i0];
+    float pVal = iVals[i0];
     //Special Check for any algo with log(0)
     if (fAlgoId[i0] == 0 && iVals[i0] == 0)
       pVal = cur_Med;

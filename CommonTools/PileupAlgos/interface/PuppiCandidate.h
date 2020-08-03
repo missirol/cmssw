@@ -4,27 +4,27 @@
 struct PuppiCandidate {
 public:
   PuppiCandidate() {
-    pt = 0.;
-    eta = 0.;
-    phi = 0.;
-    mass = 0.;
-    time = 0.;
-    depth = 0.;
-    dZ = 0.;
-    d0 = 0.;
+    pt = 0.f;
+    eta = 0.f;
+    phi = 0.f;
+    mass = 0.f;
+    time = 0.f;
+    depth = 0.f;
+    dZ = 0.f;
+    d0 = 0.f;
     charge = 0;
     pdgId = 0;
     id = -1;
   }
 
-  double pt;
-  double eta;
-  double phi;
-  double mass;
-  double time;
-  double depth;
-  double dZ;
-  double d0;
+  float pt;
+  float eta;
+  float phi;
+  float mass;
+  float time;
+  float depth;
+  float dZ;
+  float d0;
   int charge;
   int pdgId;
   int id;
