@@ -11,7 +11,7 @@ public:
   PuppiContainer(edm::ParameterSet const &iConfig);
   ~PuppiContainer();
   void initialize(std::vector<PuppiCandidate> const &iPuppiCandidates);
-  void setNPV(int iNPV) { fNPV = iNPV; }
+  void setNPV(int const iNPV) { fNPV = iNPV; }
 
   std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
   std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
@@ -29,13 +29,13 @@ protected:
                  int const iOpt,
                  float const iRCone) const;
   void getRMSAvg(int const iOpt,
-                 std::vector<PuppiCandidate> const &iParticles,
-                 std::vector<PuppiCandidate> const &iParticlesXXX,
-                 std::vector<PuppiCandidate> const &iChargeParticles);
+                 std::vector<PuppiCandidate> const &iCands,
+                 std::vector<PuppiCandidate> const &iCandsForVar,
+                 std::vector<PuppiCandidate> const &iCandsForVarChargedPV);
   void getRawAlphas(int const iOpt,
-                    std::vector<PuppiCandidate> const &iParticles,
-                    std::vector<PuppiCandidate> const &iParticlesXXX,
-                    std::vector<PuppiCandidate> const &iChargeParticles);
+                    std::vector<PuppiCandidate> const &iCands,
+                    std::vector<PuppiCandidate> const &iCandsForVar,
+                    std::vector<PuppiCandidate> const &iCandsForVarChargedPV);
   int getPuppiId(float const iPt, float const iEta);
   float getChi2FromdZ(float const iDZ) const;
 
