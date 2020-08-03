@@ -9,37 +9,33 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "CommonTools/PileupAlgos/interface/PuppiContainer.h"
-#include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
 
 class PuppiProducer : public edm::stream::EDProducer<> {
 public:
-  explicit PuppiProducer(const edm::ParameterSet&);
+  explicit PuppiProducer(edm::ParameterSet const&);
   ~PuppiProducer() override;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
   typedef math::XYZTLorentzVector LorentzVector;
   typedef std::vector<LorentzVector> LorentzVectorCollection;
-  typedef reco::VertexCollection VertexCollection;
-  typedef edm::View<reco::Candidate> CandidateView;
-  typedef std::vector<reco::PFCandidate> PFInputCollection;
-  typedef std::vector<reco::PFCandidate> PFOutputCollection;
-  typedef std::vector<pat::PackedCandidate> PackedOutputCollection;
-  typedef edm::View<reco::PFCandidate> PFView;
 
 private:
-  virtual void beginJob();
-  void produce(edm::Event&, const edm::EventSetup&) override;
-  virtual void endJob();
+  void produce(edm::Event&, edm::EventSetup const&) override;
 
-  edm::EDGetTokenT<CandidateView> tokenPFCandidates_;
-  edm::EDGetTokenT<VertexCollection> tokenVertices_;
-  edm::EDGetTokenT<PuppiContainer> tokenPuppiContainer_;
-  edm::EDGetTokenT<PFOutputCollection> tokenPuppiCandidates_;
-  edm::EDGetTokenT<PackedOutputCollection> tokenPackedPuppiCandidates_;
+  edm::EDGetTokenT<reco::CandidateView> tokenPFCandidates_;
+  edm::EDGetTokenT<reco::VertexCollection> tokenVertices_;
+  edm::EDGetTokenT<reco::PFCandidateCollection> tokenPuppiCandidates_;
+  edm::EDGetTokenT<pat::PackedCandidateCollection> tokenPackedPuppiCandidates_;
   edm::EDPutTokenT<edm::ValueMap<float>> ptokenPupOut_;
   edm::EDPutTokenT<edm::ValueMap<LorentzVector>> ptokenP4PupOut_;
   edm::EDPutTokenT<edm::ValueMap<reco::CandidatePtr>> ptokenValues_;

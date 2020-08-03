@@ -15,11 +15,11 @@ public:
   //Computing Mean and RMS
   void reset();
   void fixAlgoEtaBin(int i_eta);
-  void add(const PuppiCandidate &iParticle, double const iVal, const uint iAlgo);
-  void computeMedRMS(const uint iAlgo);
+  void add(PuppiCandidate const &iParticle, double const iVal, uint const iAlgo);
+  void computeMedRMS(uint const iAlgo);
   //Get the Weight
   double compute(std::vector<double> const &iVals, double const iChi2) const;
-  const std::vector<double> &alphas() const { return fPups; }
+  std::vector<double> const &alphas() const { return fPups; }
   //Helpers
   inline int etaBins() const { return fEtaMin.size(); }
   inline double etaMin(int i) const { return fEtaMin[i]; }
@@ -34,6 +34,8 @@ public:
 
   inline double rms() const { return cur_RMS; }
   inline double median() const { return cur_Med; }
+
+  inline double etaMaxExtrap() const { return fEtaMaxExtrap; }
 
 private:
   uint fNAlgos;

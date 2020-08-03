@@ -1,13 +1,13 @@
 #include <cmath>
 
 #include "CommonTools/PileupAlgos/interface/PuppiContainer.h"
-#include "DataFormats/Math/interface/deltaR.h"
-#include "Math/ProbFunc.h"
-#include "TMath.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/isFinite.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "Math/ProbFuncMathCore.h"
+#include "TMath.h"
 
-PuppiContainer::PuppiContainer(const edm::ParameterSet& iConfig) {
+PuppiContainer::PuppiContainer(edm::ParameterSet const& iConfig) {
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
   fApplyCHS = iConfig.getParameter<bool>("applyCHS");
   fInvert = iConfig.getParameter<bool>("invertPuppi");
@@ -93,22 +93,28 @@ void PuppiContainer::getRMSAvg(int const iOpt,
                                std::vector<PuppiCandidate> const& iChargedParticles) {
   for (uint i0 = 0; i0 < iParticles.size(); i0++) {
     auto const& iPart(iParticles.at(i0));
-    double pVal = -1;
     //Calculate the Puppi Algo to use
     int pPupId = getPuppiId(iPart.pt, iPart.eta);
     if (pPupId == -1 || fPuppiAlgo[pPupId].numAlgos() <= iOpt) {
       fVals.push_back(-1);
       continue;
     }
+
     //Get the Puppi Sub Algo (given iteration)
     int pAlgo = fPuppiAlgo[pPupId].algoId(iOpt);
     bool pCharged = fPuppiAlgo[pPupId].isCharged(iOpt);
     double pCone = fPuppiAlgo[pPupId].coneSize(iOpt);
     //Compute the Puppi Metric
-    if (!pCharged)
-      pVal = goodVar(iPart, iParticles, pAlgo, pCone);
-    if (pCharged)
-      pVal = goodVar(iPart, iChargedParticles, pAlgo, pCone);
+    double pVal(-1.);
+    // calculate goodVar only for candidates that (1) will not be assigned a predefined weight (e.g 0, 1),
+    // or (2) are required for computations inside puppi-algos (see call to PuppiAlgo::add below)
+    if (((not(fApplyCHS and ((iPart.id == 1) or (iPart.id == 2)))) and (iPart.id != 3)) or
+        ((std::abs(iPart.eta) < fPuppiAlgo[pPupId].etaMaxExtrap()) and ((iPart.id == 1) or (iPart.id == 2)))) {
+      if (!pCharged)
+        pVal = goodVar(iPart, iParticles, pAlgo, pCone);
+      if (pCharged)
+        pVal = goodVar(iPart, iChargedParticles, pAlgo, pCone);
+    }
     fVals.push_back(pVal);
 
     if (!edm::isFinite(pVal)) {
@@ -119,6 +125,11 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     // // fPuppiAlgo[pPupId].add(iPart,pVal,iOpt);
     //code added by Nhan, now instead for every algorithm give it all the particles
     for (int i1 = 0; i1 < fNAlgos; i1++) {
+      // skip cands outside of algo's etaMaxExtrap,
+      // as they would anyway be ignored inside PuppiAlgo::add
+      if (not((std::abs(iPart.eta) < fPuppiAlgo[i1].etaMaxExtrap()) and ((iPart.id == 1) or (iPart.id == 2))))
+        continue;
+
       pAlgo = fPuppiAlgo[i1].algoId(iOpt);
       pCharged = fPuppiAlgo[i1].isCharged(iOpt);
       pCone = fPuppiAlgo[i1].coneSize(iOpt);
@@ -266,7 +277,7 @@ std::vector<double> const& PuppiContainer::puppiWeights() {
     }
 
     //Basic Weight Checks
-    if (!edm::isFinite(pWeight)) {
+    if (not edm::isFinite(pWeight)) {
       pWeight = 0.0;
       LogDebug("PuppiWeightError") << "====> Weight is nan : " << pWeight << " : pt " << rPart.pt
                                    << " -- eta : " << rPart.eta << " -- Value" << fVals[i0] << " -- id :  " << rPart.id
@@ -274,7 +285,7 @@ std::vector<double> const& PuppiContainer::puppiWeights() {
     }
 
     //Basic Cuts
-    if (pWeight * rPart.pt < fPuppiAlgo[pPupId].neutralPt(fNPV) && rPart.id == 0)
+    if (((pWeight * rPart.pt) < fPuppiAlgo[pPupId].neutralPt(fNPV)) && (rPart.id == 0))
       pWeight = 0;  //threshold cut on the neutral Pt
 
     // Protect high pT photons (important for gamma to hadronic recoil balance)

@@ -1,23 +1,16 @@
 #include <memory>
 
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "DataFormats/Common/interface/ValueMap.h"
-#include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/Common/interface/View.h"
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
 #include "DataFormats/Common/interface/Association.h"
-
 #include "CommonTools/PileupAlgos/plugins/PuppiProducer.h"
 #include "CommonTools/PileupAlgos/interface/PuppiCandidate.h"
+#include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
 
 // ------------------------------------------------------------------------------------------
-PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
+PuppiProducer::PuppiProducer(edm::ParameterSet const& iConfig) {
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
   fPuppiNoLep = iConfig.getParameter<bool>("puppiNoLep");
   fUseFromPVLooseTight = iConfig.getParameter<bool>("UseFromPVLooseTight");
@@ -34,8 +27,8 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   fVtxZCut = iConfig.getParameter<double>("vtxZCut");
   fPuppiContainer = std::make_unique<PuppiContainer>(iConfig);
 
-  tokenPFCandidates_ = consumes<CandidateView>(iConfig.getParameter<edm::InputTag>("candName"));
-  tokenVertices_ = consumes<VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexName"));
+  tokenPFCandidates_ = consumes<edm::View<reco::Candidate>>(iConfig.getParameter<edm::InputTag>("candName"));
+  tokenVertices_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexName"));
 
   ptokenPupOut_ = produces<edm::ValueMap<float>>();
   ptokenP4PupOut_ = produces<edm::ValueMap<LorentzVector>>();
@@ -58,36 +51,31 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
 
 PuppiProducer::~PuppiProducer() {}
 
-void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void PuppiProducer::produce(edm::Event& iEvent, edm::EventSetup const& iSetup) {
   // Get PFCandidate Collection
-  edm::Handle<CandidateView> hPFProduct;
-  iEvent.getByToken(tokenPFCandidates_, hPFProduct);
-  const CandidateView* pfCol = hPFProduct.product();
+  auto const& pfCandView(iEvent.getHandle(tokenPFCandidates_));
 
   // Get vertex collection w/PV as the first entry?
-  edm::Handle<reco::VertexCollection> hVertexProduct;
-  iEvent.getByToken(tokenVertices_, hVertexProduct);
-  const reco::VertexCollection* pvCol = hVertexProduct.product();
+  reco::VertexCollection const& pvCol(iEvent.get(tokenVertices_));
 
-  int npv = 0;
-  const reco::VertexCollection::const_iterator vtxEnd = pvCol->end();
-  for (reco::VertexCollection::const_iterator vtxIter = pvCol->begin(); vtxEnd != vtxIter; ++vtxIter) {
-    if (!vtxIter->isFake() && vtxIter->ndof() >= fVtxNdofCut && std::abs(vtxIter->z()) <= fVtxZCut)
+  int npv(0);
+  for (auto const& aVtx : pvCol) {
+    if (!aVtx.isFake() && (aVtx.ndof() >= fVtxNdofCut) && (std::abs(aVtx.z()) <= fVtxZCut))
       npv++;
   }
 
   std::vector<double> lWeights;
   if (!fUseExistingWeights) {
     std::vector<PuppiCandidate> fPuppiCandCollection;
-    fPuppiCandCollection.reserve(pfCol->size());
-    for (auto const& aPF : *pfCol) {
-      PuppiCandidate puppiCand;
-      puppiCand.pt = aPF.pt();
-      puppiCand.eta = aPF.eta();
-      puppiCand.phi = aPF.phi();
-      puppiCand.mass = aPF.mass();
-      puppiCand.charge = aPF.charge();
-      puppiCand.pdgId = aPF.pdgId();
+    fPuppiCandCollection.reserve(pfCandView->size());
+    for (auto const& aPF : *pfCandView) {
+      PuppiCandidate pReco;
+      pReco.pt = aPF.pt();
+      pReco.eta = aPF.eta();
+      pReco.phi = aPF.phi();
+      pReco.mass = aPF.mass();
+      pReco.charge = aPF.charge();
+      pReco.pdgId = aPF.pdgId();
       bool const isLepton = ((std::abs(aPF.pdgId()) == 11) || (std::abs(aPF.pdgId()) == 13));
       const reco::Vertex* closestVtx = nullptr;
       double pDZ = -9999;
@@ -99,8 +87,8 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         double curdz = 9999;
         int closestVtxForUnassociateds = -9999;
         bool lFirst = true;
-        const reco::TrackRef aTrackRef = pPF->trackRef();
-        for (auto const& aV : *pvCol) {
+        reco::TrackRef const aTrackRef = pPF->trackRef();
+        for (auto const& aV : pvCol) {
           if (lFirst) {
             if (aTrackRef.isNonnull()) {
               pDZ = aTrackRef->dz(aV.position());
@@ -131,7 +119,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         }
         int tmpFromPV = 0;
         // mocking the miniAOD definitions
-        if (std::abs(puppiCand.charge) > 0) {
+        if (std::abs(pReco.charge) > 0) {
           if (closestVtx != nullptr && pVtxId > 0)
             tmpFromPV = 0;
           if (closestVtx != nullptr && pVtxId == 0)
@@ -141,69 +129,69 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
           if (closestVtx == nullptr && closestVtxForUnassociateds != 0)
             tmpFromPV = 1;
         }
-        puppiCand.dZ = pDZ;
-        puppiCand.d0 = pD0;
-        puppiCand.id = 0;
-        if (std::abs(puppiCand.charge) == 0) {
-          puppiCand.id = 0;
+        pReco.dZ = pDZ;
+        pReco.d0 = pD0;
+        pReco.id = 0;
+        if (std::abs(pReco.charge) == 0) {
+          pReco.id = 0;
         } else {
           if (fPuppiNoLep && isLepton)
-            puppiCand.id = 3;
+            pReco.id = 3;
           else if (tmpFromPV == 0) {
-            puppiCand.id = 2;
+            pReco.id = 2;
           }  // 0 is associated to PU vertex
           else if (tmpFromPV == 3) {
-            puppiCand.id = 1;
+            pReco.id = 1;
           } else if (tmpFromPV == 1 || tmpFromPV == 2) {
-            puppiCand.id = 0;
-            if ((fPtMaxCharged > 0) and (puppiCand.pt > fPtMaxCharged))
-              puppiCand.id = 1;
-            else if (std::abs(puppiCand.eta) > fEtaMaxCharged)
-              puppiCand.id = 1;
-            else if ((fUseDZ) && (std::abs(puppiCand.eta) >= fEtaMinUseDZ))
-              puppiCand.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
+            pReco.id = 0;
+            if ((fPtMaxCharged > 0) and (pReco.pt > fPtMaxCharged))
+              pReco.id = 1;
+            else if (std::abs(pReco.eta) > fEtaMaxCharged)
+              pReco.id = 1;
+            else if ((fUseDZ) && (std::abs(pReco.eta) >= fEtaMinUseDZ))
+              pReco.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
             else if (fUseFromPVLooseTight && tmpFromPV == 1)
-              puppiCand.id = 2;
+              pReco.id = 2;
             else if (fUseFromPVLooseTight && tmpFromPV == 2)
-              puppiCand.id = 1;
+              pReco.id = 1;
           }
         }
       } else if (lPack->vertexRef().isNonnull()) {
         pDZ = lPack->dz();
         pD0 = lPack->dxy();
-        puppiCand.dZ = pDZ;
-        puppiCand.d0 = pD0;
+        pReco.dZ = pDZ;
+        pReco.d0 = pD0;
 
-        puppiCand.id = 0;
-        if (std::abs(puppiCand.charge) == 0) {
-          puppiCand.id = 0;
+        pReco.id = 0;
+        if (std::abs(pReco.charge) == 0) {
+          pReco.id = 0;
         }
-        if (std::abs(puppiCand.charge) > 0) {
+        if (std::abs(pReco.charge) > 0) {
           if (fPuppiNoLep && isLepton)
-            puppiCand.id = 3;
+            pReco.id = 3;
           else if (lPack->fromPV() == 0) {
-            puppiCand.id = 2;
+            pReco.id = 2;
           }  // 0 is associated to PU vertex
           else if (lPack->fromPV() == (pat::PackedCandidate::PVUsedInFit)) {
-            puppiCand.id = 1;
+            pReco.id = 1;
           } else if (lPack->fromPV() == (pat::PackedCandidate::PVTight) ||
                      lPack->fromPV() == (pat::PackedCandidate::PVLoose)) {
-            puppiCand.id = 0;
-            if ((fPtMaxCharged > 0) and (puppiCand.pt > fPtMaxCharged))
-              puppiCand.id = 1;
-            else if (std::abs(puppiCand.eta) > fEtaMaxCharged)
-              puppiCand.id = 1;
-            else if ((fUseDZ) && (std::abs(puppiCand.eta) >= fEtaMinUseDZ))
-              puppiCand.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
+            pReco.id = 0;
+            if ((fPtMaxCharged > 0) and (pReco.pt > fPtMaxCharged))
+              pReco.id = 1;
+            else if (std::abs(pReco.eta) > fEtaMaxCharged)
+              pReco.id = 1;
+            else if ((fUseDZ) && (std::abs(pReco.eta) >= fEtaMinUseDZ))
+              pReco.id = (std::abs(pDZ) < fDZCut) ? 1 : 2;
             else if (fUseFromPVLooseTight && lPack->fromPV() == (pat::PackedCandidate::PVLoose))
-              puppiCand.id = 2;
+              pReco.id = 2;
             else if (fUseFromPVLooseTight && lPack->fromPV() == (pat::PackedCandidate::PVTight))
-              puppiCand.id = 1;
+              pReco.id = 1;
           }
         }
       }
 
-      fPuppiCandCollection.push_back(puppiCand);
+      fPuppiCandCollection.push_back(pReco);
     }
 
     fPuppiContainer->initialize(fPuppiCandCollection);
@@ -214,7 +202,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   } else {
     //Use the existing weights
     int lPackCtr = 0;
-    for (auto const& aPF : *pfCol) {
+    for (auto const& aPF : *pfCandView) {
       const pat::PackedCandidate* lPack = dynamic_cast<const pat::PackedCandidate*>(&aPF);
       float curpupweight = -1.;
       if (lPack == nullptr) {
@@ -240,7 +228,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   //Fill it into the event
   edm::ValueMap<float> lPupOut;
   edm::ValueMap<float>::Filler lPupFiller(lPupOut);
-  lPupFiller.insert(hPFProduct, lWeights.begin(), lWeights.end());
+  lPupFiller.insert(pfCandView, lWeights.begin(), lWeights.end());
   lPupFiller.fill();
 
   // This is a dummy to access the "translate" method which is a
@@ -252,15 +240,15 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // Since the size of the ValueMap must be equal to the input collection, we need
   // to search the "puppi" particles to find a match for each input. If none is found,
   // the input is set to have a four-vector of 0,0,0,0
-  PFOutputCollection fPuppiCandidates;
-  PackedOutputCollection fPackedPuppiCandidates;
+  reco::PFCandidateCollection fPuppiCandidates;
+  pat::PackedCandidateCollection fPackedPuppiCandidates;
 
   edm::ValueMap<LorentzVector> p4PupOut;
   LorentzVectorCollection puppiP4s;
-  std::vector<reco::CandidatePtr> values(hPFProduct->size());
+  std::vector<reco::CandidatePtr> values(pfCandView->size());
 
   int iCand = -1;
-  for (auto const& aCand : *hPFProduct) {
+  for (auto const& aCand : *pfCandView) {
     ++iCand;
     std::unique_ptr<pat::PackedCandidate> pCand;
     std::unique_ptr<reco::PFCandidate> pfCand;
@@ -305,7 +293,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
   //Compute the modified p4s
   edm::ValueMap<LorentzVector>::Filler p4PupFiller(p4PupOut);
-  p4PupFiller.insert(hPFProduct, puppiP4s.begin(), puppiP4s.end());
+  p4PupFiller.insert(pfCandView, puppiP4s.begin(), puppiP4s.end());
   p4PupFiller.fill();
 
   iEvent.emplace(ptokenPupOut_, lPupOut);
@@ -326,11 +314,10 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   }
   edm::ValueMap<reco::CandidatePtr> pfMap_p;
   edm::ValueMap<reco::CandidatePtr>::Filler filler(pfMap_p);
-  filler.insert(hPFProduct, values.begin(), values.end());
+  filler.insert(pfCandView, values.begin(), values.end());
   filler.fill();
   iEvent.emplace(ptokenValues_, pfMap_p);
 
-  //////////////////////////////////////////////
   if (fPuppiDiagnostics && !fUseExistingWeights) {
     // all the different alphas per particle
     // THE alpha per particle
@@ -348,11 +335,6 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   }
 }
 
-// ------------------------------------------------------------------------------------------
-void PuppiProducer::beginJob() {}
-// ------------------------------------------------------------------------------------------
-void PuppiProducer::endJob() {}
-// ------------------------------------------------------------------------------------------
 void PuppiProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<bool>("puppiDiagnostics", false);
@@ -382,5 +364,6 @@ void PuppiProducer::fillDescriptions(edm::ConfigurationDescriptions& description
 
   descriptions.add("PuppiProducer", desc);
 }
+
 //define this as a plug-in
 DEFINE_FWK_MODULE(PuppiProducer);

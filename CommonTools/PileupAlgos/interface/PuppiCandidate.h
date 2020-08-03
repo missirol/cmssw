@@ -1,8 +1,6 @@
 #ifndef CommonTools_PileupAlgos_PuppiCandidate_h
 #define CommonTools_PileupAlgos_PuppiCandidate_h
 
-#include <cstdint>
-
 struct PuppiCandidate {
 public:
   PuppiCandidate() {
@@ -29,7 +27,7 @@ public:
   double d0;
   int charge;
   int pdgId;
-  int8_t id;
+  int id;
 };
 
 #endif

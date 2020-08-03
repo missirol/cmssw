@@ -1,9 +1,9 @@
+#include <cmath>
+
 #include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "Math/QuantFuncMathCore.h"
-#include "Math/SpecFuncMathCore.h"
-#include "Math/ProbFunc.h"
-#include "TMath.h"
+#include "Math/ProbFuncMathCore.h"
 
 PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   fEtaMin = iConfig.getParameter<std::vector<double>>("etaMin");
@@ -86,14 +86,14 @@ void PuppiAlgo::fixAlgoEtaBin(int i_eta) {
   cur_Med = fMedian_perEta[0][i_eta];  // 0 is number of algos within this eta bin
 }
 
-void PuppiAlgo::add(const PuppiCandidate &iParticle, double const iVal, const uint iAlgo) {
+void PuppiAlgo::add(PuppiCandidate const &iParticle, double const iVal, uint const iAlgo) {
   if (iParticle.pt < fRMSPtMin[iAlgo])
     return;
 
   int const puppi_id = iParticle.id;
   if (puppi_id < 0) {
-    throw cms::Exception("PuppiRegisterNotSet")
-        << "The puppi register is not set. This must be set before use:" << puppi_id;
+    throw cms::Exception("PuppiID") << "The integer ID assigned to the Puppi candidate is invalid (negative): "
+                                    << puppi_id;
   }
 
   // added by Nhan -- for all eta regions, compute mean/RMS from the central charged PU
@@ -102,15 +102,15 @@ void PuppiAlgo::add(const PuppiCandidate &iParticle, double const iVal, const ui
     fNCount[iAlgo]++;
   }
   // for the low PU case, correction.  for checking that the PU-only median will be below the PV particles
-  if (std::abs(iParticle.eta) < fEtaMaxExtrap && (puppi_id == 1))
+  if ((std::abs(iParticle.eta) < fEtaMaxExtrap) && (puppi_id == 1))
     fPupsPV.push_back(iVal);
 }
 
 //NHAN'S VERSION
-void PuppiAlgo::computeMedRMS(const uint iAlgo) {
-  //std::cout << "fNCount[iAlgo] = " << fNCount[iAlgo] << std::endl;
+void PuppiAlgo::computeMedRMS(uint const iAlgo) {
   if (iAlgo >= fNAlgos)
     return;
+
   if (fNCount[iAlgo] == 0)
     return;
 
@@ -127,18 +127,17 @@ void PuppiAlgo::computeMedRMS(const uint iAlgo) {
       lNum0 = i0 - lNBefore;
   }
 
-  // comput median, removed lCorr for now
+  // compute median, removed lCorr for now
   int lNHalfway = lNBefore + lNum0 + int((fNCount[iAlgo] - lNum0) * 0.5);
   fMedian[iAlgo] = fPups[lNHalfway];
-  double lMed = fMedian[iAlgo];  //Just to make the readability easier
+  double const lMed = fMedian[iAlgo];  //Just to make the readability easier
 
   int lNRMS = 0;
   for (int i0 = lNBefore; i0 < lNBefore + fNCount[iAlgo]; i0++) {
     fMean[iAlgo] += fPups[i0];
     if (fPups[i0] == 0)
       continue;
-    // if(!fCharged[iAlgo] && fAdjust[iAlgo] && fPups[i0] > lMed) continue;
-    if (fAdjust[iAlgo] && fPups[i0] > lMed)
+    if (fAdjust[iAlgo] && (fPups[i0] > lMed))
       continue;
     lNRMS++;
     fRMS[iAlgo] += (fPups[i0] - lMed) * (fPups[i0] - lMed);
@@ -156,7 +155,6 @@ void PuppiAlgo::computeMedRMS(const uint iAlgo) {
 
   if (fAdjust[iAlgo]) {
     //Adjust the p-value to correspond to the median
-    std::sort(fPupsPV.begin(), fPupsPV.end());
     int lNPV = 0;
     for (uint i0 = 0; i0 < fPupsPV.size(); i0++)
       if (fPupsPV[i0] <= lMed)
@@ -201,7 +199,7 @@ double PuppiAlgo::compute(std::vector<double> const &iVals, double const iChi2) 
       pVal = cur_Med;
     if (fAlgoId[i0] == 5 && iVals[i0] == 0)
       pVal = cur_Med;
-    lVal += (pVal - cur_Med) * (fabs(pVal - cur_Med)) / cur_RMS / cur_RMS;
+    lVal += (pVal - cur_Med) * (std::abs(pVal - cur_Med)) / cur_RMS / cur_RMS;
     lNDOF++;
     if (i0 == 0 && iChi2 != 0)
       lNDOF++;  //Add external Chi2 to first element
