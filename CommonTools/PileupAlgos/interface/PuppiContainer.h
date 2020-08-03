@@ -13,8 +13,6 @@ public:
   void initialize(std::vector<PuppiCandidate> const &iPuppiCandidates);
   void setNPV(int iNPV) { fNPV = iNPV; }
 
-  std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
-  std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
   std::vector<double> const &puppiWeights();
   std::vector<double> const &puppiRawAlphas() const { return fRawAlphas; }
   std::vector<double> const &puppiAlphas() const { return fVals; }
@@ -24,22 +22,26 @@ public:
   int puppiNAlgos() const { return fNAlgos; }
 
 protected:
-  double goodVar(PuppiCandidate const &iPart,
-                 std::vector<PuppiCandidate> const &iParticles,
+  double goodVar(std::vector<PuppiCandidate> const &iCands,
+                 uint const iCandIndex0,
+                 std::vector<uint> const &iCandIndices,
                  int const iOpt,
                  double const iRCone) const;
   void getRMSAvg(int const iOpt,
-                 std::vector<PuppiCandidate> const &iParticles,
-                 std::vector<PuppiCandidate> const &iChargeParticles);
+                 std::vector<PuppiCandidate> const &iCands,
+                 std::vector<uint> const &iCandIndicesSum,
+                 std::vector<uint> const &iCandIndicesSumChargedPV);
   void getRawAlphas(int const iOpt,
-                    std::vector<PuppiCandidate> const &iParticles,
-                    std::vector<PuppiCandidate> const &iChargeParticles);
+                    std::vector<PuppiCandidate> const &iCands,
+                    std::vector<uint> const &iCandIndicesSum,
+                    std::vector<uint> const &iCandIndicesSumChargedPV);
   int getPuppiId(double const iPt, double const iEta);
   double getChi2FromdZ(double const iDZ) const;
 
   bool fPuppiDiagnostics;
-  std::vector<PuppiCandidate> fPFParticles;
-  std::vector<PuppiCandidate> fChargedPV;
+  std::vector<PuppiCandidate> fCands;
+  std::vector<uint> fCandIndicesSum;
+  std::vector<uint> fCandIndicesSumChargedPV;
   std::vector<double> fWeights;
   std::vector<double> fVals;
   std::vector<double> fRawAlphas;
