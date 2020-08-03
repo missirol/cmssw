@@ -30,15 +30,18 @@ protected:
                  float const iRCone) const;
   void getRMSAvg(int const iOpt,
                  std::vector<PuppiCandidate> const &iParticles,
+                 std::vector<PuppiCandidate> const &iParticlesXXX,
                  std::vector<PuppiCandidate> const &iChargeParticles);
   void getRawAlphas(int const iOpt,
                     std::vector<PuppiCandidate> const &iParticles,
+                    std::vector<PuppiCandidate> const &iParticlesXXX,
                     std::vector<PuppiCandidate> const &iChargeParticles);
   int getPuppiId(float const iPt, float const iEta);
   float getChi2FromdZ(float const iDZ) const;
 
   bool fPuppiDiagnostics;
   std::vector<PuppiCandidate> fPFParticles;
+  std::vector<PuppiCandidate> fPFParticlesXXX;
   std::vector<PuppiCandidate> fChargedPV;
   std::vector<float> fWeights;
   std::vector<float> fVals;
