@@ -30,15 +30,15 @@ PuppiContainer::~PuppiContainer() {}
 
 void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandidates) {
   //Clear everything
-  fPFParticles.clear();
-  fChargedPV.clear();
   fWeights.clear();
   fVals.clear();
   fRawAlphas.clear();
   fAlphaMed.clear();
   fAlphaRMS.clear();
   fNPV = 1.;
+  fPFParticles.clear();
   fPFParticles.reserve(iPuppiCandidates.size());
+  fChargedPV.clear();
   fChargedPV.reserve(iPuppiCandidates.size());
   for (auto const& pParticle : iPuppiCandidates) {
     fPFParticles.emplace_back(pParticle);
@@ -110,10 +110,10 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     // or (2) are required for computations inside puppi-algos (see call to PuppiAlgo::add below)
     if (((not(fApplyCHS and ((iPart.id == 1) or (iPart.id == 2)))) and (iPart.id != 3)) or
         ((std::abs(iPart.eta) < fPuppiAlgo[pPupId].etaMaxExtrap()) and ((iPart.id == 1) or (iPart.id == 2)))) {
-      if (!pCharged)
-        pVal = goodVar(iPart, iParticles, pAlgo, pCone);
       if (pCharged)
         pVal = goodVar(iPart, iChargedParticles, pAlgo, pCone);
+      else
+        pVal = goodVar(iPart, iParticles, pAlgo, pCone);
     }
     fVals.push_back(pVal);
 
@@ -135,10 +135,10 @@ void PuppiContainer::getRMSAvg(int const iOpt,
       pCone = fPuppiAlgo[i1].coneSize(iOpt);
       float curVal = -1;
       if (i1 != pPupId) {
-        if (!pCharged)
-          curVal = goodVar(iPart, iParticles, pAlgo, pCone);
         if (pCharged)
           curVal = goodVar(iPart, iChargedParticles, pAlgo, pCone);
+        else
+          curVal = goodVar(iPart, iParticles, pAlgo, pCone);
       } else {  //no need to repeat the computation
         curVal = pVal;
       }
@@ -156,20 +156,19 @@ void PuppiContainer::getRawAlphas(int const iOpt,
                                   std::vector<PuppiCandidate> const& iChargedParticles) {
   for (int j0 = 0; j0 < fNAlgos; j0++) {
     for (auto const& iPart : iParticles) {
-      float pVal = -1;
       //Get the Puppi Sub Algo (given iteration)
       int pAlgo = fPuppiAlgo[j0].algoId(iOpt);
       bool pCharged = fPuppiAlgo[j0].isCharged(iOpt);
       float pCone = fPuppiAlgo[j0].coneSize(iOpt);
       //Compute the Puppi Metric
-      if (!pCharged)
-        pVal = goodVar(iPart, iParticles, pAlgo, pCone);
+      float pVal = -1.f;
       if (pCharged)
         pVal = goodVar(iPart, iChargedParticles, pAlgo, pCone);
+      else
+        pVal = goodVar(iPart, iParticles, pAlgo, pCone);
       fRawAlphas.push_back(pVal);
       if (!edm::isFinite(pVal)) {
-        LogDebug("NotFound") << "====> Value is Nan " << pVal << " == " << iPart.pt << " -- " << iPart.eta;
-        continue;
+	edm::LogWarning("NotFound") << "====> Value is Nan " << pVal << " == " << iPart.pt << " -- " << iPart.eta;
       }
     }
   }
