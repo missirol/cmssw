@@ -59,8 +59,8 @@ float PuppiContainer::goodVar(PuppiCandidate const& iPart0,
   float var((iId == 1) ? iPart0.pt : 0.);
 
   for (auto const& part : iParticles) {
-    if (part.id == 3)
-      continue;
+//    if (part.id == 3)
+//      continue;
     if (std::abs(part.eta - iPart0.eta) < iRCone) {
       auto const dr2(reco::deltaR2(part.eta, part.phi, iPart0.eta, iPart0.phi));
       if ((dr2 < r2) and (dr2 > 0.0001)) {
