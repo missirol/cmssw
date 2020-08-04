@@ -113,10 +113,7 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     // or (2) are required for computations inside puppi-algos (see call to PuppiAlgo::add below)
     if (((not(fApplyCHS and ((iCand.id == 1) or (iCand.id == 2)))) and (iCand.id != 3)) or
         ((std::abs(iCand.eta) < fPuppiAlgo[pPupId].etaMaxExtrap()) and ((iCand.id == 1) or (iCand.id == 2)))) {
-      if (pCharged)
-        pVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
-      else
-        pVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
+      pVal = goodVar(iCand, pCharged ? iPuppiCandsForVarChargedPV : iPuppiCandsForVar, pAlgo, pCone);
     }
     fVals.push_back(pVal);
 
@@ -134,14 +131,11 @@ void PuppiContainer::getRMSAvg(int const iOpt,
         continue;
 
       auto curVal(pVal);
-      if (i1 != pPupId) { //else, no need to repeat the computation
+      if (i1 != pPupId) {  //else, no need to repeat the computation
         auto const pAlgo = fPuppiAlgo[i1].algoId(iOpt);
         auto const pCharged = fPuppiAlgo[i1].isCharged(iOpt);
         auto const pCone = fPuppiAlgo[i1].coneSize(iOpt);
-        if (pCharged)
-          curVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
-        else
-          curVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
+        curVal = goodVar(iCand, pCharged ? iPuppiCandsForVarChargedPV : iPuppiCandsForVar, pAlgo, pCone);
       }
 
       fPuppiAlgo[i1].add(iCand, curVal, iOpt);
@@ -163,11 +157,7 @@ void PuppiContainer::getRawAlphas(int const iOpt,
       auto const pCharged = fPuppiAlgo[j0].isCharged(iOpt);
       auto const pCone = fPuppiAlgo[j0].coneSize(iOpt);
       //Compute the Puppi Metric
-      float pVal = -1.f;
-      if (pCharged)
-        pVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
-      else
-        pVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
+      auto const pVal = goodVar(iCand, pCharged ? iPuppiCandsForVarChargedPV : iPuppiCandsForVar, pAlgo, pCone);
       fRawAlphas.push_back(pVal);
       if (!edm::isFinite(pVal)) {
         edm::LogWarning("NotFound") << "====> Value is Nan " << pVal << " == " << iCand.pt << " -- " << iCand.eta;

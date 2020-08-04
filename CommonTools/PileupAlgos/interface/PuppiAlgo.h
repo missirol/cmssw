@@ -9,7 +9,7 @@
 
 class PuppiAlgo {
 public:
-  PuppiAlgo(edm::ParameterSet const& iConfig);
+  PuppiAlgo(edm::ParameterSet const &iConfig);
   ~PuppiAlgo();
   static void fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc);
   //Computing Mean and RMS

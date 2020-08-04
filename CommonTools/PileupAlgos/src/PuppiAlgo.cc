@@ -5,7 +5,7 @@
 #include "Math/QuantFuncMathCore.h"
 #include "Math/ProbFuncMathCore.h"
 
-PuppiAlgo::PuppiAlgo(edm::ParameterSet const& iConfig) {
+PuppiAlgo::PuppiAlgo(edm::ParameterSet const &iConfig) {
   fEtaMin = iConfig.getParameter<std::vector<double>>("etaMin");
   fEtaMax = iConfig.getParameter<std::vector<double>>("etaMax");
   fPtMin = iConfig.getParameter<std::vector<double>>("ptMin");
