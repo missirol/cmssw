@@ -20,9 +20,8 @@ PuppiContainer::PuppiContainer(edm::ParameterSet const& iConfig) {
   std::vector<edm::ParameterSet> lAlgos = iConfig.getParameter<std::vector<edm::ParameterSet>>("algos");
   fNAlgos = lAlgos.size();
   fPuppiAlgo.reserve(lAlgos.size());
-  for (uint i0 = 0; i0 < lAlgos.size(); i0++) {
-    PuppiAlgo pPuppiConfig(lAlgos[i0]);
-    fPuppiAlgo.push_back(pPuppiConfig);
+  for (auto const& algo_i : lAlgos) {
+    fPuppiAlgo.push_back(PuppiAlgo(algo_i));
   }
 }
 
@@ -98,16 +97,16 @@ void PuppiContainer::getRMSAvg(int const iOpt,
   for (uint i0 = 0; i0 < iPuppiCands.size(); i0++) {
     auto const& iCand(iPuppiCands.at(i0));
     //Calculate the Puppi Algo to use
-    int pPupId = getPuppiId(iCand.pt, iCand.eta);
+    auto const pPupId = getPuppiId(iCand.pt, iCand.eta);
     if (pPupId == -1 || fPuppiAlgo[pPupId].numAlgos() <= iOpt) {
       fVals.push_back(-1);
       continue;
     }
 
     //Get the Puppi Sub Algo (given iteration)
-    int pAlgo = fPuppiAlgo[pPupId].algoId(iOpt);
-    bool pCharged = fPuppiAlgo[pPupId].isCharged(iOpt);
-    float pCone = fPuppiAlgo[pPupId].coneSize(iOpt);
+    auto const pAlgo = fPuppiAlgo[pPupId].algoId(iOpt);
+    auto const pCharged = fPuppiAlgo[pPupId].isCharged(iOpt);
+    auto const pCone = fPuppiAlgo[pPupId].coneSize(iOpt);
     //Compute the Puppi Metric
     float pVal(-1.);
     // calculate goodVar only for candidates that (1) will not be assigned a predefined weight (e.g 0, 1),
@@ -134,17 +133,15 @@ void PuppiContainer::getRMSAvg(int const iOpt,
       if (not((std::abs(iCand.eta) < fPuppiAlgo[i1].etaMaxExtrap()) and ((iCand.id == 1) or (iCand.id == 2))))
         continue;
 
-      pAlgo = fPuppiAlgo[i1].algoId(iOpt);
-      pCharged = fPuppiAlgo[i1].isCharged(iOpt);
-      pCone = fPuppiAlgo[i1].coneSize(iOpt);
-      float curVal = -1;
-      if (i1 != pPupId) {
+      auto curVal(pVal);
+      if (i1 != pPupId) { //else, no need to repeat the computation
+        auto const pAlgo = fPuppiAlgo[i1].algoId(iOpt);
+        auto const pCharged = fPuppiAlgo[i1].isCharged(iOpt);
+        auto const pCone = fPuppiAlgo[i1].coneSize(iOpt);
         if (pCharged)
           curVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
         else
           curVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
-      } else {  //no need to repeat the computation
-        curVal = pVal;
       }
 
       fPuppiAlgo[i1].add(iCand, curVal, iOpt);
@@ -162,9 +159,9 @@ void PuppiContainer::getRawAlphas(int const iOpt,
   for (int j0 = 0; j0 < fNAlgos; j0++) {
     for (auto const& iCand : iPuppiCands) {
       //Get the Puppi Sub Algo (given iteration)
-      int pAlgo = fPuppiAlgo[j0].algoId(iOpt);
-      bool pCharged = fPuppiAlgo[j0].isCharged(iOpt);
-      float pCone = fPuppiAlgo[j0].coneSize(iOpt);
+      auto const pAlgo = fPuppiAlgo[j0].algoId(iOpt);
+      auto const pCharged = fPuppiAlgo[j0].isCharged(iOpt);
+      auto const pCone = fPuppiAlgo[j0].coneSize(iOpt);
       //Compute the Puppi Metric
       float pVal = -1.f;
       if (pCharged)
@@ -182,7 +179,7 @@ void PuppiContainer::getRawAlphas(int const iOpt,
 int PuppiContainer::getPuppiId(float const iPt, float const iEta) {
   int lId = -1;
   for (int i0 = 0; i0 < fNAlgos; i0++) {
-    int nEtaBinsPerAlgo = fPuppiAlgo[i0].etaBins();
+    auto const nEtaBinsPerAlgo = fPuppiAlgo[i0].etaBins();
     for (int i1 = 0; i1 < nEtaBinsPerAlgo; i1++) {
       if ((std::abs(iEta) > fPuppiAlgo[i0].etaMin(i1)) && (std::abs(iEta) < fPuppiAlgo[i0].etaMax(i1))) {
         fPuppiAlgo[i0].fixAlgoEtaBin(i1);
@@ -203,7 +200,7 @@ float PuppiContainer::getChi2FromdZ(float const iDZ) const {
   //float lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ),0.2)*2.; //*2 is to do it double sided
   //Take iDZ to be corrected by sigma already
   float lProbLV = ROOT::Math::normal_cdf_c(std::abs(iDZ), 1.) * 2.;  //*2 is to do it double sided
-  float lProbPU = 1 - lProbLV;
+  float lProbPU = 1.f - lProbLV;
   if (lProbPU <= 0)
     lProbPU = 1e-16;  //Quick Trick to through out infs
   if (lProbPU >= 0)
@@ -214,7 +211,7 @@ float PuppiContainer::getChi2FromdZ(float const iDZ) const {
 }
 
 std::vector<float> const& PuppiContainer::puppiWeights() {
-  int const lNCands = fCands.size();
+  auto const lNCands = fCands.size();
 
   fWeights.clear();
   fAlphaMed.clear();
@@ -240,10 +237,10 @@ std::vector<float> const& PuppiContainer::puppiWeights() {
   if (fPuppiDiagnostics)
     getRawAlphas(0, fCands, fCandsForVar, fCandsForVarChargedPV);
 
-  for (int i0 = 0; i0 < lNCands; i0++) {
+  for (uint i0 = 0; i0 < lNCands; i0++) {
     //Get the Puppi Id and, if ill defined, move on
     auto const& pCand(fCands.at(i0));
-    int pPupId = getPuppiId(pCand.pt, pCand.eta);
+    auto const pPupId = getPuppiId(pCand.pt, pCand.eta);
     if (pPupId == -1) {
       fWeights.push_back(0);
       fAlphaMed.push_back(-10);
@@ -271,7 +268,7 @@ std::vector<float> const& PuppiContainer::puppiWeights() {
           pChi2 = 0;
       }
       std::vector<float> pVals;
-      int lNAlgos = fPuppiAlgo[pPupId].numAlgos();
+      auto const lNAlgos = fPuppiAlgo[pPupId].numAlgos();
       pVals.reserve(lNAlgos);
       for (int i1 = 0; i1 < lNAlgos; i1++) {
         pVals.push_back(fVals[lNCands * i1 + i0]);
