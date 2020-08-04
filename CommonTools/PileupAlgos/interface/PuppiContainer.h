@@ -13,8 +13,7 @@ public:
   void initialize(std::vector<PuppiCandidate> const &iPuppiCandidates);
   void setNPV(int const iNPV) { fNPV = iNPV; }
 
-  std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
-  std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
+  std::vector<PuppiCandidate> const &puppiCandidates() const { return fCands; }
   std::vector<float> const &puppiWeights();
   std::vector<float> const &puppiRawAlphas() const { return fRawAlphas; }
   std::vector<float> const &puppiAlphas() const { return fVals; }
@@ -24,25 +23,25 @@ public:
   int puppiNAlgos() const { return fNAlgos; }
 
 protected:
-  float goodVar(PuppiCandidate const &iPart,
-                 std::vector<PuppiCandidate> const &iParticles,
-                 int const iOpt,
-                 float const iRCone) const;
+  float goodVar(PuppiCandidate const &iPuppiCand_0,
+                std::vector<PuppiCandidate> const &iPuppiCands,
+                int const iOpt,
+                float const iRCone) const;
   void getRMSAvg(int const iOpt,
-                 std::vector<PuppiCandidate> const &iCands,
-                 std::vector<PuppiCandidate> const &iCandsForVar,
-                 std::vector<PuppiCandidate> const &iCandsForVarChargedPV);
+                 std::vector<PuppiCandidate> const &iPuppiCands,
+                 std::vector<PuppiCandidate> const &iPuppiCandsForVar,
+                 std::vector<PuppiCandidate> const &iPuppiCandsForVarChargedPV);
   void getRawAlphas(int const iOpt,
-                    std::vector<PuppiCandidate> const &iCands,
-                    std::vector<PuppiCandidate> const &iCandsForVar,
-                    std::vector<PuppiCandidate> const &iCandsForVarChargedPV);
+                    std::vector<PuppiCandidate> const &iPuppiCands,
+                    std::vector<PuppiCandidate> const &iPuppiCandsForVar,
+                    std::vector<PuppiCandidate> const &iPuppiCandsForVarChargedPV);
   int getPuppiId(float const iPt, float const iEta);
   float getChi2FromdZ(float const iDZ) const;
 
   bool fPuppiDiagnostics;
-  std::vector<PuppiCandidate> fPFParticles;
-  std::vector<PuppiCandidate> fPFParticlesXXX;
-  std::vector<PuppiCandidate> fChargedPV;
+  std::vector<PuppiCandidate> fCands;
+  std::vector<PuppiCandidate> fCandsForVar;
+  std::vector<PuppiCandidate> fCandsForVarChargedPV;
   std::vector<float> fWeights;
   std::vector<float> fVals;
   std::vector<float> fRawAlphas;

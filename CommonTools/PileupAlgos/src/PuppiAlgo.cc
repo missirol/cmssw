@@ -25,7 +25,7 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
     int pAlgoId = lAlgos[i0].getParameter<int>("algoId");
     bool pCharged = lAlgos[i0].getParameter<bool>("useCharged");
     bool pWeight0 = lAlgos[i0].getParameter<bool>("applyLowPUCorr");
-    int pComb = lAlgos[i0].getParameter<int>("combOpt");                // 0=> add in chi2/1=>Multiply p-values
+    int pComb = lAlgos[i0].getParameter<int>("combOpt");               // 0=> add in chi2/1=>Multiply p-values
     float pConeSize = lAlgos[i0].getParameter<double>("cone");         // Min Pt when computing pt and rms
     float pRMSPtMin = lAlgos[i0].getParameter<double>("rmsPtMin");     // Min Pt when computing pt and rms
     float pRMSSF = lAlgos[i0].getParameter<double>("rmsScaleFactor");  // Additional Tuning parameter for Jokers

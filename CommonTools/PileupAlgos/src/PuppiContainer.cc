@@ -28,7 +28,7 @@ PuppiContainer::PuppiContainer(edm::ParameterSet const& iConfig) {
 
 PuppiContainer::~PuppiContainer() {}
 
-void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandidates) {
+void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCands) {
   //Clear everything
   fWeights.clear();
   fVals.clear();
@@ -37,14 +37,14 @@ void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandida
   fAlphaRMS.clear();
   fNPV = 1.;
   fCands.clear();
-  fCands.reserve(iPuppiCandidates.size());
+  fCands.reserve(iPuppiCands.size());
   fCandsForVar.clear();
-  fCandsForVar.reserve(iPuppiCandidates.size());
+  fCandsForVar.reserve(iPuppiCands.size());
   fCandsForVarChargedPV.clear();
-  fCandsForVarChargedPV.reserve(iPuppiCandidates.size());
-  for (auto const& pCand : iPuppiCandidates) {
+  fCandsForVarChargedPV.reserve(iPuppiCands.size());
+  for (auto const& pCand : iPuppiCands) {
     fCands.emplace_back(pCand);
-    //charged particles associated to PV
+    //charged candidates associated to PV
     if (pCand.id == 3)
       continue;
     fCandsForVar.emplace_back(pCand);
@@ -53,21 +53,21 @@ void PuppiContainer::initialize(std::vector<PuppiCandidate> const& iPuppiCandida
   }
 }
 
-float PuppiContainer::goodVar(PuppiCandidate const& iCand0,
-                               std::vector<PuppiCandidate> const& iCands,
-                               int const iId,
-                               float const iRCone) const {
+float PuppiContainer::goodVar(PuppiCandidate const& iPuppiCand_0,
+                              std::vector<PuppiCandidate> const& iPuppiCands,
+                              int const iId,
+                              float const iRCone) const {
   if (iId == -1)
     return 1.;
 
   float const r2(iRCone * iRCone);
-  float var((iId == 1) ? iCand0.pt : 0.);
+  float var((iId == 1) ? iPuppiCand_0.pt : 0.);
 
-  for (auto const& part : iCands) {
-    if (std::abs(part.eta - iCand0.eta) < iRCone) {
-      auto const dr2(reco::deltaR2(part.eta, part.phi, iCand0.eta, iCand0.phi));
+  for (auto const& cand : iPuppiCands) {
+    if (std::abs(cand.eta - iPuppiCand_0.eta) < iRCone) {
+      auto const dr2(reco::deltaR2(cand.eta, cand.phi, iPuppiCand_0.eta, iPuppiCand_0.phi));
       if ((dr2 < r2) and (dr2 > 0.0001)) {
-        auto const pt(part.pt);
+        auto const pt(cand.pt);
         if (iId == 5)
           var += (pt * pt / dr2);
         else if (iId == 4)
@@ -92,11 +92,11 @@ float PuppiContainer::goodVar(PuppiCandidate const& iCand0,
 
 //In fact takes the median not the average
 void PuppiContainer::getRMSAvg(int const iOpt,
-                               std::vector<PuppiCandidate> const& iCands,
-                               std::vector<PuppiCandidate> const& iCandsForVar,
-                               std::vector<PuppiCandidate> const& iCandsForVarChargedPV) {
-  for (uint i0 = 0; i0 < iCands.size(); i0++) {
-    auto const& iCand(iCands.at(i0));
+                               std::vector<PuppiCandidate> const& iPuppiCands,
+                               std::vector<PuppiCandidate> const& iPuppiCandsForVar,
+                               std::vector<PuppiCandidate> const& iPuppiCandsForVarChargedPV) {
+  for (uint i0 = 0; i0 < iPuppiCands.size(); i0++) {
+    auto const& iCand(iPuppiCands.at(i0));
     //Calculate the Puppi Algo to use
     int pPupId = getPuppiId(iCand.pt, iCand.eta);
     if (pPupId == -1 || fPuppiAlgo[pPupId].numAlgos() <= iOpt) {
@@ -115,9 +115,9 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     if (((not(fApplyCHS and ((iCand.id == 1) or (iCand.id == 2)))) and (iCand.id != 3)) or
         ((std::abs(iCand.eta) < fPuppiAlgo[pPupId].etaMaxExtrap()) and ((iCand.id == 1) or (iCand.id == 2)))) {
       if (pCharged)
-        pVal = goodVar(iCand, iCandsForVarChargedPV, pAlgo, pCone);
+        pVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
       else
-        pVal = goodVar(iCand, iCandsForVar, pAlgo, pCone);
+        pVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
     }
     fVals.push_back(pVal);
 
@@ -127,7 +127,7 @@ void PuppiContainer::getRMSAvg(int const iOpt,
     }
 
     // // fPuppiAlgo[pPupId].add(iCand,pVal,iOpt);
-    //code added by Nhan, now instead for every algorithm give it all the particles
+    //code added by Nhan, now instead for every algorithm give it all the candidates
     for (int i1 = 0; i1 < fNAlgos; i1++) {
       // skip cands outside of algo's etaMaxExtrap,
       // as they would anyway be ignored inside PuppiAlgo::add
@@ -140,9 +140,9 @@ void PuppiContainer::getRMSAvg(int const iOpt,
       float curVal = -1;
       if (i1 != pPupId) {
         if (pCharged)
-          curVal = goodVar(iCand, iCandsForVarChargedPV, pAlgo, pCone);
+          curVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
         else
-          curVal = goodVar(iCand, iCandsForVar, pAlgo, pCone);
+          curVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
       } else {  //no need to repeat the computation
         curVal = pVal;
       }
@@ -156,11 +156,11 @@ void PuppiContainer::getRMSAvg(int const iOpt,
 }
 
 void PuppiContainer::getRawAlphas(int const iOpt,
-                                  std::vector<PuppiCandidate> const& iParticles,
-                                  std::vector<PuppiCandidate> const& iCandsForVar,
-                                  std::vector<PuppiCandidate> const& iCandsForVarChargedPV) {
+                                  std::vector<PuppiCandidate> const& iPuppiCands,
+                                  std::vector<PuppiCandidate> const& iPuppiCandsForVar,
+                                  std::vector<PuppiCandidate> const& iPuppiCandsForVarChargedPV) {
   for (int j0 = 0; j0 < fNAlgos; j0++) {
-    for (auto const& iCand : iCands) {
+    for (auto const& iCand : iPuppiCands) {
       //Get the Puppi Sub Algo (given iteration)
       int pAlgo = fPuppiAlgo[j0].algoId(iOpt);
       bool pCharged = fPuppiAlgo[j0].isCharged(iOpt);
@@ -168,12 +168,12 @@ void PuppiContainer::getRawAlphas(int const iOpt,
       //Compute the Puppi Metric
       float pVal = -1.f;
       if (pCharged)
-        pVal = goodVar(iCand, iCandsForVarChargedPV, pAlgo, pCone);
+        pVal = goodVar(iCand, iPuppiCandsForVarChargedPV, pAlgo, pCone);
       else
-        pVal = goodVar(iCand, iCandsForVar, pAlgo, pCone);
+        pVal = goodVar(iCand, iPuppiCandsForVar, pAlgo, pCone);
       fRawAlphas.push_back(pVal);
       if (!edm::isFinite(pVal)) {
-	edm::LogWarning("NotFound") << "====> Value is Nan " << pVal << " == " << iCand.pt << " -- " << iCand.eta;
+        edm::LogWarning("NotFound") << "====> Value is Nan " << pVal << " == " << iCand.pt << " -- " << iCand.eta;
       }
     }
   }
