@@ -1,11 +1,11 @@
+#include <cmath>
+
 #include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "Math/QuantFuncMathCore.h"
-#include "Math/SpecFuncMathCore.h"
-#include "Math/ProbFunc.h"
-#include "TMath.h"
+#include "Math/ProbFuncMathCore.h"
 
-PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
+PuppiAlgo::PuppiAlgo(edm::ParameterSet const &iConfig) {
   fEtaMin = iConfig.getParameter<std::vector<double>>("etaMin");
   fEtaMax = iConfig.getParameter<std::vector<double>>("etaMax");
   fPtMin = iConfig.getParameter<std::vector<double>>("ptMin");
@@ -18,17 +18,17 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   std::vector<edm::ParameterSet> lAlgos = iConfig.getParameter<std::vector<edm::ParameterSet>>("puppiAlgos");
   fNAlgos = lAlgos.size();
   //Uber Configurable Puppi
-  std::vector<double> tmprms;
-  std::vector<double> tmpmed;
+  std::vector<float> tmprms;
+  std::vector<float> tmpmed;
 
-  for (unsigned int i0 = 0; i0 < lAlgos.size(); i0++) {
+  for (uint i0 = 0; i0 < lAlgos.size(); i0++) {
     int pAlgoId = lAlgos[i0].getParameter<int>("algoId");
     bool pCharged = lAlgos[i0].getParameter<bool>("useCharged");
     bool pWeight0 = lAlgos[i0].getParameter<bool>("applyLowPUCorr");
-    int pComb = lAlgos[i0].getParameter<int>("combOpt");                // 0=> add in chi2/1=>Multiply p-values
-    double pConeSize = lAlgos[i0].getParameter<double>("cone");         // Min Pt when computing pt and rms
-    double pRMSPtMin = lAlgos[i0].getParameter<double>("rmsPtMin");     // Min Pt when computing pt and rms
-    double pRMSSF = lAlgos[i0].getParameter<double>("rmsScaleFactor");  // Additional Tuning parameter for Jokers
+    int pComb = lAlgos[i0].getParameter<int>("combOpt");               // 0=> add in chi2/1=>Multiply p-values
+    float pConeSize = lAlgos[i0].getParameter<double>("cone");         // Min Pt when computing pt and rms
+    float pRMSPtMin = lAlgos[i0].getParameter<double>("rmsPtMin");     // Min Pt when computing pt and rms
+    float pRMSSF = lAlgos[i0].getParameter<double>("rmsScaleFactor");  // Additional Tuning parameter for Jokers
     fAlgoId.push_back(pAlgoId);
     fCharged.push_back(pCharged);
     fAdjust.push_back(pWeight0);
@@ -36,9 +36,9 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
     fConeSize.push_back(pConeSize);
     fRMSPtMin.push_back(pRMSPtMin);
     fRMSScaleFactor.push_back(pRMSSF);
-    double pRMS = 0;
-    double pMed = 0;
-    double pMean = 0;
+    float pRMS = 0;
+    float pMed = 0;
+    float pMean = 0;
     int pNCount = 0;
     fRMS.push_back(pRMS);
     fMedian.push_back(pMed);
@@ -47,7 +47,7 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
 
     tmprms.clear();
     tmpmed.clear();
-    for (unsigned int j0 = 0; j0 < fEtaMin.size(); j0++) {
+    for (uint j0 = 0; j0 < fEtaMin.size(); j0++) {
       tmprms.push_back(pRMS);
       tmpmed.push_back(pMed);
     }
@@ -61,14 +61,16 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   cur_RMS = -99.;
   cur_Med = -99.;
 }
+
 PuppiAlgo::~PuppiAlgo() {
   fPups.clear();
   fPupsPV.clear();
 }
+
 void PuppiAlgo::reset() {
   fPups.clear();
   fPupsPV.clear();
-  for (unsigned int i0 = 0; i0 < fNAlgos; i0++) {
+  for (uint i0 = 0; i0 < fNAlgos; i0++) {
     fMedian[i0] = 0;
     fRMS[i0] = 0;
     fMean[i0] = 0;
@@ -84,41 +86,37 @@ void PuppiAlgo::fixAlgoEtaBin(int i_eta) {
   cur_Med = fMedian_perEta[0][i_eta];  // 0 is number of algos within this eta bin
 }
 
-void PuppiAlgo::add(const PuppiCandidate &iParticle, const double &iVal, const unsigned int iAlgo) {
-  if (iParticle.pt() < fRMSPtMin[iAlgo])
+void PuppiAlgo::add(PuppiCandidate const &iParticle, float const iVal, uint const iAlgo) {
+  if (iParticle.pt < fRMSPtMin[iAlgo])
     return;
-  // Change from SRR : Previously used fastjet::PseudoJet::user_index to decide the particle type.
-  // In CMSSW we use the user_index to specify the index in the input collection, so I invented
-  // a new mechanism using the fastjet UserInfo functionality. Of course, it's still just an integer
-  // but that interface could be changed (or augmented) if desired / needed.
-  int puppi_id = iParticle.puppi_register();
-  if (puppi_id == std::numeric_limits<int>::lowest()) {
-    throw cms::Exception("PuppiRegisterNotSet") << "The puppi register is not set. This must be set before use.\n";
+
+  int const puppi_id = iParticle.id;
+  if (puppi_id < 0) {
+    throw cms::Exception("PuppiID") << "The integer ID assigned to the Puppi candidate is invalid (negative): "
+                                    << puppi_id;
   }
 
   // added by Nhan -- for all eta regions, compute mean/RMS from the central charged PU
-  if ((std::abs(iParticle.eta()) < fEtaMaxExtrap) && (puppi_id == 2)) {
+  if ((std::abs(iParticle.eta) < fEtaMaxExtrap) && (puppi_id == 2)) {
     fPups.push_back(iVal);
     fNCount[iAlgo]++;
   }
   // for the low PU case, correction.  for checking that the PU-only median will be below the PV particles
-  if (std::abs(iParticle.eta()) < fEtaMaxExtrap && (puppi_id == 1))
+  if ((std::abs(iParticle.eta) < fEtaMaxExtrap) && (puppi_id == 1))
     fPupsPV.push_back(iVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 //NHAN'S VERSION
-void PuppiAlgo::computeMedRMS(const unsigned int &iAlgo) {
-  //std::cout << "fNCount[iAlgo] = " << fNCount[iAlgo] << std::endl;
+void PuppiAlgo::computeMedRMS(uint const iAlgo) {
   if (iAlgo >= fNAlgos)
     return;
+
   if (fNCount[iAlgo] == 0)
     return;
 
   // sort alphas
   int lNBefore = 0;
-  for (unsigned int i0 = 0; i0 < iAlgo; i0++)
+  for (uint i0 = 0; i0 < iAlgo; i0++)
     lNBefore += fNCount[i0];
   std::sort(fPups.begin() + lNBefore, fPups.begin() + lNBefore + fNCount[iAlgo]);
 
@@ -129,18 +127,17 @@ void PuppiAlgo::computeMedRMS(const unsigned int &iAlgo) {
       lNum0 = i0 - lNBefore;
   }
 
-  // comput median, removed lCorr for now
-  int lNHalfway = lNBefore + lNum0 + int(double(fNCount[iAlgo] - lNum0) * 0.50);
+  // compute median, removed lCorr for now
+  int lNHalfway = lNBefore + lNum0 + int((fNCount[iAlgo] - lNum0) * 0.5);
   fMedian[iAlgo] = fPups[lNHalfway];
-  double lMed = fMedian[iAlgo];  //Just to make the readability easier
+  float const lMed = fMedian[iAlgo];  //Just to make the readability easier
 
   int lNRMS = 0;
   for (int i0 = lNBefore; i0 < lNBefore + fNCount[iAlgo]; i0++) {
     fMean[iAlgo] += fPups[i0];
     if (fPups[i0] == 0)
       continue;
-    // if(!fCharged[iAlgo] && fAdjust[iAlgo] && fPups[i0] > lMed) continue;
-    if (fAdjust[iAlgo] && fPups[i0] > lMed)
+    if (fAdjust[iAlgo] && (fPups[i0] > lMed))
       continue;
     lNRMS++;
     fRMS[iAlgo] += (fPups[i0] - lMed) * (fPups[i0] - lMed);
@@ -158,12 +155,11 @@ void PuppiAlgo::computeMedRMS(const unsigned int &iAlgo) {
 
   if (fAdjust[iAlgo]) {
     //Adjust the p-value to correspond to the median
-    std::sort(fPupsPV.begin(), fPupsPV.end());
     int lNPV = 0;
-    for (unsigned int i0 = 0; i0 < fPupsPV.size(); i0++)
+    for (uint i0 = 0; i0 < fPupsPV.size(); i0++)
       if (fPupsPV[i0] <= lMed)
         lNPV++;
-    double lAdjust = double(lNPV) / double(lNPV + 0.5 * fNCount[iAlgo]);
+    float lAdjust = float(lNPV) / float(lNPV + 0.5 * fNCount[iAlgo]);
     if (lAdjust > 0) {
       fMedian[iAlgo] -= sqrt(ROOT::Math::chisquared_quantile(lAdjust, 1.) * fRMS[iAlgo]);
       fRMS[iAlgo] -= sqrt(ROOT::Math::chisquared_quantile(lAdjust, 1.) * fRMS[iAlgo]);
@@ -173,30 +169,29 @@ void PuppiAlgo::computeMedRMS(const unsigned int &iAlgo) {
   // fRMS_perEta[iAlgo]    *= cur_RMSEtaSF;
   // fMedian_perEta[iAlgo] *= cur_MedEtaSF;
 
-  for (unsigned int j0 = 0; j0 < fEtaMin.size(); j0++) {
+  for (uint j0 = 0; j0 < fEtaMin.size(); j0++) {
     fRMS_perEta[iAlgo][j0] = fRMS[iAlgo] * fRMSEtaSF[j0];
     fMedian_perEta[iAlgo][j0] = fMedian[iAlgo] * fMedEtaSF[j0];
   }
 }
-////////////////////////////////////////////////////////////////////////////////
 
 //This code is probably a bit confusing
-double PuppiAlgo::compute(std::vector<double> const &iVals, double iChi2) const {
+float PuppiAlgo::compute(std::vector<float> const &iVals, float const iChi2) const {
   if (fAlgoId[0] == -1)
     return 1;
-  double lVal = 0.;
-  double lPVal = 1.;
+  float lVal = 0.;
+  float lPVal = 1.;
   int lNDOF = 0;
-  for (unsigned int i0 = 0; i0 < fNAlgos; i0++) {
+  for (uint i0 = 0; i0 < fNAlgos; i0++) {
     if (fNCount[i0] == 0)
       return 1.;                       //in the NoPU case return 1.
     if (fCombId[i0] == 1 && i0 > 0) {  //Compute the previous p-value so that p-values can be multiplieed
-      double pPVal = ROOT::Math::chisquared_cdf(lVal, lNDOF);
+      float pPVal = ROOT::Math::chisquared_cdf(lVal, lNDOF);
       lPVal *= pPVal;
       lNDOF = 0;
       lVal = 0;
     }
-    double pVal = iVals[i0];
+    float pVal = iVals[i0];
     //Special Check for any algo with log(0)
     if (fAlgoId[i0] == 0 && iVals[i0] == 0)
       pVal = cur_Med;
@@ -204,7 +199,7 @@ double PuppiAlgo::compute(std::vector<double> const &iVals, double iChi2) const 
       pVal = cur_Med;
     if (fAlgoId[i0] == 5 && iVals[i0] == 0)
       pVal = cur_Med;
-    lVal += (pVal - cur_Med) * (fabs(pVal - cur_Med)) / cur_RMS / cur_RMS;
+    lVal += (pVal - cur_Med) * (std::abs(pVal - cur_Med)) / cur_RMS / cur_RMS;
     lNDOF++;
     if (i0 == 0 && iChi2 != 0)
       lNDOF++;  //Add external Chi2 to first element
@@ -215,7 +210,7 @@ double PuppiAlgo::compute(std::vector<double> const &iVals, double iChi2) const 
   lPVal *= ROOT::Math::chisquared_cdf(lVal, lNDOF);
   return lPVal;
 }
-// ------------------------------------------------------------------------------------------
+
 void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   edm::ParameterSetDescription puppialgos;
   puppialgos.add<int>("algoId", 5);
@@ -225,7 +220,7 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   puppialgos.add<double>("cone", .4);
   puppialgos.add<double>("rmsPtMin", .1);
   puppialgos.add<double>("rmsScaleFactor", 1.0);
-  std::vector<edm::ParameterSet> VPSetPuppiAlgos;
+
   edm::ParameterSet puppiset;
   puppiset.addParameter<int>("algoId", 5);
   puppiset.addParameter<bool>("useCharged", false);
@@ -234,12 +229,10 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   puppiset.addParameter<double>("cone", .4);
   puppiset.addParameter<double>("rmsPtMin", .1);
   puppiset.addParameter<double>("rmsScaleFactor", 1.0);
-  VPSetPuppiAlgos.push_back(puppiset);
+  std::vector<edm::ParameterSet> VPSetPuppiAlgos({puppiset});
 
   edm::ParameterSetDescription algos;
   algos.addVPSet("puppiAlgos", puppialgos, VPSetPuppiAlgos);
-  std::vector<edm::ParameterSet> VPSetAlgos;
-  edm::ParameterSet algosset;
   algos.add<std::vector<double>>("etaMin", {0.});
   algos.add<std::vector<double>>("etaMax", {2.5});
   algos.add<std::vector<double>>("ptMin", {0.});
@@ -248,6 +241,8 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   algos.add<std::vector<double>>("RMSEtaSF", {1.0});
   algos.add<std::vector<double>>("MedEtaSF", {1.0});
   algos.add<double>("EtaMaxExtrap", 2.0);
+
+  edm::ParameterSet algosset;
   algosset.addParameter<std::vector<double>>("etaMin", {0.});
   algosset.addParameter<std::vector<double>>("etaMax", {2.5});
   algosset.addParameter<std::vector<double>>("ptMin", {0.});
@@ -257,6 +252,5 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   algosset.addParameter<std::vector<double>>("MedEtaSF", {1.0});
   algosset.addParameter<double>("EtaMaxExtrap", 2.0);
   algosset.addParameter<std::vector<edm::ParameterSet>>("puppiAlgos", VPSetPuppiAlgos);
-  VPSetAlgos.push_back(algosset);
-  desc.addVPSet("algos", algos, VPSetAlgos);
+  desc.addVPSet("algos", algos, {algosset});
 }
