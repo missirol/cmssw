@@ -1,4 +1,6 @@
 <use name="FWCore/ParameterSet"/>
+<use name="FWCore/SoA"/>
+<use name="CommonTools/Utils"/>
 <use name="root"/>
 <use name="rootcore"/>
 <export>
