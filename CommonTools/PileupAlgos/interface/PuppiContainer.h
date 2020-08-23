@@ -2,67 +2,61 @@
 #define COMMONTOOLS_PUPPI_PUPPICONTAINER_H_
 
 #include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
+#include "CommonTools/PileupAlgos/interface/PuppiCandidates.h"
 #include "CommonTools/PileupAlgos/interface/RecoObj.h"
-#include "CommonTools/PileupAlgos/interface/PuppiCandidate.h"
+
+#include "DataFormats/Math/interface/deltaR.h"
+#include "Math/ProbFunc.h"
+#include "TMath.h"
+#include <iostream>
+#include <cmath>
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/isFinite.h"
+
 
 class PuppiContainer {
 public:
   PuppiContainer(const edm::ParameterSet &iConfig);
   ~PuppiContainer();
-  void initialize(const std::vector<RecoObj> &iRecoObjects);
-  void setNPV(int iNPV) { fNPV = iNPV; }
+  int computeWeights(std::vector<RecoObj> const&, int const);
 
-  std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
-  std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
-  std::vector<double> const &puppiWeights();
-  const std::vector<double> &puppiRawAlphas() { return fRawAlphas; }
-  const std::vector<double> &puppiAlphas() { return fVals; }
-  // const std::vector<double> puppiAlpha   () {return fAlpha;}
-  const std::vector<double> &puppiAlphasMed() { return fAlphaMed; }
-  const std::vector<double> &puppiAlphasRMS() { return fAlphaRMS; }
+  std::vector<float> const &puppiWeights() const { return fWeights; }
+  const std::vector<float> &puppiRawAlphas() const { return fRawAlphas; }
+  const std::vector<float> &puppiAlphas() const { return fVals; }
+  const std::vector<float> &puppiAlphasMed() const { return fAlphaMed; }
+  const std::vector<float> &puppiAlphasRMS() const { return fAlphaRMS; }
 
-  int puppiNAlgos() { return fNAlgos; }
+  int puppiNAlgos() const { return fNAlgos; }
 
 protected:
-  double goodVar(PuppiCandidate const &iPart, std::vector<PuppiCandidate> const &iParts, int iOpt, const double iRCone);
-  void getRMSAvg(int iOpt,
-                 std::vector<PuppiCandidate> const &iConstits,
-                 std::vector<PuppiCandidate> const &iParticles,
-                 std::vector<PuppiCandidate> const &iChargeParticles);
-  void getRawAlphas(int iOpt,
-                    std::vector<PuppiCandidate> const &iConstits,
-                    std::vector<PuppiCandidate> const &iParticles,
-                    std::vector<PuppiCandidate> const &iChargeParticles);
-  double getChi2FromdZ(double iDZ);
+  using CandidatesTable = edm::soa::PtEtaRapPhiIdTable;
+
+  float goodVar(CandidatesTable const&, uint const, bool const, int const, float const);
+  void getRMSAvg(int iOpt, CandidatesTable const&);
+  void getRawAlphas(int iOpt, CandidatesTable const&);
+
+  float getChi2FromdZ(float iDZ);
   int getPuppiId(float iPt, float iEta);
-  double var_within_R(int iId,
-                      const std::vector<PuppiCandidate> &particles,
-                      const PuppiCandidate &centre,
-                      const double R);
+
+  std::vector<float> fWeights;
+  std::vector<float> fVals;
+  std::vector<float> fRawAlphas;
+  std::vector<float> fAlphaMed;
+  std::vector<float> fAlphaRMS;
 
   bool fPuppiDiagnostics;
-  const std::vector<RecoObj> *fRecoParticles;
-  std::vector<PuppiCandidate> fPFParticles;
-  std::vector<PuppiCandidate> fChargedPV;
-  std::vector<double> fWeights;
-  std::vector<double> fVals;
-  std::vector<double> fRawAlphas;
-  std::vector<double> fAlphaMed;
-  std::vector<double> fAlphaRMS;
-
   bool fApplyCHS;
   bool fInvert;
   bool fUseExp;
-  double fNeutralMinPt;
-  double fNeutralSlope;
-  double fPuppiWeightCut;
-  double fPtMaxPhotons;
-  double fEtaMaxPhotons;
-  double fPtMaxNeutrals;
-  double fPtMaxNeutralsStartSlope;
+  float fNeutralMinPt;
+  float fNeutralSlope;
+  float fPuppiWeightCut;
+  float fPtMaxPhotons;
+  float fEtaMaxPhotons;
+  float fPtMaxNeutrals;
+  float fPtMaxNeutralsStartSlope;
   int fNAlgos;
-  int fNPV;
-  double fPVFrac;
   std::vector<PuppiAlgo> fPuppiAlgo;
 };
+
 #endif
