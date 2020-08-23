@@ -211,8 +211,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       fRecoObjCollection.push_back(pReco);
     }
 
-    fPuppiContainer->initialize(fRecoObjCollection);
-    fPuppiContainer->setNPV(npv);
+    fPuppiContainer->fillValues(fRecoObjCollection, npv);
 
     //Compute the weights and get the particles
     lWeights = fPuppiContainer->puppiWeights();

@@ -4,7 +4,6 @@
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "CommonTools/PileupAlgos/interface/PuppiCandidate.h"
 #include <vector>
 
 class PuppiAlgo {
@@ -15,7 +14,7 @@ public:
   //Computing Mean and RMS
   void reset();
   void fixAlgoEtaBin(int i_eta);
-  void add(const PuppiCandidate &iParticle, const float iVal, const unsigned int iAlgo);
+  void add(const float iVal, const unsigned int iAlgo, float const, float const, int const);
   void computeMedRMS(const unsigned int &iAlgo);
   //Get the Weight
   float compute(std::vector<float> const &iVals, float iChi2) const;

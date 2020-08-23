@@ -84,25 +84,24 @@ void PuppiAlgo::fixAlgoEtaBin(int i_eta) {
   cur_Med = fMedian_perEta[0][i_eta];  // 0 is number of algos within this eta bin
 }
 
-void PuppiAlgo::add(const PuppiCandidate &iParticle, const float iVal, const unsigned int iAlgo) {
-  if (iParticle.pt < fRMSPtMin[iAlgo])
+void PuppiAlgo::add(const float iVal, const unsigned int iAlgo, float const cand_pt, float const cand_eta, int const cand_id) {
+  if (cand_pt < fRMSPtMin[iAlgo])
     return;
   // Change from SRR : Previously used fastjet::PseudoJet::user_index to decide the particle type.
   // In CMSSW we use the user_index to specify the index in the input collection, so I invented
   // a new mechanism using the fastjet UserInfo functionality. Of course, it's still just an integer
   // but that interface could be changed (or augmented) if desired / needed.
-  int puppi_id = iParticle.id;
-  if (puppi_id == std::numeric_limits<int>::lowest()) {
+  if (cand_id == std::numeric_limits<int>::lowest()) {
     throw cms::Exception("PuppiRegisterNotSet") << "The puppi register is not set. This must be set before use.\n";
   }
 
   // added by Nhan -- for all eta regions, compute mean/RMS from the central charged PU
-  if ((std::abs(iParticle.eta) < fEtaMaxExtrap) && (puppi_id == 2)) {
+  if ((std::abs(cand_eta) < fEtaMaxExtrap) && (cand_id == 2)) {
     fPups.push_back(iVal);
     fNCount[iAlgo]++;
   }
   // for the low PU case, correction.  for checking that the PU-only median will be below the PV particles
-  if (std::abs(iParticle.eta) < fEtaMaxExtrap && (puppi_id == 1))
+  if (std::abs(cand_eta) < fEtaMaxExtrap && (cand_id == 1))
     fPupsPV.push_back(iVal);
 }
 
