@@ -92,7 +92,7 @@ void PuppiContainer::getRMSAvg(int iOpt, PuppiContainer::CandidatesTable const &
     //Calculate the Puppi Algo to use
     float const pt = iConstits.get<edm::soa::col::Pt>(i0);
     float const eta = iConstits.get<edm::soa::col::Eta>(i0);
-    float const id = iConstits.get<edm::soa::col::Id>(i0);
+    int const id = iConstits.get<edm::soa::col::Id>(i0);
 
     int pPupId = getPuppiId(pt, eta);
     if (pPupId == -1 || fPuppiAlgo[pPupId].numAlgos() <= iOpt) {
