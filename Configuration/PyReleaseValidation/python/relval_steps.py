@@ -3267,6 +3267,16 @@ for year,k in [(year,k) for year in upgradeKeys for k in upgradeKeys[year]]:
     hltversion=upgradeProperties[year][k].get('HLTmenu')
     beamspot=upgradeProperties[year][k].get('BeamSpot', None)
 
+    hltType = hltversion
+    if hltversion.startswith('@'):
+       hltTypeKey = hltversion[1:]
+       if hltTypeKey in autoHLT:
+          hltType = autoHLT[hltTypeKey]
+       else:
+          raise ValueError('invalid key "{:}" for autoHLT dictionary (see autoHLT.py)'.format(hltTypeKey))
+       del hltTypeKey
+    hltIsFake = hltType.startswith('Fake')
+
     # setup baseline steps
     upgradeStepDict['GenSim'][k]= {'-s' : 'GEN,SIM',
                                        '-n' : 10,
