@@ -49,6 +49,8 @@ puppi = cms.EDProducer("PuppiProducer",#cms.PSet(#"PuppiProducer",
                        clonePackedCands   = cms.bool(False), # should only be set to True for MiniAOD
                        vtxNdofCut     = cms.int32(4),
                        vtxZCut        = cms.double(24),
+                       useRhoAsPUProxy = cms.bool(False),
+                       rho = cms.InputTag('fixedGridRhoFastjetAll'),
                        algos          = cms.VPSet( 
                         cms.PSet( 
                          etaMin = cms.vdouble(0.),
