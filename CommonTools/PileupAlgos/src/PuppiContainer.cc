@@ -38,7 +38,6 @@ void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
   fAlphaRMS.resize(0);
   //fChargedNoPV.resize(0);
   //Link to the RecoObjects
-  fPVFrac = 0.;
   fNPV = 1.;
   fRecoParticles = &iRecoObjects;
   for (auto const &rParticle : *fRecoParticles) {

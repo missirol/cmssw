@@ -10,7 +10,7 @@ public:
   PuppiContainer(const edm::ParameterSet &iConfig);
   ~PuppiContainer();
   void initialize(const std::vector<RecoObj> &iRecoObjects);
-  void setNPV(int iNPV) { fNPV = iNPV; }
+  void setNPV(double iNPV) { fNPV = iNPV; }
 
   std::vector<PuppiCandidate> const &pfParticles() const { return fPFParticles; }
   std::vector<PuppiCandidate> const &pvParticles() const { return fChargedPV; }
@@ -61,8 +61,8 @@ protected:
   double fPtMaxNeutrals;
   double fPtMaxNeutralsStartSlope;
   int fNAlgos;
-  int fNPV;
-  double fPVFrac;
+  double fNPV;
+
   std::vector<PuppiAlgo> fPuppiAlgo;
 };
 #endif

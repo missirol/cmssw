@@ -41,6 +41,12 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   tokenPFCandidates_ = consumes<CandidateView>(iConfig.getParameter<edm::InputTag>("candName"));
   tokenVertices_ = consumes<VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexName"));
 
+  fUsePUProxyValue = iConfig.getParameter<bool>("usePUProxyValue");
+
+  if(fUsePUProxyValue){
+    puProxyValueToken_ = consumes<double>(iConfig.getParameter<edm::InputTag>("PUProxyValue"));
+  }
+
   ptokenPupOut_ = produces<edm::ValueMap<float>>();
   ptokenP4PupOut_ = produces<edm::ValueMap<LorentzVector>>();
   ptokenValues_ = produces<edm::ValueMap<reco::CandidatePtr>>();
@@ -73,11 +79,16 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.getByToken(tokenVertices_, hVertexProduct);
   const reco::VertexCollection* pvCol = hVertexProduct.product();
 
-  int npv = 0;
-  const reco::VertexCollection::const_iterator vtxEnd = pvCol->end();
-  for (reco::VertexCollection::const_iterator vtxIter = pvCol->begin(); vtxEnd != vtxIter; ++vtxIter) {
-    if (!vtxIter->isFake() && vtxIter->ndof() >= fVtxNdofCut && std::abs(vtxIter->z()) <= fVtxZCut)
-      npv++;
+  double puProxyValue(0.);
+  if(fUsePUProxyValue){
+    puProxyValue = iEvent.get(puProxyValueToken_);
+  }
+  else {
+    const reco::VertexCollection::const_iterator vtxEnd = pvCol->end();
+    for (reco::VertexCollection::const_iterator vtxIter = pvCol->begin(); vtxEnd != vtxIter; ++vtxIter) {
+      if (!vtxIter->isFake() && vtxIter->ndof() >= fVtxNdofCut && std::abs(vtxIter->z()) <= fVtxZCut)
+        puProxyValue++;
+    }
   }
 
   std::vector<double> lWeights;
@@ -213,7 +224,7 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     }
 
     fPuppiContainer->initialize(fRecoObjCollection);
-    fPuppiContainer->setNPV(npv);
+    fPuppiContainer->setNPV(puProxyValue);
 
     //Compute the weights and get the particles
     lWeights = fPuppiContainer->puppiWeights();
@@ -383,6 +394,8 @@ void PuppiProducer::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<bool>("invertPuppi", false);
   desc.add<bool>("useExp", false);
   desc.add<double>("MinPuppiWeight", .01);
+  desc.add<bool>("usePUProxyValue", false);
+  desc.add<edm::InputTag>("PUProxyValue", edm::InputTag(""));
 
   PuppiAlgo::fillDescriptionsPuppiAlgo(desc);
 
