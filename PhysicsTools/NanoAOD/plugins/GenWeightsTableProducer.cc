@@ -555,6 +555,7 @@ public:
       std::regex weightgroupmg26x("<weightgroup\\s+(?:name|type)=\"(.*)\"\\s+combine=\"(.*)\"\\s*>");
       std::regex weightgroup("<weightgroup\\s+combine=\"(.*)\"\\s+(?:name|type)=\"(.*)\"\\s*>");
       std::regex weightgroupRwgt("<weightgroup\\s+(?:name|type)=\"(.*)\"\\s*>");
+      std::regex weightgroupRwgtmg26xNew("<weightgroup\\s+(?:name|type)=\"(.*)\" weight_name_strategy=\"(.*)\"\\s*>");
       std::regex endweightgroup("</weightgroup>");
       std::regex scalewmg26x(
           "<weight\\s+(?:.*\\s+)?id=\"(\\d+)\"\\s*(?:lhapdf=\\d+|dyn=\\s*-?\\d+)?\\s*((?:[mM][uU][rR]|renscfact)=\"("
@@ -604,7 +605,8 @@ public:
           if (std::regex_search(lines[iLine], groups, weightgroupmg26x)) {
             ismg26x = true;
           } else if (std::regex_search(lines[iLine], groups, scalewmg26xNew) ||
-                     std::regex_search(lines[iLine], groups, pdfwmg26xNew)) {
+                     std::regex_search(lines[iLine], groups, pdfwmg26xNew) ||
+                     std::regex_search(lines[iLine], groups, weightgroupRwgtmg26xNew)) {
             ismg26xNew = true;
           }
         }
@@ -798,7 +800,7 @@ public:
                 }
               }
             }
-          } else if (std::regex_search(lines[iLine], groups, weightgroupRwgt)) {
+          } else if (std::regex_search(lines[iLine], groups, ismg26xNew ? weightgroupRwgtmg26xNew : weightgroupRwgt)) {
             std::string groupname = groups.str(1);
             if (groupname == "mg_reweighting") {
               if (lheDebug)
