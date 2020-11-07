@@ -1,4 +1,4 @@
-from __future__ import print_function
+#from __future__ import print_function
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
 from PhysicsTools.NanoAOD.jets_cff import *
@@ -161,13 +161,13 @@ from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 def nanoAOD_addDeepInfo(process,addDeepBTag,addDeepFlavour):
     _btagDiscriminators=[]
     if addDeepBTag:
-        print("Updating process to run DeepCSV btag")
+#        print("Updating process to run DeepCSV btag")
         _btagDiscriminators += ['pfDeepCSVJetTags:probb','pfDeepCSVJetTags:probbb','pfDeepCSVJetTags:probc']
     if addDeepFlavour:
-        print("Updating process to run DeepFlavour btag")
+#        print("Updating process to run DeepFlavour btag")
         _btagDiscriminators += ['pfDeepFlavourJetTags:probb','pfDeepFlavourJetTags:probbb','pfDeepFlavourJetTags:problepb','pfDeepFlavourJetTags:probc']
     if len(_btagDiscriminators)==0: return process
-    print("Will recalculate the following discriminators: "+", ".join(_btagDiscriminators))
+#    print("Will recalculate the following discriminators: "+", ".join(_btagDiscriminators))
     updateJetCollection(
                process,
                jetSource = cms.InputTag('slimmedJets'),
@@ -183,7 +183,7 @@ def nanoAOD_addDeepInfo(process,addDeepBTag,addDeepFlavour):
 def nanoAOD_addDeepMET(process, addDeepMETProducer, ResponseTune_Graph):
     if addDeepMETProducer:
         # produce DeepMET on the fly if it is not in MiniAOD
-        print("add DeepMET Producers")
+#        print("add DeepMET Producers")
         process.load('RecoMET.METPUSubtraction.deepMETProducer_cfi')
         process.deepMETsResolutionTune = process.deepMETProducer.clone()
         process.deepMETsResponseTune = process.deepMETProducer.clone()
@@ -262,24 +262,24 @@ def nanoAOD_activateVID(process):
 def nanoAOD_addDeepInfoAK8(process, addDeepBTag, addDeepBoostedJet, addDeepDoubleX, addParticleNet, jecPayload):
     _btagDiscriminators=[]
     if addDeepBTag:
-        print("Updating process to run DeepCSV btag to AK8 jets")
+#        print("Updating process to run DeepCSV btag to AK8 jets")
         _btagDiscriminators += ['pfDeepCSVJetTags:probb','pfDeepCSVJetTags:probbb']
     if addDeepBoostedJet:
-        print("Updating process to run DeepBoostedJet on datasets before 103X")
+#        print("Updating process to run DeepBoostedJet on datasets before 103X")
         from RecoBTag.ONNXRuntime.pfDeepBoostedJet_cff import _pfDeepBoostedJetTagsAll as pfDeepBoostedJetTagsAll
         _btagDiscriminators += pfDeepBoostedJetTagsAll
     if addParticleNet:
-        print("Updating process to run ParticleNet before it's included in MiniAOD")
+#        print("Updating process to run ParticleNet before it's included in MiniAOD")
         from RecoBTag.ONNXRuntime.pfParticleNet_cff import _pfParticleNetJetTagsAll as pfParticleNetJetTagsAll
         _btagDiscriminators += pfParticleNetJetTagsAll
     if addDeepDoubleX: 
-        print("Updating process to run DeepDoubleX on datasets before 104X")
+#        print("Updating process to run DeepDoubleX on datasets before 104X")
         _btagDiscriminators += ['pfDeepDoubleBvLJetTags:probHbb', \
             'pfDeepDoubleCvLJetTags:probHcc', \
             'pfDeepDoubleCvBJetTags:probHcc', \
             'pfMassIndependentDeepDoubleBvLJetTags:probHbb', 'pfMassIndependentDeepDoubleCvLJetTags:probHcc', 'pfMassIndependentDeepDoubleCvBJetTags:probHcc']
     if len(_btagDiscriminators)==0: return process
-    print("Will recalculate the following discriminators on AK8 jets: "+", ".join(_btagDiscriminators))
+#    print("Will recalculate the following discriminators on AK8 jets: "+", ".join(_btagDiscriminators))
     updateJetCollection(
        process,
        jetSource = cms.InputTag('slimmedJetsAK8'),
