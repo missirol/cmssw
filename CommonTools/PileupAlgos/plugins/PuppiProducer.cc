@@ -391,8 +391,6 @@ void PuppiProducer::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<double>("EtaMaxCharged", 99999.);
   desc.add<double>("PtMaxPhotons", -1.);
   desc.add<double>("EtaMaxPhotons", 2.5);
-  desc.add<double>("PtMaxNeutrals", 200.);
-  desc.add<double>("PtMaxNeutralsStartSlope", 0.);
   desc.add<uint>("NumOfPUVtxsForCharged", 0);
   desc.add<double>("DeltaZCutForChargedFromPUVtxs", 0.2);
   desc.add<bool>("useExistingWeights", false);

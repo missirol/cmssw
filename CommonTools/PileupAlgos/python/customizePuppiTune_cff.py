@@ -30,14 +30,19 @@ def UpdatePuppiTuneV15(process, runOnMC=True):
   #
   process.puppi.PtMaxCharged = 20.
   process.puppi.EtaMinUseDeltaZ = 2.4
-  process.puppi.PtMaxNeutralsStartSlope = 20.
   process.puppi.NumOfPUVtxsForCharged = 2
   process.puppi.algos[0].etaMin[0] = -0.01
+  for _tmp1 in process.puppi.algos:
+    for _tmp2 in range(len(_tmp1.PtMaxNeutralsStartSlope)):
+      _tmp1.PtMaxNeutralsStartSlope[_tmp2] = 20.
+
   process.puppiNoLep.PtMaxCharged = 20.
   process.puppiNoLep.EtaMinUseDeltaZ = 2.4
-  process.puppiNoLep.PtMaxNeutralsStartSlope = 20.
   process.puppiNoLep.NumOfPUVtxsForCharged = 2
   process.puppiNoLep.algos[0].etaMin[0] = -0.01
+  for _tmp1 in process.puppiNoLep.algos:
+    for _tmp2 in range(len(_tmp1.PtMaxNeutralsStartSlope)):
+      _tmp1.PtMaxNeutralsStartSlope[_tmp2] = 20.
 
   from Configuration.Eras.Modifier_phase2_common_cff import phase2_common
   phase2_common.toModify( process.puppi, EtaMinUseDeltaZ = 4.0)

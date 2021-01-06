@@ -1,9 +1,11 @@
 #include "CommonTools/PileupAlgos/interface/PuppiAlgo.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Math/QuantFuncMathCore.h"
 #include "Math/SpecFuncMathCore.h"
 #include "Math/ProbFunc.h"
 #include "TMath.h"
+#include <algorithm>
 
 PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   fEtaMin = iConfig.getParameter<std::vector<double>>("etaMin");
@@ -11,6 +13,8 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   fPtMin = iConfig.getParameter<std::vector<double>>("ptMin");
   fNeutralPtMin = iConfig.getParameter<std::vector<double>>("MinNeutralPt");         // Weighted Neutral Pt Cut
   fNeutralPtSlope = iConfig.getParameter<std::vector<double>>("MinNeutralPtSlope");  // Slope vs #pv
+  fPtMaxNeutrals = iConfig.getParameter<std::vector<double>>("PtMaxNeutrals");
+  fPtMaxNeutralsStartSlope = iConfig.getParameter<std::vector<double>>("PtMaxNeutralsStartSlope");
   fRMSEtaSF = iConfig.getParameter<std::vector<double>>("RMSEtaSF");
   fMedEtaSF = iConfig.getParameter<std::vector<double>>("MedEtaSF");
   fEtaMaxExtrap = iConfig.getParameter<double>("EtaMaxExtrap");
@@ -58,13 +62,17 @@ PuppiAlgo::PuppiAlgo(edm::ParameterSet &iConfig) {
   cur_PtMin = -99.;
   cur_NeutralPtMin = -99.;
   cur_NeutralPtSlope = -99.;
+  cur_PtMaxNeutrals = -99.;
+  cur_PtMaxNeutralsStartSlope = -99.;
   cur_RMS = -99.;
   cur_Med = -99.;
 }
+
 PuppiAlgo::~PuppiAlgo() {
   fPups.clear();
   fPupsPV.clear();
 }
+
 void PuppiAlgo::reset() {
   fPups.clear();
   fPupsPV.clear();
@@ -80,6 +88,8 @@ void PuppiAlgo::fixAlgoEtaBin(int i_eta) {
   cur_PtMin = fPtMin[i_eta];
   cur_NeutralPtMin = fNeutralPtMin[i_eta];
   cur_NeutralPtSlope = fNeutralPtSlope[i_eta];
+  cur_PtMaxNeutrals = fPtMaxNeutrals[i_eta];
+  cur_PtMaxNeutralsStartSlope = fPtMaxNeutralsStartSlope[i_eta];
   cur_RMS = fRMS_perEta[0][i_eta];     // 0 is number of algos within this eta bin
   cur_Med = fMedian_perEta[0][i_eta];  // 0 is number of algos within this eta bin
 }
@@ -214,7 +224,20 @@ double PuppiAlgo::compute(std::vector<double> const &iVals, double iChi2) const 
   lPVal *= ROOT::Math::chisquared_cdf(lVal, lNDOF);
   return lPVal;
 }
-// ------------------------------------------------------------------------------------------
+
+double PuppiAlgo::clippedWeightForNeutrals(double const weight, double const candPt) const {
+  if(cur_PtMaxNeutrals < 0.) return weight;
+
+  if(cur_PtMaxNeutrals <= cur_PtMaxNeutralsStartSlope){
+    edm::LogWarning("Configuration") << "logic error in PuppiAlgo configuration: PtMaxNeutrals ("
+      << cur_PtMaxNeutrals << ") <= PtMaxNeutralsStartSlope (" << cur_PtMaxNeutralsStartSlope << ")."
+      << " Will return input weight (" << weight << ").";
+    return weight;
+  }
+
+  return std::clamp((candPt - cur_PtMaxNeutralsStartSlope)/(cur_PtMaxNeutrals - cur_PtMaxNeutralsStartSlope), weight, 1.);
+}
+
 void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   edm::ParameterSetDescription puppialgos;
   puppialgos.add<int>("algoId", 5);
@@ -244,6 +267,8 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   algos.add<std::vector<double>>("ptMin", {0.});
   algos.add<std::vector<double>>("MinNeutralPt", {0.2});
   algos.add<std::vector<double>>("MinNeutralPtSlope", {0.015});
+  algos.add<std::vector<double>>("PtMaxNeutrals", {200.});
+  algos.add<std::vector<double>>("PtMaxNeutralsStartSlope", {0.});
   algos.add<std::vector<double>>("RMSEtaSF", {1.0});
   algos.add<std::vector<double>>("MedEtaSF", {1.0});
   algos.add<double>("EtaMaxExtrap", 2.0);
@@ -252,6 +277,8 @@ void PuppiAlgo::fillDescriptionsPuppiAlgo(edm::ParameterSetDescription &desc) {
   algosset.addParameter<std::vector<double>>("ptMin", {0.});
   algosset.addParameter<std::vector<double>>("MinNeutralPt", {0.2});
   algosset.addParameter<std::vector<double>>("MinNeutralPtSlope", {0.015});
+  algosset.addParameter<std::vector<double>>("PtMaxNeutrals", {200.});
+  algosset.addParameter<std::vector<double>>("PtMaxNeutralsStartSlope", {0.});
   algosset.addParameter<std::vector<double>>("RMSEtaSF", {1.0});
   algosset.addParameter<std::vector<double>>("MedEtaSF", {1.0});
   algosset.addParameter<double>("EtaMaxExtrap", 2.0);

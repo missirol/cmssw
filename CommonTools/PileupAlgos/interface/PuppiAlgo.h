@@ -31,6 +31,7 @@ public:
   inline bool isCharged(unsigned int iAlgo) const { return fCharged.at(iAlgo); }
   inline double coneSize(unsigned int iAlgo) const { return fConeSize.at(iAlgo); }
   inline double neutralPt(double const iPUProxy) const { return cur_NeutralPtMin + iPUProxy * cur_NeutralPtSlope; }
+  double clippedWeightForNeutrals(double const weight, double const candPt) const;
 
   inline double rms() const { return cur_RMS; }
   inline double median() const { return cur_Med; }
@@ -44,6 +45,8 @@ private:
   std::vector<double> fPtMin;
   std::vector<double> fNeutralPtMin;
   std::vector<double> fNeutralPtSlope;
+  std::vector<double> fPtMaxNeutrals;
+  std::vector<double> fPtMaxNeutralsStartSlope;
 
   std::vector<double> fRMSEtaSF;
   std::vector<double> fMedEtaSF;
@@ -52,6 +55,8 @@ private:
   double cur_PtMin;
   double cur_NeutralPtMin;
   double cur_NeutralPtSlope;
+  double cur_PtMaxNeutrals;
+  double cur_PtMaxNeutralsStartSlope;
   double cur_RMS;
   double cur_Med;
 
