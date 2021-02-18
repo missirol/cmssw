@@ -215,18 +215,6 @@ void JetMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& iRun
             true,
             false);
 
-  /*
-    WE WOULD NEED TURNON CURVES TO BE COMPARED NOT JUST THE ZOOM OF A 2D MAP !!!
-
-  histname = hist_obtag +"AbsEtaVsPhi_HEP17"; histtitle = histtitle_obtag + " |eta| Vs phi (HEP17) ";
-  bookME(ibooker,jetHEP17_AbsEtaVsPhi_,histname,histtitle, eta_binning_hep17_.nbins, eta_binning_hep17_.xmin, eta_binning_hep17_.xmax, phi_binning_hep17_.nbins,phi_binning_hep17_.xmin,phi_binning_hep17_.xmax);
-  setMETitle(jetHEP17_AbsEtaVsPhi_,histtitle_obtag + " |#eta|","#phi");
-
-  histname = hist_obtag +"AbsEtaVsPhi_HEM17"; histtitle = histtitle_obtag + " |eta| Vs phi (HEM17) ";
-  bookME(ibooker,jetHEM17_AbsEtaVsPhi_,histname,histtitle, eta_binning_hep17_.nbins, eta_binning_hep17_.xmin, eta_binning_hep17_.xmax, phi_binning_hep17_.nbins,phi_binning_hep17_.xmin,phi_binning_hep17_.xmax);
-  setMETitle(jetHEM17_AbsEtaVsPhi_,histtitle_obtag + " |#eta|","#phi");
-  */
-
 }
 
 void JetMonitor::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup) {
