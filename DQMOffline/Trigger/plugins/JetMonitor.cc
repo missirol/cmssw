@@ -34,9 +34,6 @@ protected:
   bool isEndCapP(double eta);
   bool isEndCapM(double eta);
   bool isForward(double eta);
-  bool isHEP17(double eta, double phi);
-  bool isHEM17(double eta, double phi);
-  bool isHEP18(double eta, double phi);  // -0.87< Phi < -1.22
 
   void bookMESub(DQMStore::IBooker&,
                  ObjME* a_me,
@@ -85,14 +82,6 @@ private:
   ObjME a_ME_HF[7];
   ObjME a_ME_HE_p[7];
   ObjME a_ME_HE_m[7];
-  ObjME a_ME_HEM17[7];
-  ObjME a_ME_HEP17[7];
-  ObjME a_ME_HEP18[7];
-
-  ObjME jetHEP17_AbsEtaVsPhi_;
-  ObjME jetHEM17_AbsEtaVsPhi_;
-  ObjME jetHEP17_AbsEta_;
-  ObjME jetHEM17_AbsEta_;
 
   std::vector<double> v_jetpt;
   std::vector<double> v_jeteta;
@@ -230,39 +219,6 @@ void JetMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& iRun
             true,
             true,
             false);
-  bookMESub(ibooker,
-            a_ME_HEP17,
-            sizeof(a_ME_HEP17) / sizeof(a_ME_HEP17[0]),
-            hist_obtag,
-            histtitle_obtag,
-            "HEP17",
-            "(HEP17)",
-            true,
-            false,
-            false,
-            false);
-  bookMESub(ibooker,
-            a_ME_HEM17,
-            sizeof(a_ME_HEM17) / sizeof(a_ME_HEM17[0]),
-            hist_obtag,
-            histtitle_obtag,
-            "HEM17",
-            "(HEM17)",
-            true,
-            false,
-            false,
-            false);
-  bookMESub(ibooker,
-            a_ME_HEP18,
-            sizeof(a_ME_HEP18) / sizeof(a_ME_HEP18[0]),
-            hist_obtag,
-            histtitle_obtag,
-            "HEP18",
-            "(HEP18)",
-            false,
-            false,
-            false,
-            false);
 
   /*
     WE WOULD NEED TURNON CURVES TO BE COMPARED NOT JUST THE ZOOM OF A 2D MAP !!!
@@ -276,27 +232,6 @@ void JetMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& iRun
   setMETitle(jetHEM17_AbsEtaVsPhi_,histtitle_obtag + " |#eta|","#phi");
   */
 
-  histname = hist_obtag + "abseta_HEP17";
-  histtitle = histtitle_obtag + " |#eta| (HEP17) ";
-  bookME(ibooker,
-         jetHEP17_AbsEta_,
-         histname,
-         histtitle,
-         eta_binning_hep17_.nbins,
-         eta_binning_hep17_.xmin,
-         eta_binning_hep17_.xmax);
-  setMETitle(jetHEP17_AbsEta_, histtitle_obtag + " |#eta|", "events / |#eta|");
-
-  histname = hist_obtag + "abseta_HEM17";
-  histtitle = histtitle_obtag + " |eta| (HEM17) ";
-  bookME(ibooker,
-         jetHEM17_AbsEta_,
-         histname,
-         histtitle,
-         eta_binning_hep17_.nbins,
-         eta_binning_hep17_.xmin,
-         eta_binning_hep17_.xmax);
-  setMETitle(jetHEM17_AbsEta_, histtitle_obtag + " |#eta|", "events / |#eta|");
 }
 
 void JetMonitor::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup) {
@@ -354,27 +289,6 @@ void JetMonitor::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
     FillME(a_ME_HF, jetpt_, jetphi_, jeteta_, ls, "denominator", true, true, true, false);
   }
 
-  if (isHEP17(jeteta_, jetphi_)) {
-    FillME(a_ME_HEP17,
-           jetpt_,
-           jetphi_,
-           jeteta_,
-           ls,
-           "denominator",
-           true,
-           false,
-           false,
-           false);  // doPhi, doEta, doEtaPhi, doVsLS
-    jetHEP17_AbsEta_.denominator->Fill(abs(jeteta_));
-  } else if (isHEM17(jeteta_, jetphi_)) {
-    FillME(
-        a_ME_HEM17, jetpt_, jetphi_, jeteta_, ls, "denominator", true, false, false, false);  // doPhi, doEta, doEtaPhi
-    jetHEM17_AbsEta_.denominator->Fill(abs(jeteta_));
-  } else if (isHEP18(jeteta_, jetphi_)) {
-    FillME(
-        a_ME_HEP18, jetpt_, jetphi_, jeteta_, ls, "denominator", false, false, false, false);  // doPhi, doEta, doEtaPhi
-  }
-
   if (num_genTriggerEventFlag_->on() && !num_genTriggerEventFlag_->accept(iEvent, iSetup))
     return;  // Require Numerator //
 
@@ -391,42 +305,6 @@ void JetMonitor::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
     FillME(a_ME_HF, jetpt_, jetphi_, jeteta_, ls, "numerator", true, true, true, false);
   }
 
-  if (isHEP17(jeteta_, jetphi_)) {
-    FillME(a_ME_HEP17,
-           jetpt_,
-           jetphi_,
-           jeteta_,
-           ls,
-           "numerator",
-           true,
-           false,
-           false,
-           false);  // doPhi, doEta, doEtaPhi, doVsLS
-    jetHEP17_AbsEta_.numerator->Fill(abs(jeteta_));
-  } else if (isHEM17(jeteta_, jetphi_)) {
-    FillME(a_ME_HEM17,
-           jetpt_,
-           jetphi_,
-           jeteta_,
-           ls,
-           "numerator",
-           true,
-           false,
-           false,
-           false);  // doPhi, doEta, doEtaPhi, doVsLS
-    jetHEM17_AbsEta_.numerator->Fill(abs(jeteta_));
-  } else if (isHEP18(jeteta_, jetphi_)) {
-    FillME(a_ME_HEP18,
-           jetpt_,
-           jetphi_,
-           jeteta_,
-           ls,
-           "numerator",
-           false,
-           false,
-           false,
-           false);  // doPhi, doEta, doEtaPhi, doVsLS
-  }
 }
 
 bool JetMonitor::isBarrel(double eta) {
@@ -457,35 +335,6 @@ bool JetMonitor::isForward(double eta) {
   bool output = false;
   if (fabs(eta) > 3.0)
     output = true;
-  return output;
-}
-
-/// For Hcal HEP17 Area
-bool JetMonitor::isHEP17(double eta, double phi) {
-  bool output = false;
-  // phi -0.87 to -0.52
-  if (fabs(eta) <= 3.0 && fabs(eta) > 1.3 && (eta > 0) && phi > -0.87 && phi <= -0.52) {
-    output = true;
-  }  // (mia) this magic number should come from some file in CMSSW !!!
-  return output;
-}
-
-/// For Hcal HEM17 Area
-bool JetMonitor::isHEM17(double eta, double phi) {
-  bool output = false;
-  if (fabs(eta) <= 3.0 && fabs(eta) > 1.3 && (eta < 0) && phi > -0.87 && phi <= -0.52) {
-    output = true;
-  }  // (mia) this magic number should come from some file in CMSSW !!!
-  return output;
-}
-
-/// For Hcal HEP18 Area
-bool JetMonitor::isHEP18(double eta, double phi) {
-  bool output = false;
-  // phi -0.87 to -0.52
-  if (fabs(eta) <= 3.0 && fabs(eta) > 1.3 && (eta > 0) && phi > -0.52 && phi <= -0.17) {
-    output = true;
-  }  // (mia) this magic number should come from some file in CMSSW !!!
   return output;
 }
 
@@ -555,33 +404,6 @@ void JetMonitor::bookMESub(DQMStore::IBooker& Ibooker,
   double maxbin_eta = jet_eta_binning_.xmax;
   double minbin_eta = jet_eta_binning_.xmin;
 
-  if (h_subOptName == "HEP17") {
-    nbin_phi = phi_binning_hep17_.nbins;
-    maxbin_phi = phi_binning_hep17_.xmax;
-    minbin_phi = phi_binning_hep17_.xmin;
-
-    nbin_eta = eta_binning_hep17_.nbins;
-    maxbin_eta = eta_binning_hep17_.xmax;
-    minbin_eta = eta_binning_hep17_.xmin;
-  }
-  if (h_subOptName == "HEM17") {
-    nbin_phi = phi_binning_hep17_.nbins;
-    maxbin_phi = phi_binning_hep17_.xmax;
-    minbin_phi = phi_binning_hep17_.xmin;
-
-    nbin_eta = eta_binning_hem17_.nbins;
-    maxbin_eta = eta_binning_hem17_.xmax;
-    minbin_eta = eta_binning_hem17_.xmin;
-  }
-  if (h_subOptName == "HEP18") {
-    nbin_phi = phi_binning_hep18_.nbins;
-    maxbin_phi = phi_binning_hep18_.xmax;
-    minbin_phi = phi_binning_hep18_.xmin;
-
-    nbin_eta = eta_binning_hep17_.nbins;
-    maxbin_eta = eta_binning_hep17_.xmax;
-    minbin_eta = eta_binning_hep17_.xmin;
-  }
   hName = h_Name + "pT" + hSubN;
   hTitle = h_Title + " pT " + hSubT;
   bookME(Ibooker, a_me[0], hName, hTitle, jetpt_binning_.nbins, jetpt_binning_.xmin, jetpt_binning_.xmax);
