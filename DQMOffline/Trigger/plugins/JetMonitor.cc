@@ -91,11 +91,6 @@ private:
   MEbinning jet_phi_binning_{32, -3.2, 3.2};
   MEbinning jet_eta_binning_{20, -5, 5};
 
-  MEbinning eta_binning_hep17_{9, 1.3, 3.0};
-  MEbinning eta_binning_hem17_{9, -3.0, -1.3};
-
-  MEbinning phi_binning_hep17_{7, -0.87, -0.52};
-  MEbinning phi_binning_hep18_{7, -0.52, -0.17};
 };
 
 JetMonitor::JetMonitor(const edm::ParameterSet& iConfig)
