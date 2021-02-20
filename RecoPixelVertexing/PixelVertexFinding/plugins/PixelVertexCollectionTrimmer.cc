@@ -51,11 +51,13 @@ private:
   double fractionSumPt2_;
   double minSumPt2_;
 
+  std::string encode_;
   PVClusterComparer* pvComparer_;
 };
 
 PixelVertexCollectionTrimmer::PixelVertexCollectionTrimmer(const edm::ParameterSet& iConfig) {
   edm::InputTag vtxInputTag = iConfig.getParameter<edm::InputTag>("src");
+  encode_ = vtxInputTag.encode();
   vtxToken_ = consumes<reco::VertexCollection>(vtxInputTag);
   maxVtx_ = iConfig.getParameter<unsigned int>("maxVtx");
   fractionSumPt2_ = iConfig.getParameter<double>("fractionSumPt2");
@@ -106,6 +108,7 @@ void PixelVertexCollectionTrimmer::produce(edm::Event& iEvent, const edm::EventS
     //    if (sumpt2 >= sumpt2first*fractionSumPt2_ && sumpt2 > minSumPt2_ ) vtxs_trim->push_back(*vtx) ;
     if (sumpt2 >= sumpt2first * fractionSumPt2_ && sumpt2 > minSumPt2_)
       vtxs_trim->push_back(*vtx);
+    edm::LogPrint("") << "[PixelVertexCollectionTrimmer:" << encode_ << "] " << vtx-vtxs->begin() << " | x=" << vtx->x() << " y=" << vtx->y() << " z=" << vtx->z() << " sumPt2=" << sumpt2;
   }
   //  std::cout << " ==> # vertices: " << vtxs_trim->size() << std::endl;
   iEvent.put(std::move(vtxs_trim));

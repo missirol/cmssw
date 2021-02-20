@@ -131,6 +131,7 @@ void PixelVertexProducerFromSoA::produce(edm::StreamID streamID, edm::Event &iEv
       v.add(reco::TrackBaseRef(tk));
     }
     itrk.clear();
+    edm::LogPrint("") << "[PixelVertexProducerFromSoA] " << vertexes->size()-1 << " | x=" << x << " y=" << y << " z=" << z << " sumPt2=" << soa.ptv2[i];
   }
 
   LogDebug("PixelVertexProducer") << ": Found " << vertexes->size() << " vertexes\n";
