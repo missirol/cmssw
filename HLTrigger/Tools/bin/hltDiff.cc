@@ -287,11 +287,18 @@ void print_detailed_path_state(std::ostream& out, State state, int path, int mod
   auto const& label = config.moduleLabel(path, module);
   auto const& type = config.moduleType(path, module);
 
-  out << "'" << path_state(state) << "'";
+  out << "'   " << path_state(state) << "'";
   if (state == Fail)
     out << " by module " << module << " '" << label << "' [" << type << "]";
   else if (state == Exception)
     out << " at module " << module << " '" << label << "' [" << type << "]";
+
+  out << "D " << state
+	    << " " << path
+	    << " " << module
+	    << " " << label
+	    << " " << type
+;
 }
 
 void print_trigger_candidates(std::ostream& out, trigger::TriggerEvent const& summary, edm::InputTag const& filter) {
@@ -1377,8 +1384,10 @@ public:
         old_config_data = getHLTConfigData(*old_events->event(), old_process);
         new_config_data = getHLTConfigData(*new_events->event(), new_process);
         if (new_config_data->triggerNames() == old_config_data->triggerNames()) {
+std::cout << ">>> triggernames match" << std::endl;
           old_config = old_config_data.get();
           new_config = new_config_data.get();
+for(auto const& tmp : new_config_data->triggerNames()) std::cout << "   triggername: " << tmp << std::endl; 
         } else {
           common_config = std::make_unique<HLTCommonConfig>(*old_config_data, *new_config_data);
           old_config = &common_config->getView(HLTCommonConfig::Index::First);
@@ -1417,12 +1426,16 @@ public:
       // compare the TriggerResults
       bool needs_header = true;
       bool event_affected = false;
+std::cout << "XXX 1: " << old_config->size() << " " << new_config->size() << std::endl;
+std::cout << "XXX 2: " << old_results->size() << " " << new_results->size() << std::endl;
       for (unsigned int p = 0; p < old_config->size(); ++p) {
         // FIXME explicitly converting the indices is a hack, it should be properly encapsulated instead
         unsigned int old_index = old_config->triggerIndex(p);
         unsigned int new_index = new_config->triggerIndex(p);
         State old_state = prescaled_state(old_results->state(old_index), p, old_results->index(old_index), *old_config);
         State new_state = prescaled_state(new_results->state(new_index), p, new_results->index(new_index), *new_config);
+
+std::cout << "XXX " << p << " " << old_index << " " << new_index << std::endl;
 
         if (old_state == Pass) {
           ++differences.at(p).count;
@@ -1435,12 +1448,18 @@ public:
         bool trigger_affected = false;
         if (not ignore_prescales or (old_state != Prescaled and new_state != Prescaled)) {
           if (old_state == Pass and new_state != Pass) {
+std::cout << "A" << std::endl;
             ++differences.at(p).lost;
             trigger_affected = true;
           } else if (old_state != Pass and new_state == Pass) {
+std::cout << "B" << std::endl;
             ++differences.at(p).gained;
             trigger_affected = true;
           } else if (old_results->index(old_index) != new_results->index(new_index)) {
+std::cout << "C" << std::endl;
+std::cout << "C " << old_index << " " << old_results->index(old_index) << std::endl;
+std::cout << "C " << std::endl;
+std::cout << "C " << new_index << " " << new_results->index(new_index) << std::endl;
             ++differences.at(p).internal;
             trigger_affected = true;
           }
@@ -1464,6 +1483,8 @@ public:
                                   new_config->moduleLabel(p, new_moduleIndex),
                                   new_config->moduleType(p, new_moduleIndex));
 
+
+
         if (verbose > 0) {
           if (needs_header) {
             needs_header = false;
@@ -1479,6 +1500,13 @@ public:
                     << "        new state is ";
           print_detailed_path_state(std::cout, new_state, p, new_moduleIndex, *new_config);
           std::cout << std::endl;
+
+std::cout << "OLD CONFIG (p="<<p<<")\n";
+for(uint ooo=0;ooo<old_config->size(p);++ooo){ std::cout << "  " << ooo << " " << old_config->moduleLabel(p, ooo) << std::endl; }
+
+std::cout << "NEW CONFIG (p="<<p<<")\n";
+for(uint ooo=0;ooo<new_config->size(p);++ooo){ std::cout << "  " << ooo << " " << new_config->moduleLabel(p, ooo) << std::endl; }
+
         }
         if (verbose > 1 and old_summary and new_summary) {
           // print TriggerObjects for the filter responsible for the discrepancy
