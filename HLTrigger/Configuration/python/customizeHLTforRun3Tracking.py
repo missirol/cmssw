@@ -54,7 +54,6 @@ def customizeHLTforRun3Tracking(process):
         process.hltIter0PFLowPixelSeedsFromPixelTracks.includeFourthHit = cms.bool(True)
 
     if hasattr(process,'hltIter0PFlowTrackCutClassifier'):
-        delattr(process,'hltIter0PFlowTrackCutClassifier')
         process.hltIter0PFlowTrackCutClassifier = cms.EDProducer("TrackCutClassifier",
             src = cms.InputTag("hltIter0PFlowCtfWithMaterialTracks"),
             beamspot = cms.InputTag("hltOnlineBeamSpot"),
@@ -89,7 +88,6 @@ def customizeHLTforRun3Tracking(process):
         )
     
     if hasattr(process,'hltMergedTracks'):
-        delattr(process,'hltMergedTracks')
         process.hltMergedTracks = process.hltIter0PFlowTrackSelectionHighPurity.clone()
 
     process.HLTIterativeTrackingIteration0Task = cms.Task(
@@ -100,15 +98,12 @@ def customizeHLTforRun3Tracking(process):
         process.hltMergedTracks
     )
     if hasattr(process,'HLTIterativeTrackingIteration0'):
-        delattr(process,'HLTIterativeTrackingIteration0')
         process.HLTIterativeTrackingIteration0 = cms.Sequence( process.HLTIterativeTrackingIteration0Task )
     
     if hasattr(process,'HLTIterativeTrackingIter02'):
-        delattr(process,'HLTIterativeTrackingIter02')
         process.HLTIterativeTrackingIter02 = cms.Sequence( process.HLTIterativeTrackingIteration0 )
     
     if hasattr(process,'MC_ReducedIterativeTracking_v12'):
-        delattr(process,'MC_ReducedIterativeTracking_v12')
         process.MC_ReducedIterativeTracking_v12 = cms.Path( 
             process.HLTBeginSequence +
             process.hltPreMCReducedIterativeTracking +
@@ -204,7 +199,6 @@ def customizeHLTforRun3TrackingAllPixelVertices(process):
         process.hltIter0PFLowPixelSeedsFromPixelTracks.InputCollection = cms.InputTag("hltPixelTracksClean")
     
     if hasattr(process,'hltIter0PFlowTrackCutClassifier'):
-        delattr(process,'hltIter0PFlowTrackCutClassifier')
         process.hltIter0PFlowTrackCutClassifier = cms.EDProducer("TrackCutClassifier",
             src = cms.InputTag("hltIter0PFlowCtfWithMaterialTracks"),
             beamspot = cms.InputTag("hltOnlineBeamSpot"),
@@ -239,7 +233,6 @@ def customizeHLTforRun3TrackingAllPixelVertices(process):
         )
     
     if hasattr(process,'hltMergedTracks'):
-        delattr(process,'hltMergedTracks')
         process.hltMergedTracks = process.hltIter0PFlowTrackSelectionHighPurity.clone()
 
     process.HLTIterativeTrackingIteration0Task = cms.Task(
@@ -251,15 +244,12 @@ def customizeHLTforRun3TrackingAllPixelVertices(process):
         process.hltMergedTracks
     )
     if hasattr(process,'HLTIterativeTrackingIteration0'):
-        delattr(process,'HLTIterativeTrackingIteration0')
         process.HLTIterativeTrackingIteration0 = cms.Sequence( process.HLTIterativeTrackingIteration0Task )
     
     if hasattr(process,'HLTIterativeTrackingIter02'):
-        delattr(process,'HLTIterativeTrackingIter02')
         process.HLTIterativeTrackingIter02 = cms.Sequence( process.HLTIterativeTrackingIteration0 )
-    
+
     if hasattr(process,'MC_ReducedIterativeTracking_v12'):
-        delattr(process,'MC_ReducedIterativeTracking_v12')
         process.MC_ReducedIterativeTracking_v12 = cms.Path( 
             process.HLTBeginSequence +
             process.hltPreMCReducedIterativeTracking +

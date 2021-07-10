@@ -695,8 +695,8 @@ def customizeHLTforPatatrack(process):
     process = customiseCommon(process)
     process = customisePixelLocalReconstruction(process)
     process = customisePixelTrackReconstruction(process)
-    process = customiseEcalLocalReconstruction(process)
-    process = customiseHcalLocalReconstruction(process)
+#    process = customiseEcalLocalReconstruction(process)
+#    process = customiseHcalLocalReconstruction(process)
     return process
 
 
@@ -705,8 +705,8 @@ def customizeHLTforPatatrackTriplets(process):
     process = customiseCommon(process)
     process = customisePixelLocalReconstruction(process)
     process = customisePixelTrackReconstruction(process)
-    process = customiseEcalLocalReconstruction(process)
-    process = customiseHcalLocalReconstruction(process)
+#    process = customiseEcalLocalReconstruction(process)
+#    process = customiseHcalLocalReconstruction(process)
     process = enablePatatrackPixelTriplets(process)
     return process
 
