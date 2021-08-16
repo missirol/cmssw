@@ -406,7 +406,11 @@ def customiseEcalLocalReconstruction(process):
                 cms.PSet(type = cms.string("EBSrFlagsSorted")),
                 cms.PSet(type = cms.string("EESrFlagsSorted")),
                 cms.PSet(type = cms.string("EcalElectronicsIdedmEDCollection"), fromProductInstance = cms.string("EcalIntegrityBlockSizeErrors")),
-                cms.PSet(type = cms.string("EcalElectronicsIdedmEDCollection"), fromProductInstance = cms.string("EcalIntegrityTTIdErrors"))
+                cms.PSet(type = cms.string("EcalElectronicsIdedmEDCollection"), fromProductInstance = cms.string("EcalIntegrityTTIdErrors")),
+                cms.PSet(type = cms.string("EcalElectronicsIdedmEDCollection"), fromProductInstance = cms.string("EcalIntegrityZSXtalIdErrors")),
+                cms.PSet(type = cms.string("EcalPnDiodeDigisSorted")),
+                cms.PSet(type = cms.string("EcalPseudoStripInputDigisSorted"), fromProductInstance = cms.string("EcalPseudoStripInputs")),
+                cms.PSet(type = cms.string("EcalTriggerPrimitiveDigisSorted"), fromProductInstance = cms.string("EcalTriggerPrimitives"))
             )
         ),
         # convert ECAL digis from SoA format on gpu to legacy format on cpu
@@ -695,8 +699,8 @@ def customizeHLTforPatatrack(process):
     process = customiseCommon(process)
     process = customisePixelLocalReconstruction(process)
     process = customisePixelTrackReconstruction(process)
-#    process = customiseEcalLocalReconstruction(process)
-#    process = customiseHcalLocalReconstruction(process)
+    process = customiseEcalLocalReconstruction(process)
+    process = customiseHcalLocalReconstruction(process)
     return process
 
 
@@ -705,8 +709,8 @@ def customizeHLTforPatatrackTriplets(process):
     process = customiseCommon(process)
     process = customisePixelLocalReconstruction(process)
     process = customisePixelTrackReconstruction(process)
-#    process = customiseEcalLocalReconstruction(process)
-#    process = customiseHcalLocalReconstruction(process)
+    process = customiseEcalLocalReconstruction(process)
+    process = customiseHcalLocalReconstruction(process)
     process = enablePatatrackPixelTriplets(process)
     return process
 
