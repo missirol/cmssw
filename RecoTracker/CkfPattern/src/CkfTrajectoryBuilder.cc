@@ -27,10 +27,7 @@
 using namespace std;
 
 CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf, edm::ConsumesCollector iC)
-    : CkfTrajectoryBuilder(conf,
-                           iC,
-                           BaseCkfTrajectoryBuilder::createTrajectoryFilter(
-                               conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC)) {}
+    : CkfTrajectoryBuilder(conf, iC, BaseCkfTrajectoryBuilder::createTrajectoryFilter(conf.getParameter<edm::ParameterSet>("trajectoryFilter"), iC)) {}
 
 CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf,
                                            edm::ConsumesCollector iC,
@@ -47,6 +44,14 @@ CkfTrajectoryBuilder::CkfTrajectoryBuilder(const edm::ParameterSet& conf,
     theUniqueName = ss.str();
     LogDebug("CkfPattern")<<"my unique name is: "<<theUniqueName;
   */
+}
+
+void CkfTrajectoryBuilder::fillPSetDescription(edm::ParameterSetDescription& iDesc){
+  BaseCkfTrajectoryBuilder::fillPSetDescription(iDesc);
+  iDesc.add<int>("maxCand");
+  iDesc.add<double>("lostHitPenalty");
+  iDesc.add<bool>("intermediateCleaning");
+  iDesc.add<bool>("alwaysUseInvalidHits");
 }
 
 /*

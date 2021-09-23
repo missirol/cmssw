@@ -1,6 +1,7 @@
 #ifndef MaxHitsTrajectoryFilter_H
 #define MaxHitsTrajectoryFilter_H
 
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "TrackingTools/TrajectoryFiltering/interface/TrajectoryFilter.h"
 
 class MaxHitsTrajectoryFilter final : public TrajectoryFilter {
@@ -11,6 +12,10 @@ public:
       : theMaxHits(pset.getParameter<int>("maxNumberOfHits")) {
     if (theMaxHits < 0)
       theMaxHits = 10000;
+  }
+
+  static void fillPSetDescription(edm::ParameterSetDescription& iDesc){
+    iDesc.add<int>("maxNumberOfHits");
   }
 
   bool qualityFilter(const Trajectory& traj) const override { return TrajectoryFilter::qualityFilterIfNotContributing; }

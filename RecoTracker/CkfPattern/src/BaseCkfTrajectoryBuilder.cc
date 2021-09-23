@@ -32,8 +32,7 @@ BaseCkfTrajectoryBuilder::BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf
       theInOutFilter(std::move(inOutFilter)),
       theUpdatorToken(iC.esConsumes(edm::ESInputTag("", conf.getParameter<std::string>("updator")))),
       thePropagatorAlongToken(iC.esConsumes(edm::ESInputTag("", conf.getParameter<std::string>("propagatorAlong")))),
-      thePropagatorOppositeToken(
-          iC.esConsumes(edm::ESInputTag("", conf.getParameter<std::string>("propagatorOpposite")))),
+      thePropagatorOppositeToken(iC.esConsumes(edm::ESInputTag("", conf.getParameter<std::string>("propagatorOpposite")))),
       theEstimatorToken(iC.esConsumes(edm::ESInputTag("", conf.getParameter<std::string>("estimator")))),
       theRecHitBuilderToken(iC.esConsumes(edm::ESInputTag("", conf.getParameter<std::string>("TTRHBuilder")))) {
   if (conf.exists("clustersToSkip"))
@@ -42,6 +41,15 @@ BaseCkfTrajectoryBuilder::BaseCkfTrajectoryBuilder(const edm::ParameterSet& conf
 }
 
 BaseCkfTrajectoryBuilder::~BaseCkfTrajectoryBuilder() {}
+
+void BaseCkfTrajectoryBuilder::fillPSetDescription(edm::ParameterSetDescription& iDesc){
+  iDesc.add<bool>("seedAs5DHit");
+  iDesc.add<std::string>("updator");
+  iDesc.add<std::string>("propagatorAlong");
+  iDesc.add<std::string>("propagatorOpposite");
+  iDesc.add<std::string>("estimator");
+  iDesc.add<std::string>("TTRHBuilder");
+}
 
 std::unique_ptr<TrajectoryFilter> BaseCkfTrajectoryBuilder::createTrajectoryFilter(const edm::ParameterSet& pset,
                                                                                    edm::ConsumesCollector& iC) {
