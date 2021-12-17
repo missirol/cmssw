@@ -157,7 +157,6 @@ def customisePixelLocalReconstruction(process):
         process.hltSiPixelDigisLegacy = process.hltSiPixelDigis.clone()
 
         # SwitchProducer wrapping a subset of the legacy pixel digis producer, or the conversion of the pixel digis errors to the legacy format
-        from EventFilter.SiPixelRawToDigi.siPixelDigiErrorsFromSoA_cfi import siPixelDigiErrorsFromSoA as _siPixelDigiErrorsFromSoA
         process.hltSiPixelDigis = SwitchProducerCUDA(
             # legacy producer
             cpu = cms.EDAlias(
@@ -240,7 +239,7 @@ def customisePixelLocalReconstruction(process):
 
     # Tasks and Sequences
     if 'HLTDoLocalPixelTask' in process.__dict__ and not isinstance(process.HLTDoLocalPixelTask, cms.Task):
-        del process.HLTDoLocalPixelTask
+        raise Exception('unsupported configuration: "process.HLTDoLocalPixelTask" already exists, but it is not a Task')
 
     process.HLTDoLocalPixelTask = cms.Task(
           process.hltOnlineBeamSpotToCUDA,   # transfer the beamspot to the gpu
@@ -368,7 +367,7 @@ def customisePixelTrackReconstruction(process):
 
     # Tasks and Sequences
     if 'HLTRecoPixelTracksTask' in process.__dict__ and not isinstance(process.HLTRecoPixelTracksTask, cms.Task):
-        del process.HLTRecoPixelTracksTask
+        raise Exception('unsupported configuration: "process.HLTRecoPixelTracksTask" already exists, but it is not a Task')
 
     process.HLTRecoPixelTracksTask = cms.Task(
           process.hltPixelTracksTrackingRegions,            # from the original sequence
@@ -380,7 +379,7 @@ def customisePixelTrackReconstruction(process):
 
     if hasHLTPixelVertexReco:
         if 'HLTRecopixelvertexingTask' in process.__dict__ and not isinstance(process.HLTRecopixelvertexingTask, cms.Task):
-            del process.HLTRecopixelvertexingTask
+            raise Exception('unsupported configuration: "process.HLTRecopixelvertexingTask" already exists, but it is not a Task')
 
         process.HLTRecopixelvertexingTask = cms.Task(
               process.HLTRecoPixelTracksTask,
