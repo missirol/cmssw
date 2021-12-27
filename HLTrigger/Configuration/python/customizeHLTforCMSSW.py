@@ -115,12 +115,17 @@ def customisePixelGainForRun2Input(process):
 
     Since the conditions for Run 2 have not been updated to the new scheme, the HLT configuration needs to be reverted.
     """
-    # revert the Pixel parameters to be compatible with the Run 2 conditions
+    # revert the Pixel parameters to be compatible with the Run-2 conditions
     for producer in producers_by_type(process, "SiPixelClusterProducer"):
         producer.VCaltoElectronGain      =   47
         producer.VCaltoElectronGain_L1   =   50
         producer.VCaltoElectronOffset    =  -60
         producer.VCaltoElectronOffset_L1 = -670
+
+    # the flag "isRun2" in SiPixelRawToClusterCUDA enables
+    # the pixel-gain scheme compatible with Run-2 conditions
+    for producer in producers_by_type(process, 'SiPixelRawToClusterCUDA'):
+        producer.isRun2 = cms.bool(True)
 
     return process
 
@@ -135,10 +140,19 @@ def customisePixelL1ClusterThresholdForRun2Input(process):
 
     return process
 
+def customisePixelTrackRecoForRun2Input(process):
+    """Configure parameters of pixel-only tracking for Run-2 conditions
+    """
+    for producer in producers_by_type(process, 'CAHitNtupletCUDA'):
+        producer.idealConditions = cms.bool(False)
+
+    return process
+
 def customiseFor2018Input(process):
-    """Customise the HLT to run on Run 2 data/MC"""
+    """Customise the HLT to run on Run-2 data/MC"""
     process = customisePixelGainForRun2Input(process)
     process = customisePixelL1ClusterThresholdForRun2Input(process)
+    process = customisePixelTrackRecoForRun2Input(process)
     process = customiseHCALFor2018Input(process)
 
     return process
