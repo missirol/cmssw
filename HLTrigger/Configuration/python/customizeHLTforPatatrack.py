@@ -297,21 +297,25 @@ def customisePixelTrackReconstruction(process):
     # referenced in process.HLTRecoPixelTracksTask
 
     # build pixel ntuplets and pixel tracks in SoA format on gpu
-    from RecoPixelVertexing.PixelTriplets.pixelTracksCUDA_cfi import pixelTracksCUDA as _pixelTracksCUDA
+    from RecoPixelVertexing.PixelTriplets.pixelTracksCUDA_cfi import pixelTracksCUDA as _pixelTracksCUDATmp
+    _pixelTracksCUDA = _pixelTracksCUDATmp.clone(idealConditions = False)
+    # use quality cuts tuned for Run 2 ideal conditions for all Run 3 workflows
+    run3_common.toModify(_pixelTracksCUDA, idealConditions = True)
+
+    # take value of _pixelTracksCUDA.idealConditions from process.hltPixelTracksSoA.cpu, if it already exists
+    if hasattr(process, 'hltPixelTracksSoA') and hasattr(process.hltPixelTracksSoA, 'cpu') and hasattr(process.hltPixelTracksSoA.cpu, 'idealConditions'):
+      _pixelTracksCUDA.idealConditions = process.hltPixelTracksSoA.cpu.idealConditions.value()
+
     process.hltPixelTracksCUDA = _pixelTracksCUDA.clone(
-        idealConditions = False,
         pixelRecHitSrc = "hltSiPixelRecHitsCUDA",
         onGPU = True
     )
-    # use quality cuts tuned for Run 2 ideal conditions for all Run 3 workflows
-    run3_common.toModify(process.hltPixelTracksCUDA, idealConditions = True)
 
     # SwitchProducer providing the pixel tracks in SoA format on cpu
     from RecoPixelVertexing.PixelTrackFitting.pixelTracksSoA_cfi import pixelTracksSoA as _pixelTracksSoA
     process.hltPixelTracksSoA = SwitchProducerCUDA(
         # build pixel ntuplets and pixel tracks in SoA format on cpu
         cpu = _pixelTracksCUDA.clone(
-            idealConditions = False,
             pixelRecHitSrc = "hltSiPixelRecHitSoA",
             onGPU = False
         ),
@@ -320,8 +324,6 @@ def customisePixelTrackReconstruction(process):
             src = "hltPixelTracksCUDA"
         )
     )
-    # use quality cuts tuned for Run 2 ideal conditions for all Run 3 workflows
-    run3_common.toModify(process.hltPixelTracksSoA.cpu, idealConditions = True)
 
     # convert the pixel tracks from SoA to legacy format
     from RecoPixelVertexing.PixelTrackFitting.pixelTrackProducerFromSoA_cfi import pixelTrackProducerFromSoA as _pixelTrackProducerFromSoA
