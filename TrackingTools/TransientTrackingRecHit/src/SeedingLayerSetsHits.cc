@@ -45,13 +45,17 @@ void SeedingLayerSetsHits::print() const {
   ss << "SeedingLayerSetsHits with " << numberOfLayersInSet() << " layers in each LayerSets, LayerSets has " << size()
      << " items\n";
   for (LayerSetIndex iLayers = 0; iLayers < size(); ++iLayers) {
-    ss << " " << iLayers << ": ";
+    ss << " " << iLayers << ":\n";
     SeedingLayerSet layers = operator[](iLayers);
     for (unsigned iLayer = 0; iLayer < layers.size(); ++iLayer) {
       SeedingLayer layer = layers[iLayer];
-      ss << layer.name() << " (" << layer.index() << ", nhits " << layer.hits().size() << ") ";
+      ss << "  " << layer.name() << " (" << layer.index() << ", nhits " << layer.hits().size() << ")\n";
+      for (unsigned iRecHit = 0; iRecHit < layer.hits().size(); ++iRecHit) {
+        auto const rh = layer.hits()[iRecHit];
+        ss << "    RecHit " << iRecHit << " : " << rh->rawId() << ", " << rh->globalPosition() << "\n";
+      }
     }
     ss << "\n";
   }
-  LogDebug("SeedingLayerSetsHits") << ss.str();
+  edm::LogPrint("SeedingLayerSetsHits") << ss.str();
 }

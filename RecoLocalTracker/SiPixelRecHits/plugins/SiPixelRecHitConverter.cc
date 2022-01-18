@@ -166,6 +166,16 @@ namespace cms {
     run(e, input, output, geom);
 
     output.shrink_to_fit();
+edm::LogPrint("--- SiPixelRecHitConverter") << output.subdetId();
+uint dset_i = 0;
+for(auto const& dset : output){
+  edm::LogPrint("XXX SiPixelRecHitConverter") << "XXX SiPixelRecHitConverter " << dset_i << " : " << dset.detId();
+dset_i++;
+for(size_t jjj=0; jjj<dset.size(); ++jjj){
+  edm::LogPrint("YYY SiPixelRecHitConverter") << "YYY SiPixelRecHitConverter     " << jjj << " : " << dset[jjj].rawId() << " " << dset[jjj].globalPosition();
+}
+}
+
     e.emplace(tPut_, std::move(output));
   }
 

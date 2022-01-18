@@ -35,7 +35,7 @@ void SeedingLayersEDProducer::fillDescriptions(edm::ConfigurationDescriptions& d
 
 void SeedingLayersEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   auto prod = builder_.hits(iEvent, iSetup);
-  //prod->print();
+  prod->print();
 
   iEvent.put(std::move(prod));
 }

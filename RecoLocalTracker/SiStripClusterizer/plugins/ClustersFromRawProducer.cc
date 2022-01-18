@@ -34,7 +34,7 @@
 #include <iostream>
 #define COUT std::cout << "VI "
 #else
-#define COUT LogDebug("")
+#define COUT edm::LogPrint("")
 #endif
 
 namespace {
@@ -252,6 +252,17 @@ void SiStripClusterizerFromRaw::run(const FEDRawDataCollection& rawColl, edmNew:
       record.abort();
 
   }  // end loop over dets
+
+edm::LogPrint("") << "--- SiStripClusterizerFromRaw" << output.subdetId();
+uint dset_i = 0;
+for(auto const& dset : output){
+  edm::LogPrint("") << "XXX SiStripClusterizerFromRaw " << dset_i << " : " << dset.detId();
+  dset_i++;
+  for(size_t jjj=0; jjj<dset.size(); ++jjj){
+    edm::LogPrint("") << "YYY SiStripClusterizerFromRaw     " << jjj << " : " << dset[jjj].firstStrip() << " " << dset[jjj].barycenter();
+  }
+}
+
 }
 
 namespace {
@@ -306,7 +317,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
     incReady();
 
     auto idet = record.id();
-
+bool morelogs = (idet == 402664106);
     COUT << "filling " << idet << std::endl;
 
     auto const& det = clusterizer.stripByStripBegin(idet);
@@ -322,7 +333,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
         continue;
 
       const uint16_t fedId = conn->fedId();
-
+if(morelogs) COUT << "fedId " << int64_t(fedId);
       // If fed id is null or connection is invalid continue
       if UNLIKELY (!fedId || !conn->isConnected()) {
         continue;
@@ -349,9 +360,9 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
 
       // check channel
       const uint8_t fedCh = conn->fedCh();
-
+if(morelogs) COUT << "fedCh " << int64_t(fedCh);
       if UNLIKELY (!buffer->channelGood(fedCh, doAPVEmulatorCheck)) {
-        if (edm::isDebugEnabled()) {
+        if (edm::isDebugEnabled() or true) {
           std::ostringstream ss;
           ss << "Problem unpacking channel " << fedCh << " on FED " << fedId;
           edm::LogWarning(sistrip::mlRawToCluster_) << ss.str();
@@ -361,20 +372,24 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
 
       // Determine APV std::pair number
       uint16_t ipair = conn->apvPairNumber();
-
+if(morelogs) COUT << "ipair " << ipair;
       const sistrip::FEDReadoutMode mode = buffer->readoutMode();
       const sistrip::FEDLegacyReadoutMode lmode =
           legacy_ ? buffer->legacyReadoutMode() : sistrip::READOUT_MODE_LEGACY_INVALID;
 
       using namespace sistrip;
       if LIKELY (fedchannelunpacker::isZeroSuppressed(mode, legacy_, lmode)) {
+if(morelogs) COUT << __LINE__ << "    -a  " << int64_t(record.size());
         auto perStripAdder = StripByStripAdder(clusterizer, state, record);
+if(morelogs) COUT << __LINE__ << "    -b  " << int64_t(record.size());
         const auto isNonLite = fedchannelunpacker::isNonLiteZS(mode, legacy_, lmode);
         const uint8_t pCode = (isNonLite ? buffer->packetCode(legacy_, fedCh) : 0);
         auto st_ch = fedchannelunpacker::StatusCode::SUCCESS;
         if LIKELY (!hybridZeroSuppressed_) {
+if(morelogs) COUT << __LINE__ << " pCode " << int64_t(pCode);
           st_ch = fedchannelunpacker::unpackZeroSuppressed(
               buffer->channel(fedCh), perStripAdder, ipair * 256, isNonLite, mode, legacy_, lmode, pCode);
+if(morelogs) COUT << __LINE__ << "    -c  " << int64_t(record.size());
         } else {
           const uint32_t id = conn->detId();
           edm::DetSet<SiStripDigi> unpDigis{id};
@@ -387,7 +402,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
             std::copy(std::begin(suppDigis), std::end(suppDigis), perStripAdder);
           }
         }
-        if (fedchannelunpacker::StatusCode::SUCCESS != st_ch && edm::isDebugEnabled()) {
+        if (fedchannelunpacker::StatusCode::SUCCESS != st_ch) {
           edm::LogWarning(sistrip::mlRawToCluster_)
               << "Unordered clusters for channel " << fedCh << " on FED " << fedId << ": " << toString(st_ch);
           continue;
@@ -408,6 +423,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
             uint16_t firstAPV = ipair * 2;
             rawAlgos.suppressVirginRawData(id, firstAPV, digis, zsdigis);
             for (const auto digi : zsdigis) {
+if(morelogs) COUT << " id " << id << " " << digi.adc();
               clusterizer.stripByStripAdd(state, digi.strip(), digi.adc(), record);
             }
           }
@@ -423,6 +439,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
             uint16_t firstAPV = ipair * 2;
             rawAlgos.suppressProcessedRawData(id, firstAPV, digis, zsdigis);
             for (edm::DetSet<SiStripDigi>::const_iterator it = zsdigis.begin(); it != zsdigis.end(); it++) {
+if(morelogs) COUT << " id " << id << " " << it->strip() << " " << it->adc();
               clusterizer.stripByStripAdd(state, it->strip(), it->adc(), record);
             }
           }
@@ -431,7 +448,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
               << "[ClustersFromRawProducer::" << __func__ << "]"
               << " FEDRawData readout mode " << mode << " from FED id " << fedId << " not supported.";
         }
-        if (fedchannelunpacker::StatusCode::SUCCESS != st_ch && edm::isDebugEnabled()) {
+        if (fedchannelunpacker::StatusCode::SUCCESS != st_ch) {
           edm::LogWarning(sistrip::mlRawToCluster_)
               << "[ClustersFromRawProducer::" << __func__ << "]" << toString(st_ch) << " from FED id " << fedId
               << " channel " << fedCh;
@@ -455,7 +472,7 @@ void ClusterFiller::fill(StripClusterizerAlgorithm::output_t::TSFastFiller& reco
 
     COUT << "filled " << record.size() << std::endl;
     for (auto const& cl : record)
-      COUT << cl.firstStrip() << ',' << cl.amplitudes().size() << std::endl;
+      COUT << cl.firstStrip() << ',' << int64_t(cl.amplitudes().size()) << std::endl;
     incClus(record.size());
   } catch (edmNew::CapacityExaustedException const&) {
     edm::LogError(sistrip::mlRawToCluster_) << "too many Sistrip Clusters to fit space allocated for OnDemand";

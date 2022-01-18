@@ -1,5 +1,6 @@
 #include "RecoTracker/TkHitPairs/interface/RecHitsSortedInPhi.h"
 #include "DataFormats/TrackerRecHit2D/interface/BaseTrackerRecHit.h"
+#include "FWCore/Utilities/interface/isFinite.h"
 
 #include <algorithm>
 #include <cassert>
@@ -21,8 +22,18 @@ RecHitsSortedInPhi::RecHitsSortedInPhi(const std::vector<Hit>& hits, GlobalPoint
   // assert(origin.x()==0 && origin.y()==0);
 
   theHits.reserve(hits.size());
-  for (auto const& hp : hits)
-    theHits.emplace_back(hp);
+  for (auto const& hp : hits) {
+    auto gp = hp->globalPosition();
+    auto phi = gp.barePhi();
+      edm::LogPrint("RecHitsSortedInPhi") << "RecHit layer " << layer << ' ' << hp->rawId() << ' ' << hp->type() << ' '
+                                          << phi << ' ' << gp << ' ' << hp->localPosition();
+    if (!edm::isFinite(phi)) {
+      edm::LogError("RecHitsSortedInPhi") << "NAN in layer " << layer << ' ' << hp->rawId() << ' ' << hp->type() << ' '
+                                          << phi << ' ' << gp << ' ' << hp->localPosition();
+    } else {
+      theHits.emplace_back(hp);
+    }
+  }
 
   std::sort(theHits.begin(), theHits.end(), HitLessPhi());
 
