@@ -1,3 +1,5 @@
+#include <TVector3.h>
+
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 
@@ -9,9 +11,9 @@
 #include "FWCore/Utilities/interface/ESGetToken.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
-
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 
 #include "RecoBTag/FeatureTools/interface/TrackInfoBuilder.h"
 #include "RecoBTag/FeatureTools/interface/deep_helpers.h"
@@ -44,17 +46,24 @@ private:
 
   void fillParticleFeatures(DeepBoostedJetFeatures &fts, const reco::Jet &jet);
   void fillSVFeatures(DeepBoostedJetFeatures &fts, const reco::Jet &jet);
+  void fillParticleFeaturesHLT(DeepBoostedJetFeatures &fts, const reco::Jet &jet, const reco::VertexRefProd &PVRefProd);
+  void fillSVFeaturesHLT(DeepBoostedJetFeatures &fts, const reco::Jet &jet);
+
+  float puppiWgt(const reco::CandidatePtr &cand);
+  bool useTrackProperties(const reco::PFCandidate *reco_cand);
 
   const double jet_radius_;
   const double min_jet_pt_;
   const double max_jet_eta_;
   const double min_pt_for_track_properties_;
+  const double min_pt_for_pfcandidates_;
   const bool use_puppiP4_;
+  const double min_puppi_wgt_;
   const bool include_neutrals_;
   const bool sort_by_sip2dsig_;
-  const double min_puppi_wgt_;
   const bool flip_ip_sign_;
   const double max_sip3dsig_;
+  const bool use_hlt_features_;
 
   edm::EDGetTokenT<edm::View<reco::Jet>> jet_token_;
   edm::EDGetTokenT<VertexCollection> vtx_token_;
@@ -79,7 +88,13 @@ private:
 
   const static std::vector<std::string> particle_features_;
   const static std::vector<std::string> sv_features_;
+  const static std::vector<std::string> particle_features_hlt_;
+  const static std::vector<std::string> sv_features_hlt_;
   const reco::Vertex *pv_ = nullptr;
+  const static float min_track_pt_property_;
+  const static int min_valid_pixel_hits_;
+
+  std::map<reco::CandidatePtr::key_type, float> puppi_wgt_cache;
 };
 
 const std::vector<std::string> DeepBoostedJetTagInfoProducer::particle_features_{
@@ -96,23 +111,68 @@ const std::vector<std::string> DeepBoostedJetTagInfoProducer::particle_features_
     "pfcand_btagSip3dSig",  "pfcand_btagJetDistVal", "pfcand_mask",         "pfcand_pt_log_nopuppi",
     "pfcand_e_log_nopuppi", "pfcand_ptrel",          "pfcand_erel"};
 
+const std::vector<std::string> DeepBoostedJetTagInfoProducer::particle_features_hlt_{"jet_pfcand_pt_log",
+                                                                                     "jet_pfcand_energy_log",
+                                                                                     "jet_pfcand_deta",
+                                                                                     "jet_pfcand_dphi",
+                                                                                     "jet_pfcand_eta",
+                                                                                     "jet_pfcand_charge",
+                                                                                     "jet_pfcand_frompv",
+                                                                                     "jet_pfcand_nlostinnerhits",
+                                                                                     "jet_pfcand_track_chi2",
+                                                                                     "jet_pfcand_track_qual",
+                                                                                     "jet_pfcand_dz",
+                                                                                     "jet_pfcand_dzsig",
+                                                                                     "jet_pfcand_dxy",
+                                                                                     "jet_pfcand_dxysig",
+                                                                                     "jet_pfcand_etarel",
+                                                                                     "jet_pfcand_pperp_ratio",
+                                                                                     "jet_pfcand_ppara_ratio",
+                                                                                     "jet_pfcand_trackjet_d3d",
+                                                                                     "jet_pfcand_trackjet_d3dsig",
+                                                                                     "jet_pfcand_trackjet_dist",
+                                                                                     "jet_pfcand_trackjet_decayL",
+                                                                                     "jet_pfcand_nhits",
+                                                                                     "jet_pfcand_npixhits",
+                                                                                     "jet_pfcand_nstriphits",
+                                                                                     "jet_pfcand_puppiw",
+                                                                                     "pfcand_mask"};
+
 const std::vector<std::string> DeepBoostedJetTagInfoProducer::sv_features_{
     "sv_mask", "sv_ptrel",     "sv_erel",     "sv_phirel", "sv_etarel",       "sv_deltaR",  "sv_abseta",
     "sv_mass", "sv_ptrel_log", "sv_erel_log", "sv_pt_log", "sv_pt",           "sv_ntracks", "sv_normchi2",
     "sv_dxy",  "sv_dxysig",    "sv_d3d",      "sv_d3dsig", "sv_costhetasvpv",
 };
 
+const std::vector<std::string> DeepBoostedJetTagInfoProducer::sv_features_hlt_{"jet_sv_pt_log",
+                                                                               "jet_sv_mass",
+                                                                               "jet_sv_deta",
+                                                                               "jet_sv_dphi",
+                                                                               "jet_sv_eta",
+                                                                               "jet_sv_ntrack",
+                                                                               "jet_sv_chi2",
+                                                                               "jet_sv_dxy",
+                                                                               "jet_sv_dxysig",
+                                                                               "jet_sv_d3d",
+                                                                               "jet_sv_d3dsig",
+                                                                               "sv_mask"};
+
+const float DeepBoostedJetTagInfoProducer::min_track_pt_property_ = 0.5;
+const int DeepBoostedJetTagInfoProducer::min_valid_pixel_hits_ = 0;
+
 DeepBoostedJetTagInfoProducer::DeepBoostedJetTagInfoProducer(const edm::ParameterSet &iConfig)
     : jet_radius_(iConfig.getParameter<double>("jet_radius")),
       min_jet_pt_(iConfig.getParameter<double>("min_jet_pt")),
       max_jet_eta_(iConfig.getParameter<double>("max_jet_eta")),
       min_pt_for_track_properties_(iConfig.getParameter<double>("min_pt_for_track_properties")),
+      min_pt_for_pfcandidates_(iConfig.getParameter<double>("min_pt_for_pfcandidates")),
       use_puppiP4_(iConfig.getParameter<bool>("use_puppiP4")),
+      min_puppi_wgt_(iConfig.getParameter<double>("min_puppi_wgt")),
       include_neutrals_(iConfig.getParameter<bool>("include_neutrals")),
       sort_by_sip2dsig_(iConfig.getParameter<bool>("sort_by_sip2dsig")),
-      min_puppi_wgt_(iConfig.getParameter<double>("min_puppi_wgt")),
       flip_ip_sign_(iConfig.getParameter<bool>("flip_ip_sign")),
       max_sip3dsig_(iConfig.getParameter<double>("sip3dSigMax")),
+      use_hlt_features_(iConfig.getParameter<bool>("use_hlt_features")),
       jet_token_(consumes<edm::View<reco::Jet>>(iConfig.getParameter<edm::InputTag>("jets"))),
       vtx_token_(consumes<VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
       sv_token_(consumes<SVCollection>(iConfig.getParameter<edm::InputTag>("secondary_vertices"))),
@@ -146,12 +206,14 @@ void DeepBoostedJetTagInfoProducer::fillDescriptions(edm::ConfigurationDescripti
   desc.add<double>("min_jet_pt", 150);
   desc.add<double>("max_jet_eta", 99);
   desc.add<double>("min_pt_for_track_properties", -1);
+  desc.add<double>("min_pt_for_pfcandidates", -1);
   desc.add<bool>("use_puppiP4", true);
   desc.add<bool>("include_neutrals", true);
   desc.add<bool>("sort_by_sip2dsig", false);
   desc.add<double>("min_puppi_wgt", 0.01);
   desc.add<bool>("flip_ip_sign", false);
   desc.add<double>("sip3dSigMax", -1);
+  desc.add<bool>("use_hlt_features", false);
   desc.add<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
   desc.add<edm::InputTag>("secondary_vertices", edm::InputTag("inclusiveCandidateSecondaryVertices"));
   desc.add<edm::InputTag>("pf_candidates", edm::InputTag("particleFlow"));
@@ -162,28 +224,29 @@ void DeepBoostedJetTagInfoProducer::fillDescriptions(edm::ConfigurationDescripti
 }
 
 void DeepBoostedJetTagInfoProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup) {
+  // output collection
   auto output_tag_infos = std::make_unique<DeepBoostedJetTagInfoCollection>();
 
+  // Input jets
   auto jets = iEvent.getHandle(jet_token_);
-
+  // Primary vertexes
   iEvent.getByToken(vtx_token_, vtxs_);
   if (vtxs_->empty()) {
     // produce empty TagInfos in case no primary vertex
     iEvent.put(std::move(output_tag_infos));
     return;  // exit event
   }
-  // primary vertex
+  // Leading vertex
   pv_ = &vtxs_->at(0);
-
+  // Secondary vertexs
   iEvent.getByToken(sv_token_, svs_);
-
+  // PF candidates
   iEvent.getByToken(pfcand_token_, pfcands_);
 
   track_builder_ = iSetup.getHandle(track_builder_token_);
 
-  if (use_puppi_value_map_) {
+  if (use_puppi_value_map_)
     iEvent.getByToken(puppi_value_map_token_, puppi_value_map_);
-  }
 
   if (use_pvasq_value_map_) {
     iEvent.getByToken(pvasq_value_map_token_, pvasq_value_map_);
@@ -196,28 +259,42 @@ void DeepBoostedJetTagInfoProducer::produce(edm::Event &iEvent, const edm::Event
 
     // create jet features
     DeepBoostedJetFeatures features;
-    // declare all the feature variables (init as empty vector)
-    for (const auto &name : particle_features_) {
-      features.add(name);
-    }
-    for (const auto &name : sv_features_) {
-      features.add(name);
+    if (not use_hlt_features_) {
+      // declare all the feature variables (init as empty vector)
+      for (const auto &name : particle_features_) {
+        features.add(name);
+      }
+      for (const auto &name : sv_features_) {
+        features.add(name);
+      }
+    } else {
+      // declare all the feature variables (init as empty vector)
+      for (const auto &name : particle_features_hlt_) {
+        features.add(name);
+      }
+      for (const auto &name : sv_features_hlt_) {
+        features.add(name);
+      }
     }
 
     // fill values only if above pt threshold and has daughters, otherwise left
-    // empty
     bool fill_vars = true;
     if (jet.pt() < min_jet_pt_ || std::abs(jet.eta()) > max_jet_eta_)
       fill_vars = false;
     if (jet.numberOfDaughters() == 0)
       fill_vars = false;
 
-    if (fill_vars) {
+    if (fill_vars and not use_hlt_features_) {
       fillParticleFeatures(features, jet);
       fillSVFeatures(features, jet);
-
       features.check_consistency(particle_features_);
       features.check_consistency(sv_features_);
+    } else if (fill_vars and use_hlt_features_) {
+      reco::VertexRefProd PVRefProd(vtxs_);
+      fillParticleFeaturesHLT(features, jet, PVRefProd);
+      fillSVFeaturesHLT(features, jet);
+      features.check_consistency(particle_features_hlt_);
+      features.check_consistency(sv_features_hlt_);
     }
 
     // this should always be done even if features are not filled
@@ -227,43 +304,34 @@ void DeepBoostedJetTagInfoProducer::produce(edm::Event &iEvent, const edm::Event
   iEvent.put(std::move(output_tag_infos));
 }
 
+float DeepBoostedJetTagInfoProducer::puppiWgt(const reco::CandidatePtr &cand) {
+  const auto *pack_cand = dynamic_cast<const pat::PackedCandidate *>(&(*cand));
+  const auto *reco_cand = dynamic_cast<const reco::PFCandidate *>(&(*cand));
+  float wgt = 1.;
+  if (pack_cand)
+    wgt = pack_cand->puppiWeight();
+  else if (reco_cand) {
+    if (use_puppi_value_map_)
+      wgt = (*puppi_value_map_)[cand];
+  } else
+    throw edm::Exception(edm::errors::InvalidReference)
+        << "Cannot convert to either pat::PackedCandidate or reco::PFCandidate";
+  puppi_wgt_cache[cand.key()] = wgt;
+  return wgt;
+}
+
+bool DeepBoostedJetTagInfoProducer::useTrackProperties(const reco::PFCandidate *reco_cand) {
+  const auto *trk = reco_cand->bestTrack();
+  return trk != nullptr and trk->pt() > min_pt_for_track_properties_;
+};
+
 void DeepBoostedJetTagInfoProducer::fillParticleFeatures(DeepBoostedJetFeatures &fts, const reco::Jet &jet) {
-  // require the input to be a pat::Jet
-  const auto *patJet = dynamic_cast<const pat::Jet *>(&jet);
-  if (!patJet) {
-    throw edm::Exception(edm::errors::InvalidReference) << "Input is not a pat::Jet.";
-  }
-
-  // do nothing if jet does not have constituents
-  if (jet.numberOfDaughters() == 0)
-    return;
-
   // some jet properties
   math::XYZVector jet_dir = jet.momentum().Unit();
   GlobalVector jet_ref_track_dir(jet.px(), jet.py(), jet.pz());
   const float etasign = jet.eta() > 0 ? 1 : -1;
 
-  std::map<reco::CandidatePtr::key_type, float> puppi_wgt_cache;
-  auto puppiWgt = [&](const reco::CandidatePtr &cand) {
-    const auto *pack_cand = dynamic_cast<const pat::PackedCandidate *>(&(*cand));
-    const auto *reco_cand = dynamic_cast<const reco::PFCandidate *>(&(*cand));
-    float wgt = 1.;
-    if (pack_cand) {
-      wgt = pack_cand->puppiWeight();
-    } else if (reco_cand) {
-      if (use_puppi_value_map_) {
-        wgt = (*puppi_value_map_)[cand];
-      } else {
-        throw edm::Exception(edm::errors::InvalidReference) << "Puppi value map is missing";
-      }
-    } else {
-      throw edm::Exception(edm::errors::InvalidReference) << "Cannot convert to either pat::PackedCandidate or "
-                                                             "reco::PFCandidate";
-    }
-    puppi_wgt_cache[cand.key()] = wgt;
-    return wgt;
-  };
-
+  // make list of pf-candidates to be considered
   std::vector<reco::CandidatePtr> daughters;
   for (const auto &dau : jet.daughterPtrVector()) {
     // remove particles w/ extremely low puppi weights
@@ -305,11 +373,9 @@ void DeepBoostedJetTagInfoProducer::fillParticleFeatures(DeepBoostedJetFeatures 
   } else {
     if (use_puppiP4_) {
       // sort by Puppi-weighted pt
-      std::sort(daughters.begin(),
-                daughters.end(),
-                [&puppi_wgt_cache](const reco::CandidatePtr &a, const reco::CandidatePtr &b) {
-                  return puppi_wgt_cache.at(a.key()) * a->pt() > puppi_wgt_cache.at(b.key()) * b->pt();
-                });
+      std::sort(daughters.begin(), daughters.end(), [&](const reco::CandidatePtr &a, const reco::CandidatePtr &b) {
+        return puppi_wgt_cache.at(a.key()) * a->pt() > puppi_wgt_cache.at(b.key()) * b->pt();
+      });
     } else {
       // sort by original pt (not Puppi-weighted)
       std::sort(daughters.begin(), daughters.end(), [](const auto &a, const auto &b) { return a->pt() > b->pt(); });
@@ -317,20 +383,15 @@ void DeepBoostedJetTagInfoProducer::fillParticleFeatures(DeepBoostedJetFeatures 
   }
 
   // reserve space
-  for (const auto &name : particle_features_) {
+  for (const auto &name : particle_features_)
     fts.reserve(name, daughters.size());
-  }
 
-  auto useTrackProperties = [&](const reco::PFCandidate *reco_cand) {
-    const auto *trk = reco_cand->bestTrack();
-    return trk != nullptr && trk->pt() > min_pt_for_track_properties_;
-  };
-
+  // Build observables
   for (const auto &cand : daughters) {
     const auto *packed_cand = dynamic_cast<const pat::PackedCandidate *>(&(*cand));
     const auto *reco_cand = dynamic_cast<const reco::PFCandidate *>(&(*cand));
 
-    if (!include_neutrals_ &&
+    if (!include_neutrals_ and
         ((packed_cand && !packed_cand->hasTrackDetails()) || (reco_cand && !useTrackProperties(reco_cand))))
       continue;
 
@@ -418,7 +479,8 @@ void DeepBoostedJetTagInfoProducer::fillParticleFeatures(DeepBoostedJetFeatures 
     fts.fill("pfcand_drminsv", drminpfcandsv);
 
     // subjets
-    if (patJet->nSubjetCollections() > 0) {
+    const auto *patJet = dynamic_cast<const pat::Jet *>(&jet);
+    if (patJet and patJet->nSubjetCollections() > 0) {
       auto subjets = patJet->subjets();
       std::sort(subjets.begin(), subjets.end(), [](const edm::Ptr<pat::Jet> &p1, const edm::Ptr<pat::Jet> &p2) {
         return p1->pt() > p2->pt();
@@ -431,11 +493,11 @@ void DeepBoostedJetTagInfoProducer::fillParticleFeatures(DeepBoostedJetFeatures 
     }
 
     const reco::Track *trk = nullptr;
-    if (packed_cand) {
+    if (packed_cand)
       trk = packed_cand->bestTrack();
-    } else if (reco_cand && useTrackProperties(reco_cand)) {
+    else if (reco_cand && useTrackProperties(reco_cand))
       trk = reco_cand->bestTrack();
-    }
+
     if (trk) {
       fts.fill("pfcand_normchi2", std::floor(trk->normalizedChi2()));
 
@@ -534,6 +596,252 @@ void DeepBoostedJetTagInfoProducer::fillSVFeatures(DeepBoostedJetFeatures &fts, 
     fts.fill("sv_d3dsig", d3d.significance());
 
     fts.fill("sv_costhetasvpv", (flip_ip_sign_ ? -1.f : 1.f) * vertexDdotP(*sv, *pv_));
+  }
+}
+
+void DeepBoostedJetTagInfoProducer::fillParticleFeaturesHLT(DeepBoostedJetFeatures &fts,
+                                                            const reco::Jet &jet,
+                                                            const reco::VertexRefProd &PVRefProd) {
+  // some jet properties
+  math::XYZVector jet_dir = jet.momentum().Unit();
+  TVector3 jet_direction(jet.momentum().Unit().x(), jet.momentum().Unit().y(), jet.momentum().Unit().z());
+  GlobalVector jet_ref_track_dir(jet.px(), jet.py(), jet.pz());
+
+  // Filling list of interesting particles for the jet
+  std::vector<reco::CandidatePtr> daughters;
+  for (const auto &dau : jet.daughterPtrVector()) {
+    if ((puppiWgt(dau)) < min_puppi_wgt_)
+      continue;
+    auto cand = pfcands_->ptrAt(dau.key());
+    if (cand->pt() < min_pt_for_pfcandidates_)
+      continue;
+    daughters.push_back(cand);
+  }
+
+  // Sorting of PF-candidates
+  std::vector<btagbtvdeep::SortingClass<reco::CandidatePtr>> c_sorted;
+  if (use_puppiP4_)
+    std::sort(daughters.begin(), daughters.end(), [&](const reco::CandidatePtr &a, const reco::CandidatePtr &b) {
+      return puppi_wgt_cache.at(a.key()) * a->pt() > puppi_wgt_cache.at(b.key()) * b->pt();
+    });
+  else
+    std::sort(daughters.begin(), daughters.end(), [&](const auto &a, const auto &b) { return a->pt() > b->pt(); });
+
+  // reserve space
+  for (const auto &name : particle_features_hlt_)
+    fts.reserve(name, daughters.size());
+
+  // build white list of candidates i.e. particles and tracks belonging to SV
+  std::vector<unsigned int> whiteListSV;
+  std::vector<reco::TrackRef> whiteListTk;
+  for (size_t isv = 0; isv < svs_->size(); isv++) {
+    for (size_t icand = 0; icand < svs_->at(isv).numberOfSourceCandidatePtrs(); icand++) {
+      const edm::Ptr<reco::Candidate> &cand = svs_->at(isv).sourceCandidatePtr(icand);
+      if (cand.id() == pfcands_.id())
+        whiteListSV.push_back(cand.key());
+    }
+    for (auto cand = svs_->at(isv).begin(); cand != svs_->at(isv).end(); cand++) {
+      const reco::RecoChargedCandidate *chCand = dynamic_cast<const reco::RecoChargedCandidate *>(&(*cand));
+      if (chCand != nullptr) {
+        whiteListTk.push_back(chCand->track());
+      }
+    }
+  }
+
+  // Loop pver candidates
+  size_t icand = 0;
+  for (const auto &cand : daughters) {
+    const auto *packed_cand = dynamic_cast<const pat::PackedCandidate *>(&(*cand));
+    const auto *reco_cand = dynamic_cast<const reco::PFCandidate *>(&(*cand));
+
+    if (not packed_cand and not reco_cand)
+      throw edm::Exception(edm::errors::InvalidReference)
+          << "Cannot convert to either reco::PFCandidate or pat::PackedCandidate";
+
+    pat::PackedCandidate candidate;
+    reco::VertexRef pv_ass;
+    math::XYZPoint pv_ass_pos;
+
+    // In case input is a reco::PFCandidates
+    if (reco_cand) {
+      // followed what is done in PhysicsTools/PatAlgos/plugins/PATPackedCandidateProducer.cc to minimize differences between HLT and RECO choices of input observables
+      const auto *track = reco_cand->bestTrack();
+      int pv_ass_quality = (*pvasq_value_map_)[cand];
+      pv_ass = (*pvas_)[cand];
+      const reco::VertexRef &pv_orig = (*pvas_)[cand];
+      if (not pv_ass.isNonnull()) {  // no reference to vertex, take closest in dz or position 0
+        if (track) {
+          float z_dist = 99999;
+          int pv_pos = -1;
+          for (size_t iv = 0; iv < vtxs_->size(); iv++) {
+            float dz = std::abs(track->dz(((*vtxs_)[iv]).position()));
+            if (dz < z_dist) {
+              z_dist = dz;
+              pv_pos = iv;
+            }
+          }
+          pv_ass = reco::VertexRef(vtxs_, pv_pos);
+        } else
+          pv_ass = reco::VertexRef(vtxs_, 0);
+      }
+
+      pv_ass_pos = pv_ass->position();
+
+      if (track) {
+        candidate = pat::PackedCandidate(cand->polarP4(),
+                                         track->referencePoint(),
+                                         track->pt(),
+                                         track->eta(),
+                                         track->phi(),
+                                         cand->pdgId(),
+                                         PVRefProd,
+                                         pv_ass.key());
+        candidate.setAssociationQuality(pat::PackedCandidate::PVAssociationQuality(
+            btagbtvdeep::vtx_ass_from_pfcand(*reco_cand, pv_ass_quality, pv_orig)));
+        candidate.setCovarianceVersion(0);
+        pat::PackedCandidate::LostInnerHits lostHits = pat::PackedCandidate::noLostInnerHits;
+        int nlost = track->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS);
+        if (nlost == 0) {
+          if (track->hitPattern().hasValidHitInPixelLayer(PixelSubdetector::SubDetector::PixelBarrel, 1))
+            lostHits = pat::PackedCandidate::validHitInFirstPixelBarrelLayer;
+        } else
+          lostHits = (nlost == 1 ? pat::PackedCandidate::oneLostInnerHit : pat::PackedCandidate::moreLostInnerHits);
+        candidate.setLostInnerHits(lostHits);
+
+        if (useTrackProperties(reco_cand) or
+            std::find(whiteListSV.begin(), whiteListSV.end(), icand) != whiteListSV.end() or
+            std::find(whiteListTk.begin(), whiteListTk.end(), reco_cand->trackRef()) != whiteListTk.end()) {
+          candidate.setFirstHit(track->hitPattern().getHitPattern(reco::HitPattern::TRACK_HITS, 0));
+          if (abs(cand->pdgId()) == 22)
+            candidate.setTrackProperties(*track, 0, 0);
+          else {
+            if (track->hitPattern().numberOfValidPixelHits() > min_valid_pixel_hits_)
+              candidate.setTrackProperties(*track, 8, 0);
+            else
+              candidate.setTrackProperties(*track, 264, 0);
+          }
+        } else {
+          if (candidate.pt() > min_track_pt_property_) {
+            if (track->hitPattern().numberOfValidPixelHits() > 0)
+              candidate.setTrackProperties(*track, 520, 0);
+            else
+              candidate.setTrackProperties(*track, 776, 0);
+          }
+        }
+        candidate.setTrackHighPurity(reco_cand->trackRef().isNonnull() and
+                                     reco_cand->trackRef()->quality(reco::Track::highPurity));
+      } else {
+        candidate = pat::PackedCandidate(
+            cand->polarP4(), pv_ass_pos, cand->pt(), cand->eta(), cand->phi(), cand->pdgId(), PVRefProd, pv_ass.key());
+        candidate.setAssociationQuality(
+            pat::PackedCandidate::PVAssociationQuality(pat::PackedCandidate::UsedInFitTight));
+      }
+    } else {
+      // easier if it is already a packedCandidate
+      candidate = *packed_cand;
+      pv_ass = reco::VertexRef(vtxs_, 0);
+      pv_ass_pos = pv_ass->position();
+    }
+
+    auto candP4 = use_puppiP4_ ? puppi_wgt_cache.at(cand.key()) * candidate.p4() : candidate.p4();
+    auto candP3 = use_puppiP4_ ? puppi_wgt_cache.at(cand.key()) * candidate.momentum() : candidate.momentum();
+    TVector3 cand_direction(candP3.x(), candP3.y(), candP3.z());
+
+    fts.fill("jet_pfcand_pt_log", std::log(candP4.pt()));
+    fts.fill("jet_pfcand_energy_log", std::log(candP4.energy()));
+    fts.fill("jet_pfcand_eta", candP4.eta());
+    fts.fill("jet_pfcand_deta", jet_direction.Eta() - cand_direction.Eta());
+    fts.fill("jet_pfcand_dphi", jet_direction.DeltaPhi(cand_direction));
+    fts.fill("jet_pfcand_charge", cand->charge());
+    fts.fill("jet_pfcand_etarel", reco::btau::etaRel(jet_dir, candP3));
+    fts.fill("jet_pfcand_pperp_ratio", jet_direction.Perp(cand_direction) / cand_direction.Mag());
+    fts.fill("jet_pfcand_ppara_ratio", jet_direction.Dot(cand_direction) / cand_direction.Mag());
+    fts.fill("jet_pfcand_frompv", candidate.fromPV());
+    fts.fill("jet_pfcand_dz", candidate.dz(pv_ass_pos));
+    fts.fill("jet_pfcand_dxy", candidate.dxy(pv_ass_pos));
+    fts.fill("jet_pfcand_puppiw", puppi_wgt_cache.at(cand.key()));
+    fts.fill("jet_pfcand_nlostinnerhits", candidate.lostInnerHits());
+    fts.fill("jet_pfcand_nhits", candidate.numberOfHits());
+    fts.fill("jet_pfcand_npixhits", candidate.numberOfPixelHits());
+    fts.fill("jet_pfcand_nstriphits", candidate.stripLayersWithMeasurement());
+    fts.fill("pfcand_mask", 1);
+
+    const reco::Track *track_cand = candidate.bestTrack();
+    if (track_cand) {
+      fts.fill("jet_pfcand_dzsig", fabs(candidate.dz(pv_ass_pos)) / candidate.dzError());
+      fts.fill("jet_pfcand_dxysig", fabs(candidate.dxy(pv_ass_pos)) / candidate.dxyError());
+      fts.fill("jet_pfcand_track_chi2", track_cand->normalizedChi2());
+      fts.fill("jet_pfcand_track_qual", track_cand->qualityMask());
+
+      reco::TransientTrack transientTrack = track_builder_->build(*track_cand);
+      Measurement1D meas_ip2d =
+          IPTools::signedTransverseImpactParameter(transientTrack, jet_ref_track_dir, *pv_).second;
+      Measurement1D meas_ip3d = IPTools::signedImpactParameter3D(transientTrack, jet_ref_track_dir, *pv_).second;
+      Measurement1D meas_jetdist = IPTools::jetTrackDistance(transientTrack, jet_ref_track_dir, *pv_).second;
+      Measurement1D meas_decayl = IPTools::signedDecayLength3D(transientTrack, jet_ref_track_dir, *pv_).second;
+
+      fts.fill("jet_pfcand_trackjet_d3d", meas_ip3d.value());
+      fts.fill("jet_pfcand_trackjet_d3dsig", fabs(meas_ip3d.significance()));
+      fts.fill("jet_pfcand_trackjet_dist", -meas_jetdist.value());
+      fts.fill("jet_pfcand_trackjet_decayL", meas_decayl.value());
+    } else {
+      fts.fill("jet_pfcand_dzsig", 0);
+      fts.fill("jet_pfcand_dxysig", 0);
+      fts.fill("jet_pfcand_track_chi2", 0);
+      fts.fill("jet_pfcand_track_qual", 0);
+      fts.fill("jet_pfcand_trackjet_d3d", 0);
+      fts.fill("jet_pfcand_trackjet_d3dsig", 0);
+      fts.fill("jet_pfcand_trackjet_dist", 0);
+      fts.fill("jet_pfcand_trackjet_decayL", 0);
+    }
+    icand++;
+  }
+}
+
+void DeepBoostedJetTagInfoProducer::fillSVFeaturesHLT(DeepBoostedJetFeatures &fts, const reco::Jet &jet) {
+  std::vector<const reco::VertexCompositePtrCandidate *> jetSVs;
+  for (const auto &sv : *svs_) {
+    if (reco::deltaR(sv, jet) < jet_radius_)
+      jetSVs.push_back(&sv);
+  }
+
+  // sort by dxy significance
+  std::sort(jetSVs.begin(),
+            jetSVs.end(),
+            [&](const reco::VertexCompositePtrCandidate *sva, const reco::VertexCompositePtrCandidate *svb) {
+              return sv_vertex_comparator(*sva, *svb, *pv_);
+            });
+
+  // reserve space
+  for (const auto &name : sv_features_hlt_)
+    fts.reserve(name, jetSVs.size());
+
+  GlobalVector jet_global_vec(jet.px(), jet.py(), jet.pz());
+
+  for (const auto &sv : jetSVs) {
+    // basic kinematics
+    fts.fill("sv_mask", 1);
+    fts.fill("jet_sv_pt_log", log(sv->pt()));
+    fts.fill("jet_sv_eta", sv->eta());
+    fts.fill("jet_sv_mass", sv->mass());
+    fts.fill("jet_sv_deta", sv->eta() - jet.eta());
+    fts.fill("jet_sv_dphi", sv->phi() - jet.phi());
+    fts.fill("jet_sv_ntrack", sv->numberOfDaughters());
+    fts.fill("jet_sv_chi2", sv->vertexNormalizedChi2());
+
+    reco::Vertex::CovarianceMatrix csv;
+    sv->fillVertexCovariance(csv);
+    reco::Vertex svtx(sv->vertex(), csv);
+
+    VertexDistanceXY dxy;
+    auto valxy = dxy.signedDistance(svtx, *pv_, jet_global_vec);
+    fts.fill("jet_sv_dxy", valxy.value());
+    fts.fill("jet_sv_dxysig", fabs(valxy.significance()));
+
+    VertexDistance3D d3d;
+    auto val3d = d3d.signedDistance(svtx, *pv_, jet_global_vec);
+    fts.fill("jet_sv_d3d", val3d.value());
+    fts.fill("jet_sv_d3dsig", fabs(val3d.significance()));
   }
 }
 
