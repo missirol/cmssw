@@ -288,6 +288,7 @@ if 'hltGetConditions' in %(dict)s and 'HLTriggerFirstPath' in %(dict)s :
           module = 'hltOutput' + match.group(1)
           self.data = self.data.replace(path+' = cms.EndPath', path+' = cms.Path')
           self.data = self.data.replace(' + process.'+module, '')
+          self.data = re.sub('process\.'+path+' *= *cms\.FinalPath\( *process\.'+module+' *\) *\n', '', self.data)
 
     else:
 
@@ -724,7 +725,8 @@ if 'GlobalTag' in %%(dict)s:
         paths.append( "-*Output" )
         paths.append( "-RatesMonitoring")
         paths.append( "-DQMHistograms")
-        if self.config.fragment: paths.append( "Scouting*Output" )
+        if self.config.fragment:
+            paths.append( "Scouting*EndPath" )
 
     elif self.config.output in ('dqm', 'minimal', 'full'):
       if self.config.paths:
@@ -734,7 +736,8 @@ if 'GlobalTag' in %%(dict)s:
         # drop all output EndPaths but the Scouting ones, and drop the RatesMonitoring
         paths.append( "-*Output" )
         paths.append( "-RatesMonitoring")
-        if self.config.fragment: paths.append( "Scouting*Output" )
+        if self.config.fragment:
+            paths.append( "Scouting*EndPath" )
 
     else:
       if self.config.paths:

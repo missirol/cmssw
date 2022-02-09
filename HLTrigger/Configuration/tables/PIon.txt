@@ -14,3 +14,7 @@ Status_OnGPU	#	CMSHLT-2206
 PhysicsCommissioningOutput
 
 DQMOutput
+
+Dataset_HLTPhysics
+Dataset_OnlineMonitor
+Dataset_ZeroBias

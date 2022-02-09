@@ -1,13 +1,13 @@
 #! /bin/bash
 
 # ConfDB configurations to use
-MASTER="/dev/CMSSW_12_3_0/HLT"             # no explicit version, take the most recent
-TARGET="/dev/CMSSW_12_3_0/\$TABLE"         # no explicit version, take the most recent
+MASTER="v3-test/dev:/users/missirol/test/taskify/test01/HLT"             # no explicit version, take the most recent
+TARGET="v3-test/dev:/users/missirol/test/taskify/test01/\$TABLE"         # no explicit version, take the most recent
 
 TABLES="GRun HIon PIon PRef"               # $TABLE in the above variable will be expanded to these TABLES
 
 # print extra messages ?
-VERBOSE=false
+VERBOSE=true
 
 # this is used for brace expansion
 TABLES_=$(echo $TABLES | sed -e's/ \+/,/g')

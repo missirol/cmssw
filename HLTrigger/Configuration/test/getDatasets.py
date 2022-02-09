@@ -47,7 +47,6 @@ def splitConfigName(configName):
   menu = ConnectionHLTMenu(configName)
   return (menu.version, menu.database, menu.name)
 
-
 # get the configuration to parse and the file where to output the stream definitions from the command line
 config = sys.argv[1]
 

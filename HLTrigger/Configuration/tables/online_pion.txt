@@ -18,3 +18,7 @@ DQMOutput
 ## only in 'online' version
 RatesMonitoring
 
+
+Dataset_HLTPhysics
+Dataset_OnlineMonitor
+Dataset_ZeroBias
