@@ -28,6 +28,7 @@ namespace trigger {
     /// DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetupFwd.h"
 
     TriggerL1Mu = -81,
+    TriggerL1MuShower = -80,
     TriggerL1NoIsoEG = -82,  // legacy and stage1
     TriggerL1IsoEG = -83,    // legacy and stage1
     TriggerL1CenJet = -84,   // legacy and stage1
