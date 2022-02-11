@@ -87413,11 +87413,11 @@ _customInfo['globalTags'][True ] = "auto:run3_hlt_GRun"
 _customInfo['globalTags'][False] = "auto:run3_mc_GRun"
 _customInfo['inputFiles']={}
 _customInfo['inputFiles'][True]  = "file:RelVal_Raw_GRun_DATA.root"
-_customInfo['inputFiles'][False] = "file:RelVal_Raw_GRun_MC.root"
-_customInfo['maxEvents' ]=  100
-_customInfo['globalTag' ]= "auto:run3_hlt_GRun"
-_customInfo['inputFile' ]=  ['file:RelVal_Raw_GRun_DATA.root']
-_customInfo['realData'  ]=  True
+_customInfo['inputFiles'][False] = "/store/relval/CMSSW_12_3_0_pre3/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/123X_mcRun3_2021_realistic_v3-v1/10000/635c70bf-874f-4e3d-926d-11d06ffff564.root"
+_customInfo['maxEvents' ]= 100
+_customInfo['globalTag' ]= "auto:run3_mc_GRun"
+_customInfo['inputFile' ]= ['/store/relval/CMSSW_12_3_0_pre3/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/123X_mcRun3_2021_realistic_v3-v1/10000/635c70bf-874f-4e3d-926d-11d06ffff564.root']
+_customInfo['realData'  ]= False
 
 from HLTrigger.Configuration.customizeHLTforALL import customizeHLTforAll
 process = customizeHLTforAll(process,"GRun",_customInfo)
