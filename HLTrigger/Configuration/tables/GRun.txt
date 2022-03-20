@@ -721,6 +721,77 @@ HLT_L1SingleMuCosmics_v*							#	CMSHLT-2097
 HLT_PPSMaxTracksPerArm1_v*							#	CMSHLT-2179
 HLT_PPSMaxTracksPerRP4_v*							#	CMSHLT-2179
 
+HLT_ExpressMuons_v*       # CMSHLT-2245
+HLT_OnlineMonitorGroup_v* # CMSHLT-2245
+
+## Dataset Path ##
+
+Dataset_AlCaLumiPixelCountsExpress # CMSHLT-2245
+Dataset_AlCaLumiPixelCountsPrompt  # CMSHLT-2245
+Dataset_AlCaP0                     # CMSHLT-2245
+Dataset_AlCaPPS                    # CMSHLT-2245
+Dataset_AlCaPhiSym                 # CMSHLT-2245
+Dataset_BTagMu                     # CMSHLT-2245
+Dataset_Commissioning              # CMSHLT-2245
+Dataset_Cosmics                    # CMSHLT-2245
+Dataset_DQMOnlineBeamspot          # CMSHLT-2245
+Dataset_DisplacedJet               # CMSHLT-2245
+Dataset_DoubleMuon                 # CMSHLT-2245
+Dataset_DoubleMuonLowMass          # CMSHLT-2245
+Dataset_EGamma                     # CMSHLT-2245
+Dataset_EcalLaser                  # CMSHLT-2245
+Dataset_EmptyBX                    # CMSHLT-2245
+Dataset_EphemeralHLTPhysics1       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics2       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics3       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics4       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics5       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics6       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics7       # CMSHLT-2245
+Dataset_EphemeralHLTPhysics8       # CMSHLT-2245
+Dataset_EphemeralZeroBias1         # CMSHLT-2245
+Dataset_EphemeralZeroBias2         # CMSHLT-2245
+Dataset_EphemeralZeroBias3         # CMSHLT-2245
+Dataset_EphemeralZeroBias4         # CMSHLT-2245
+Dataset_EphemeralZeroBias5         # CMSHLT-2245
+Dataset_EphemeralZeroBias6         # CMSHLT-2245
+Dataset_EphemeralZeroBias7         # CMSHLT-2245
+Dataset_EphemeralZeroBias8         # CMSHLT-2245
+Dataset_EventDisplay               # CMSHLT-2245
+Dataset_ExpressAlignment           # CMSHLT-2245
+Dataset_ExpressPhysics             # CMSHLT-2245
+Dataset_FSQJet1                    # CMSHLT-2245
+Dataset_FSQJet2                    # CMSHLT-2245
+Dataset_HINCaloJets                # CMSHLT-2245
+Dataset_HINPFJets                  # CMSHLT-2245
+Dataset_HLTMonitor                 # CMSHLT-2245
+Dataset_HLTPhysics                 # CMSHLT-2245
+Dataset_HcalNZS                    # CMSHLT-2245
+Dataset_HighPtLowerPhotons         # CMSHLT-2245
+Dataset_HighPtPhoton30AndZ         # CMSHLT-2245
+Dataset_IsolatedBunch              # CMSHLT-2245
+Dataset_JetHT                      # CMSHLT-2245
+Dataset_L1Accept                   # CMSHLT-2245
+Dataset_MET                        # CMSHLT-2245
+Dataset_MonteCarlo                 # CMSHLT-2245
+Dataset_MuonEG                     # CMSHLT-2245
+Dataset_NoBPTX                     # CMSHLT-2245
+Dataset_OnlineMonitor              # CMSHLT-2245
+Dataset_ParkingBPH1                # CMSHLT-2245
+Dataset_ParkingBPH2                # CMSHLT-2245
+Dataset_ParkingBPH3                # CMSHLT-2245
+Dataset_ParkingBPH4                # CMSHLT-2245
+Dataset_ParkingBPH5                # CMSHLT-2245
+Dataset_ParkingBPHPromptCSCS       # CMSHLT-2245
+Dataset_RPCMonitor                 # CMSHLT-2245
+Dataset_ScoutingPFMonitor          # CMSHLT-2245
+Dataset_ScoutingPFRun3             # CMSHLT-2245
+Dataset_SingleMuon                 # CMSHLT-2245
+Dataset_Tau                        # CMSHLT-2245
+Dataset_TestEnablesEcalHcal        # CMSHLT-2245
+Dataset_TestEnablesEcalHcalDQM     # CMSHLT-2245
+Dataset_ZeroBias                   # CMSHLT-2245
+
 ## EndPath ##
 
 PhysicsEndOfFillOutput

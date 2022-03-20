@@ -11,10 +11,13 @@ HLTAnalyzerEndpath
 Status_OnCPU	#	CMSHLT-2206
 Status_OnGPU	#	CMSHLT-2206
 
+Dataset_HLTPhysics    # CMSHLT-2245
+Dataset_OnlineMonitor # CMSHLT-2245
+Dataset_ZeroBias      # CMSHLT-2245
+
 PhysicsCommissioningOutput
 
 DQMOutput
 
 ## only in 'online' version
 RatesMonitoring
-

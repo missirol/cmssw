@@ -439,7 +439,72 @@ HLT_HIUPC_SingleEG5_BptxAND_MaxPixelTrack_v*
 HLT_HIUPC_DoubleEG2_BptxAND_MaxPixelTrack_v*
 HLT_HIUPC_DoubleEG5_BptxAND_MaxPixelTrack_v*
 
+HLT_HIOnlineMonitorGroup_v* # CMSHLT-2245
+
 HLTriggerFinalPath
+
+## Dataset Path ##
+
+Dataset_AlCaP0                       # CMSHLT-2245
+Dataset_AlCaPhiSym                   # CMSHLT-2245
+Dataset_EcalLaser                    # CMSHLT-2245
+Dataset_HICastor                     # CMSHLT-2245
+Dataset_HIDQMOnlineBeamspot          # CMSHLT-2245
+Dataset_HIDoubleMuon                 # CMSHLT-2245
+Dataset_HIDoubleMuonPsiPeri          # CMSHLT-2245
+Dataset_HIEmptyBX                    # CMSHLT-2245
+Dataset_HIExpressAlignment           # CMSHLT-2245
+Dataset_HIExpressPhysics             # CMSHLT-2245
+Dataset_HIForward                    # CMSHLT-2245
+Dataset_HIHLTPhysics                 # CMSHLT-2245
+Dataset_HIHardProbes                 # CMSHLT-2245
+Dataset_HIHardProbesLower            # CMSHLT-2245
+Dataset_HIHardProbesPeripheral       # CMSHLT-2245
+Dataset_HIHcalNZS                    # CMSHLT-2245
+Dataset_HIHeavyFlavor                # CMSHLT-2245
+Dataset_HIHighMultiplicityETTAsym    # CMSHLT-2245
+Dataset_HILowMultiplicity            # CMSHLT-2245
+Dataset_HIMinimumBias0               # CMSHLT-2245
+Dataset_HIMinimumBias1               # CMSHLT-2245
+Dataset_HIMinimumBias10              # CMSHLT-2245
+Dataset_HIMinimumBias11              # CMSHLT-2245
+Dataset_HIMinimumBias12              # CMSHLT-2245
+Dataset_HIMinimumBias13              # CMSHLT-2245
+Dataset_HIMinimumBias14              # CMSHLT-2245
+Dataset_HIMinimumBias15              # CMSHLT-2245
+Dataset_HIMinimumBias16              # CMSHLT-2245
+Dataset_HIMinimumBias17              # CMSHLT-2245
+Dataset_HIMinimumBias18              # CMSHLT-2245
+Dataset_HIMinimumBias19              # CMSHLT-2245
+Dataset_HIMinimumBias2               # CMSHLT-2245
+Dataset_HIMinimumBias3               # CMSHLT-2245
+Dataset_HIMinimumBias4               # CMSHLT-2245
+Dataset_HIMinimumBias5               # CMSHLT-2245
+Dataset_HIMinimumBias6               # CMSHLT-2245
+Dataset_HIMinimumBias7               # CMSHLT-2245
+Dataset_HIMinimumBias8               # CMSHLT-2245
+Dataset_HIMinimumBias9               # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat0  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat1  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat10 # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat11 # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat2  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat3  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat4  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat5  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat6  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat7  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat8  # CMSHLT-2245
+Dataset_HIMinimumBiasReducedFormat9  # CMSHLT-2245
+Dataset_HIOnlineMonitor              # CMSHLT-2245
+Dataset_HISingleMuon                 # CMSHLT-2245
+Dataset_HITrackerNZS                 # CMSHLT-2245
+Dataset_L1Accept                     # CMSHLT-2245
+Dataset_RPCMonitor                   # CMSHLT-2245
+Dataset_TestEnablesEcalHcal          # CMSHLT-2245
+Dataset_TestEnablesEcalHcalDQM       # CMSHLT-2245
+
+## EndPath ##
 
 HIDQMOutput
 HIDQMEventDisplayOutput

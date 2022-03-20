@@ -175,6 +175,37 @@ AlCa_HIEcalPi0EEonly_v*	#	CMSHLT-1680
 AlCa_HIEcalEtaEBonly_v*	#	CMSHLT-1680
 AlCa_HIEcalEtaEEonly_v*	#	CMSHLT-1680
 
+## Dataset Path ##
+
+Dataset_AlCaLumiPixelCountsExpress # CMSHLT-2245
+Dataset_AlCaLumiPixelCountsPrompt  # CMSHLT-2245
+Dataset_AlCaP0                     # CMSHLT-2245
+Dataset_AlCaPhiSym                 # CMSHLT-2245
+Dataset_DQMOnlineBeamspot          # CMSHLT-2245
+Dataset_EcalLaser                  # CMSHLT-2245
+Dataset_EmptyBX                    # CMSHLT-2245
+Dataset_ExpressAlignment           # CMSHLT-2245
+Dataset_ExpressPhysics             # CMSHLT-2245
+Dataset_HIZeroBias1                # CMSHLT-2245
+Dataset_HIZeroBias10               # CMSHLT-2245
+Dataset_HIZeroBias11               # CMSHLT-2245
+Dataset_HIZeroBias12               # CMSHLT-2245
+Dataset_HIZeroBias2                # CMSHLT-2245
+Dataset_HIZeroBias3                # CMSHLT-2245
+Dataset_HIZeroBias4                # CMSHLT-2245
+Dataset_HIZeroBias5                # CMSHLT-2245
+Dataset_HIZeroBias6                # CMSHLT-2245
+Dataset_HIZeroBias7                # CMSHLT-2245
+Dataset_HIZeroBias8                # CMSHLT-2245
+Dataset_HIZeroBias9                # CMSHLT-2245
+Dataset_HLTPhysics                 # CMSHLT-2245
+Dataset_L1Accept                   # CMSHLT-2245
+Dataset_OnlineMonitor              # CMSHLT-2245
+Dataset_RPCMonitor                 # CMSHLT-2245
+Dataset_TestEnablesEcalHcal        # CMSHLT-2245
+Dataset_TestEnablesEcalHcalDQM     # CMSHLT-2245
+Dataset_ZeroBias                   # CMSHLT-2245
+
 ## EndPath ##
 
 PhysicsEndOfFillOutput
