@@ -4,7 +4,11 @@ import sys
 import subprocess
 import FWCore.ParameterSet.Config as cms
 
-config = sys.argv[1]
+from HLTrigger.Configuration.Tools.options import ConnectionHLTMenu
+
+configName = sys.argv[1]
+# split a "[version/]db:name" configuration into a (version, db, name) tuple
+config = ConnectionHLTMenu(configName)
 
 def extractBlock(config, blocks, target):
   #print 'configuration: %s' % config
@@ -12,8 +16,9 @@ def extractBlock(config, blocks, target):
   #print 'target:        %s' % target
   #print
   commands = ','.join( block + '::outputCommands' for block in blocks )
+
   proc = subprocess.Popen(
-    "hltConfigFromDB --configName %s --noedsources --nopaths --noes --nopsets --noservices --cff --blocks %s --format python | sed -e'/^streams/,/^)/d' -e'/^datasets/,/^)/d' > %s" % (config, commands, target),
+    "hltConfigFromDB --%s --%s --configName %s --noedsources --nopaths --noes --nopsets --noservices --cff --blocks %s --format python | sed -e'/^streams/,/^)/d' -e'/^datasets/,/^)/d' > %s" % (config.version, config.database, config.name, commands, target),
     shell  = True,
     stdin  = None,
     stdout = None,
