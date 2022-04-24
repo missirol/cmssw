@@ -81,27 +81,27 @@ def customiseCommon(process):
         if process.schedule is not None:
             process.schedule.append(process.Status_OnGPU)
 
-    # make the ScoutingCaloMuonOutput endpath compatible with using Tasks in the Scouting paths
-    if 'hltOutputScoutingCaloMuon' in process.__dict__ and not 'hltPreScoutingCaloMuonOutputSmart' in process.__dict__:
-        process.hltPreScoutingCaloMuonOutputSmart = cms.EDFilter( "TriggerResultsFilter",
-            l1tIgnoreMaskAndPrescale = cms.bool( False ),
-            l1tResults = cms.InputTag( "" ),
-            hltResults = cms.InputTag( 'TriggerResults','','@currentProcess' ),
-            triggerConditions = process.hltOutputScoutingCaloMuon.SelectEvents.SelectEvents,
-            throw = cms.bool( True )
-        )
-        insert_modules_after(process, process.hltPreScoutingCaloMuonOutput, process.hltPreScoutingCaloMuonOutputSmart)
-
-    # make the ScoutingPFOutput endpath compatible with using Tasks in the Scouting paths
-    if 'hltOutputScoutingPF' in process.__dict__ and not 'hltPreScoutingPFOutputSmart' in process.__dict__:
-        process.hltPreScoutingPFOutputSmart = cms.EDFilter( "TriggerResultsFilter",
-            l1tIgnoreMaskAndPrescale = cms.bool( False ),
-            l1tResults = cms.InputTag( "" ),
-            hltResults = cms.InputTag( 'TriggerResults','','@currentProcess' ),
-            triggerConditions = process.hltOutputScoutingPF.SelectEvents.SelectEvents,
-            throw = cms.bool( True )
-        )
-        insert_modules_after(process, process.hltPreScoutingPFOutput, process.hltPreScoutingPFOutputSmart)
+#    # make the ScoutingCaloMuonOutput endpath compatible with using Tasks in the Scouting paths
+#    if 'hltOutputScoutingCaloMuon' in process.__dict__ and not 'hltPreScoutingCaloMuonOutputSmart' in process.__dict__:
+#        process.hltPreScoutingCaloMuonOutputSmart = cms.EDFilter( "TriggerResultsFilter",
+#            l1tIgnoreMaskAndPrescale = cms.bool( False ),
+#            l1tResults = cms.InputTag( "" ),
+#            hltResults = cms.InputTag( 'TriggerResults','','@currentProcess' ),
+#            triggerConditions = process.hltOutputScoutingCaloMuon.SelectEvents.SelectEvents,
+#            throw = cms.bool( True )
+#        )
+#        insert_modules_after(process, process.hltPreScoutingCaloMuonOutput, process.hltPreScoutingCaloMuonOutputSmart)
+#
+#    # make the ScoutingPFOutput endpath compatible with using Tasks in the Scouting paths
+#    if 'hltOutputScoutingPF' in process.__dict__ and not 'hltPreScoutingPFOutputSmart' in process.__dict__:
+#        process.hltPreScoutingPFOutputSmart = cms.EDFilter( "TriggerResultsFilter",
+#            l1tIgnoreMaskAndPrescale = cms.bool( False ),
+#            l1tResults = cms.InputTag( "" ),
+#            hltResults = cms.InputTag( 'TriggerResults','','@currentProcess' ),
+#            triggerConditions = process.hltOutputScoutingPF.SelectEvents.SelectEvents,
+#            throw = cms.bool( True )
+#        )
+#        insert_modules_after(process, process.hltPreScoutingPFOutput, process.hltPreScoutingPFOutputSmart)
 
 
     # done
@@ -847,6 +847,31 @@ def customizeHLTforPatatrackTriplets(process):
     process = customisePixelTrackReconstruction(process)
     process = customiseEcalLocalReconstruction(process)
     process = customiseHcalLocalReconstruction(process)
+
+    process.hltSiPixelDigisPPOnAAForLowPt = process.hltSiPixelDigisLegacy.clone()
+    process.hltSiPixelClustersPPOnAA.src = 'hltSiPixelDigisPPOnAA'
+    process.HLTDoLocalPixelSequencePPOnAAForLowPt = cms.Sequence(
+        process.hltSiPixelDigisPPOnAAForLowPt
+      + process.hltSiPixelClustersPPOnAAForLowPt
+      + process.hltSiPixelClustersCachePPOnAAForLowPt
+      + process.hltSiPixelRecHitsPPOnAAForLowPt
+    )
+
+    process.hltSiPixelDigisPPOnAA = process.hltSiPixelDigisLegacy.clone()
+    process.hltSiPixelClustersPPOnAAForLowPt.src = 'hltSiPixelDigisPPOnAAForLowPt'
+    process.HLTDoLocalPixelSequencePPOnAA = cms.Sequence(
+        process.hltSiPixelDigisPPOnAA
+      + process.hltSiPixelClustersPPOnAA
+      + process.hltSiPixelClustersCachePPOnAA
+      + process.hltSiPixelRecHitsPPOnAA
+    )
+
+    process.HLTRecopixelvertexingForHIppRefTask = process.HLTRecopixelvertexingTask.copy()
+    process.HLTRecopixelvertexingForHIppRefTask.remove(process.hltTrimmedPixelVertices)
+    process.HLTRecopixelvertexingForHIppRefSequence = cms.Sequence(process.HLTRecopixelvertexingForHIppRefTask)
+
+    process.HLTDoLocalHcalWithTowerSequence = cms.Sequence(process.HLTDoLocalHcalSequence + process.hltTowerMakerForAll)
+
     process = enablePatatrackPixelTriplets(process)
     return process
 
