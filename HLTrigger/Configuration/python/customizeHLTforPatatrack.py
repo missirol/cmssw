@@ -126,6 +126,9 @@ def customisePixelLocalReconstruction(process):
     _load_if_missing(process, 'siPixelGainCalibrationForHLTGPU', 'CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi')
     _load_if_missing(process, 'siPixelROCsStatusAndMappingWrapperESProducer', 'CalibTracker.SiPixelESProducers.siPixelROCsStatusAndMappingWrapperESProducer_cfi')
 
+    process.esSeqGPU01 = cms.Sequence(
+      process.PixelCPEFastESProducer + process.siPixelGainCalibrationForHLTGPU + process.siPixelROCsStatusAndMappingWrapperESProducer
+    )
 
     # Modules and EDAliases
     # referenced in HLTDoLocalPixelTask
@@ -294,6 +297,26 @@ def customisePixelLocalReconstruction(process):
                 AlCaPath.replace(process.hltSiPixelDigis, process.HLTDoLocalPixelSequence)
 
 
+    process.hltSiPixelDigisPPOnAAForLowPt = process.hltSiPixelDigisLegacy.clone()
+    process.hltSiPixelClustersPPOnAA.src = 'hltSiPixelDigisPPOnAA'
+    process.HLTDoLocalPixelSequencePPOnAAForLowPt = cms.Sequence(
+        process.hltSiPixelDigisPPOnAAForLowPt
+      + process.hltSiPixelClustersPPOnAAForLowPt
+      + process.hltSiPixelClustersCachePPOnAAForLowPt
+      + process.hltSiPixelRecHitsPPOnAAForLowPt
+    )
+
+
+    process.hltSiPixelDigisPPOnAA = process.hltSiPixelDigisLegacy.clone()
+    process.hltSiPixelClustersPPOnAAForLowPt.src = 'hltSiPixelDigisPPOnAAForLowPt'
+    process.HLTDoLocalPixelSequencePPOnAA = cms.Sequence(
+        process.hltSiPixelDigisPPOnAA
+      + process.hltSiPixelClustersPPOnAA
+      + process.hltSiPixelClustersCachePPOnAA
+      + process.hltSiPixelRecHitsPPOnAA
+    )
+
+
     # done
     return process
 
@@ -443,6 +466,9 @@ def customisePixelTrackReconstruction(process):
             process.HLTRecopixelvertexingTask,
         )
 
+        process.HLTRecopixelvertexingForHIppRefTask = process.HLTRecopixelvertexingTask.copy()
+        process.HLTRecopixelvertexingForHIppRefTask.remove(process.hltTrimmedPixelVertices)
+        process.HLTRecopixelvertexingForHIppRefSequence = cms.Sequence(process.HLTRecopixelvertexingForHIppRefTask)
 
     # done
     return process
@@ -482,6 +508,25 @@ def customiseEcalLocalReconstruction(process):
     _load_if_missing(process, 'ecalLinearCorrectionsGPUESProducer', 'RecoLocalCalo.EcalRecProducers.ecalLinearCorrectionsGPUESProducer_cfi')
     _load_if_missing(process, 'ecalRecHitParametersGPUESProducer', 'RecoLocalCalo.EcalRecProducers.ecalRecHitParametersGPUESProducer_cfi')
 
+    process.esSeqGPU02 = cms.Sequence(
+        process.ecalElectronicsMappingGPUESProducer
+      + process.ecalGainRatiosGPUESProducer
+      + process.ecalPedestalsGPUESProducer
+      + process.ecalPulseCovariancesGPUESProducer
+      + process.ecalPulseShapesGPUESProducer
+      + process.ecalSamplesCorrelationGPUESProducer
+      + process.ecalTimeBiasCorrectionsGPUESProducer
+      + process.ecalTimeCalibConstantsGPUESProducer
+      + process.ecalMultifitParametersGPUESProducer
+      + process.ecalRechitADCToGeVConstantGPUESProducer
+      + process.ecalRechitChannelStatusGPUESProducer
+      + process.ecalIntercalibConstantsGPUESProducer
+      + process.ecalLaserAPDPNRatiosGPUESProducer
+      + process.ecalLaserAPDPNRatiosRefGPUESProducer
+      + process.ecalLaserAlphasGPUESProducer
+      + process.ecalLinearCorrectionsGPUESProducer
+      + process.ecalRecHitParametersGPUESProducer
+    )
 
     # Modules and EDAliases
 
@@ -723,6 +768,25 @@ def customiseHcalLocalReconstruction(process):
         label1 = 'withTopoEff'
     )
 
+    process.esSeqGPU03 = cms.Sequence(
+        process.hcalElectronicsMappingGPUESProducer
+      + process.hcalChannelQualityGPUESProducer
+      + process.hcalGainsGPUESProducer
+      + process.hcalGainWidthsGPUESProducer
+      + process.hcalLUTCorrsGPUESProducer
+      + process.hcalConvertedPedestalsGPUESProducer
+      + process.hcalConvertedPedestalWidthsGPUESProducer
+      + process.hcalQIECodersGPUESProducer
+      + process.hcalRecoParamsWithPulseShapesGPUESProducer
+      + process.hcalRespCorrsGPUESProducer
+      + process.hcalTimeCorrsGPUESProducer
+      + process.hcalQIETypesGPUESProducer
+      + process.hcalSiPMParametersGPUESProducer
+      + process.hcalSiPMCharacteristicsGPUESProducer
+      + process.hcalMahiPulseOffsetsGPUESProducer
+      + process.hcalConvertedEffectivePedestalsGPUESProducer
+      + process.hcalConvertedEffectivePedestalWidthsGPUESProducer
+    )
 
     # Modules and EDAliases
 
@@ -808,6 +872,8 @@ def customiseHcalLocalReconstruction(process):
     # redefine HLTStoppedHSCPLocalHcalReco (it was emptied at the start of this function)
     process.HLTStoppedHSCPLocalHcalReco = cms.Sequence(process.HLTStoppedHSCPLocalHcalRecoTask)
 
+    if hasattr(process, 'HLTDoLocalHcalWithTowerSequence'):
+        process.HLTDoLocalHcalWithTowerSequence = cms.Sequence(process.HLTDoLocalHcalSequence + process.hltTowerMakerForAll)
 
     # done
     return process
@@ -847,31 +913,6 @@ def customizeHLTforPatatrackTriplets(process):
     process = customisePixelTrackReconstruction(process)
     process = customiseEcalLocalReconstruction(process)
     process = customiseHcalLocalReconstruction(process)
-
-    process.hltSiPixelDigisPPOnAAForLowPt = process.hltSiPixelDigisLegacy.clone()
-    process.hltSiPixelClustersPPOnAA.src = 'hltSiPixelDigisPPOnAA'
-    process.HLTDoLocalPixelSequencePPOnAAForLowPt = cms.Sequence(
-        process.hltSiPixelDigisPPOnAAForLowPt
-      + process.hltSiPixelClustersPPOnAAForLowPt
-      + process.hltSiPixelClustersCachePPOnAAForLowPt
-      + process.hltSiPixelRecHitsPPOnAAForLowPt
-    )
-
-    process.hltSiPixelDigisPPOnAA = process.hltSiPixelDigisLegacy.clone()
-    process.hltSiPixelClustersPPOnAAForLowPt.src = 'hltSiPixelDigisPPOnAAForLowPt'
-    process.HLTDoLocalPixelSequencePPOnAA = cms.Sequence(
-        process.hltSiPixelDigisPPOnAA
-      + process.hltSiPixelClustersPPOnAA
-      + process.hltSiPixelClustersCachePPOnAA
-      + process.hltSiPixelRecHitsPPOnAA
-    )
-
-    process.HLTRecopixelvertexingForHIppRefTask = process.HLTRecopixelvertexingTask.copy()
-    process.HLTRecopixelvertexingForHIppRefTask.remove(process.hltTrimmedPixelVertices)
-    process.HLTRecopixelvertexingForHIppRefSequence = cms.Sequence(process.HLTRecopixelvertexingForHIppRefTask)
-
-    process.HLTDoLocalHcalWithTowerSequence = cms.Sequence(process.HLTDoLocalHcalSequence + process.hltTowerMakerForAll)
-
     process = enablePatatrackPixelTriplets(process)
     return process
 
