@@ -292,25 +292,39 @@ def customisePixelLocalReconstruction(process):
                 AlCaPath.remove(process.hltSiPixelClusters)
                 AlCaPath.replace(process.hltSiPixelDigis, process.HLTDoLocalPixelSequence)
 
+    if hasattr(process, 'HLTDoLocalPixelSequencePPOnAA'):
 
-    process.hltSiPixelDigisPPOnAAForLowPt = process.hltSiPixelDigisLegacy.clone()
-    process.hltSiPixelClustersPPOnAA.src = 'hltSiPixelDigisPPOnAA'
-    process.HLTDoLocalPixelSequencePPOnAAForLowPt = cms.Sequence(
-        process.hltSiPixelDigisPPOnAAForLowPt
-      + process.hltSiPixelClustersPPOnAAForLowPt
-      + process.hltSiPixelClustersCachePPOnAAForLowPt
-      + process.hltSiPixelRecHitsPPOnAAForLowPt
-    )
+        ## decouple GRun-PixelReco and HIon-PixelReco
 
+        process.hltSiPixelDigisPPOnAA = process.hltSiPixelDigisLegacy.clone()
 
-    process.hltSiPixelDigisPPOnAA = process.hltSiPixelDigisLegacy.clone()
-    process.hltSiPixelClustersPPOnAAForLowPt.src = 'hltSiPixelDigisPPOnAAForLowPt'
-    process.HLTDoLocalPixelSequencePPOnAA = cms.Sequence(
-        process.hltSiPixelDigisPPOnAA
-      + process.hltSiPixelClustersPPOnAA
-      + process.hltSiPixelClustersCachePPOnAA
-      + process.hltSiPixelRecHitsPPOnAA
-    )
+        process.HLTDoLocalPixelSequencePPOnAA = cms.Sequence(
+            process.hltSiPixelDigisPPOnAA
+          + process.hltSiPixelClustersPPOnAA
+          + process.hltSiPixelClustersCachePPOnAA
+          + process.hltSiPixelRecHitsPPOnAA
+        )
+        process.HLTDoLocalPixelSequencePPOnAAForLowPt = cms.Sequence(
+            process.hltSiPixelDigisPPOnAA
+          + process.hltSiPixelClustersPPOnAAForLowPt
+          + process.hltSiPixelClustersCachePPOnAAForLowPt
+          + process.hltSiPixelRecHitsPPOnAAForLowPt
+        )
+
+        process.hltSiPixelClustersPPOnAA.src = 'hltSiPixelDigisPPOnAA'
+        process.hltSiPixelClustersPPOnAAForLowPt.src = 'hltSiPixelDigisPPOnAA'
+
+        process.hltDoubletRecoveryPixelLayersAndRegionsPPOnAA.inactivePixelDetectorLabels = ['hltSiPixelDigisPPOnAA']
+        process.hltDoubletRecoveryPixelLayersAndRegionsPPOnAA.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigisPPOnAA']
+
+        process.hltSiStripClustersPPOnAAZeroSuppression.inactivePixelDetectorLabels = ['hltSiPixelDigisPPOnAA']
+        process.hltSiStripClustersPPOnAAZeroSuppression.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigisPPOnAA']
+
+        process.hltDoubletRecoveryForElectronsPixelLayersAndRegions.inactivePixelDetectorLabels = ['hltSiPixelDigisPPOnAA']
+        process.hltDoubletRecoveryForElectronsPixelLayersAndRegions.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigisPPOnAA']
+
+        process.hltFullIter6PixelTrackingRegionSeedLayersBPPOnAA.inactivePixelDetectorLabels = ['hltSiPixelDigisPPOnAA']
+        process.hltFullIter6PixelTrackingRegionSeedLayersBPPOnAA.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigisPPOnAA']
 
 
     # done
