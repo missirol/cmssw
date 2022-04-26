@@ -1,6 +1,6 @@
 # hltGetConfiguration --full --data /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/HLT --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
 
-# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/HLT/V2 (CMSSW_12_3_0)
+# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/HLT/V3 (CMSSW_12_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -9,7 +9,7 @@ from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 process = cms.Process( "HLTFULL" )
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/HLT/V2')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/HLT/V3')
 )
 
 process.transferSystem = cms.PSet( 
@@ -93655,25 +93655,25 @@ process.hltDoubletRecoveryMaskedMeasurementTrackerEventPPOnAA = cms.EDProducer( 
 )
 process.hltDoubletRecoveryPixelLayersAndRegionsPPOnAA = cms.EDProducer( "PixelInactiveAreaTrackingRegionsSeedingLayersProducer",
     RegionPSet = cms.PSet( 
-      precise = cms.bool( True ),
+      vertexCollection = cms.InputTag( "hltTrimmedPixelVerticesPPOnAA" ),
       beamSpot = cms.InputTag( "hltOnlineBeamSpot" ),
       zErrorBeamSpot = cms.double( 15.0 ),
+      extraPhi = cms.double( 0.0 ),
+      extraEta = cms.double( 0.0 ),
+      maxNVertices = cms.int32( 3 ),
       nSigmaZVertex = cms.double( 3.0 ),
       nSigmaZBeamSpot = cms.double( 4.0 ),
-      measurementTrackerName = cms.InputTag( "hltDoubletRecoveryMaskedMeasurementTrackerEventPPOnAA" ),
-      extraEta = cms.double( 0.0 ),
-      vertexCollection = cms.InputTag( "hltTrimmedPixelVerticesPPOnAA" ),
       ptMin = cms.double( 1.2 ),
+      operationMode = cms.string( "VerticesFixed" ),
       searchOpt = cms.bool( False ),
       whereToUseMeasurementTracker = cms.string( "ForSiStrips" ),
-      maxNVertices = cms.int32( 3 ),
-      extraPhi = cms.double( 0.0 ),
       originRadius = cms.double( 0.015 ),
-      zErrorVertex = cms.double( 0.03 ),
-      operationMode = cms.string( "VerticesFixed" )
+      measurementTrackerName = cms.InputTag( "hltDoubletRecoveryMaskedMeasurementTrackerEventPPOnAA" ),
+      precise = cms.bool( True ),
+      zErrorVertex = cms.double( 0.03 )
     ),
-    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigis' ),
-    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigis' ),
+    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
+    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
     ignoreSingleFPixPanelModules = cms.bool( True ),
     debug = cms.untracked.bool( False ),
     createPlottingFiles = cms.untracked.bool( False ),
@@ -96778,8 +96778,8 @@ process.hltSiStripClustersPPOnAAZeroSuppression = cms.EDProducer( "MeasurementTr
     Phase2TrackerCluster1DProducer = cms.string( "" ),
     vectorHits = cms.InputTag( "" ),
     vectorHitsRej = cms.InputTag( "" ),
-    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigis' ),
-    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigis' ),
+    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
+    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
     pixelCablingMapLabel = cms.string( "" ),
     inactiveStripDetectorLabels = cms.VInputTag( 'hltSiStripExcludedFEDListProducer' ),
     switchOffPixelsIfEmpty = cms.bool( True )
@@ -97928,25 +97928,25 @@ process.hltDoubletRecoveryForElectronsMaskedMeasurementTrackerEvent = cms.EDProd
 )
 process.hltDoubletRecoveryForElectronsPixelLayersAndRegions = cms.EDProducer( "PixelInactiveAreaTrackingRegionsSeedingLayersProducer",
     RegionPSet = cms.PSet( 
-      precise = cms.bool( True ),
+      vertexCollection = cms.InputTag( "hltTrimmedPixelVerticesPPOnAA" ),
       beamSpot = cms.InputTag( "hltOnlineBeamSpot" ),
       zErrorBeamSpot = cms.double( 15.0 ),
+      extraPhi = cms.double( 0.0 ),
+      extraEta = cms.double( 0.0 ),
+      maxNVertices = cms.int32( 3 ),
       nSigmaZVertex = cms.double( 3.0 ),
       nSigmaZBeamSpot = cms.double( 4.0 ),
-      measurementTrackerName = cms.InputTag( "hltDoubletRecoveryForElectronsMaskedMeasurementTrackerEvent" ),
-      extraEta = cms.double( 0.0 ),
-      vertexCollection = cms.InputTag( "hltTrimmedPixelVerticesPPOnAA" ),
       ptMin = cms.double( 4.0 ),
+      operationMode = cms.string( "VerticesFixed" ),
       searchOpt = cms.bool( False ),
       whereToUseMeasurementTracker = cms.string( "ForSiStrips" ),
-      maxNVertices = cms.int32( 3 ),
-      extraPhi = cms.double( 0.0 ),
       originRadius = cms.double( 0.015 ),
-      zErrorVertex = cms.double( 0.03 ),
-      operationMode = cms.string( "VerticesFixed" )
+      measurementTrackerName = cms.InputTag( "hltDoubletRecoveryForElectronsMaskedMeasurementTrackerEvent" ),
+      precise = cms.bool( True ),
+      zErrorVertex = cms.double( 0.03 )
     ),
-    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigis' ),
-    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigis' ),
+    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
+    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
     ignoreSingleFPixPanelModules = cms.bool( True ),
     debug = cms.untracked.bool( False ),
     createPlottingFiles = cms.untracked.bool( False ),
@@ -101171,29 +101171,29 @@ process.hltFullIter6PixelClusterCheckPPOnAA = cms.EDProducer( "ClusterCheckerEDP
 )
 process.hltFullIter6PixelTrackingRegionSeedLayersBPPOnAA = cms.EDProducer( "PixelInactiveAreaTrackingRegionsSeedingLayersProducer",
     RegionPSet = cms.PSet( 
-      precise = cms.bool( True ),
-      maxNVertices = cms.int32( 5 ),
-      extraPhi = cms.double( 0.0 ),
-      beamSpot = cms.InputTag( "hltOnlineBeamSpot" ),
-      whereToUseMeasurementTracker = cms.string( "Never" ),
       deltaEta_Cand = cms.double( -1.0 ),
-      zErrorBeamSpot = cms.double( 24.2 ),
-      nSigmaZVertex = cms.double( 3.0 ),
-      deltaPhi_Cand = cms.double( -1.0 ),
-      nSigmaZBeamSpot = cms.double( 4.0 ),
-      extraEta = cms.double( 0.0 ),
       vertexCollection = cms.InputTag( "hltFullIter0PrimaryVerticesPPOnAAForDmeson" ),
-      ptMin = cms.double( 5.0 ),
-      searchOpt = cms.bool( False ),
+      beamSpot = cms.InputTag( "hltOnlineBeamSpot" ),
+      zErrorBeamSpot = cms.double( 24.2 ),
+      extraPhi = cms.double( 0.0 ),
+      extraEta = cms.double( 0.0 ),
       seedingMode = cms.string( "Global" ),
+      maxNVertices = cms.int32( 5 ),
+      nSigmaZVertex = cms.double( 3.0 ),
+      nSigmaZBeamSpot = cms.double( 4.0 ),
+      ptMin = cms.double( 5.0 ),
       input = cms.InputTag( "" ),
-      measurementTrackerName = cms.InputTag( "" ),
+      operationMode = cms.string( "VerticesFixed" ),
+      searchOpt = cms.bool( False ),
+      whereToUseMeasurementTracker = cms.string( "Never" ),
+      deltaPhi_Cand = cms.double( -1.0 ),
       originRadius = cms.double( 0.015 ),
-      zErrorVertex = cms.double( 0.3 ),
-      operationMode = cms.string( "VerticesFixed" )
+      measurementTrackerName = cms.InputTag( "" ),
+      precise = cms.bool( True ),
+      zErrorVertex = cms.double( 0.3 )
     ),
-    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigis' ),
-    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigis' ),
+    inactivePixelDetectorLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
+    badPixelFEDChannelCollectionLabels = cms.VInputTag( 'hltSiPixelDigisPPOnAA' ),
     ignoreSingleFPixPanelModules = cms.bool( True ),
     debug = cms.untracked.bool( False ),
     createPlottingFiles = cms.untracked.bool( False ),
@@ -101223,13 +101223,13 @@ process.hltFullIter6PixelTrackingRegionSeedLayersBPPOnAA = cms.EDProducer( "Pixe
       'FPix2_neg+FPix3_neg' ),
     BPix = cms.PSet( 
       TTRHBuilder = cms.string( "hltESPTTRHBWithTrackAngle" ),
-      HitProducer = cms.string( "hltSiPixelRecHitsAfterSplittingPPOnAAForDmeson" ),
-      skipClusters = cms.InputTag( "hltFullIter6ClustersRefRemovalPPOnAA" )
+      skipClusters = cms.InputTag( "hltFullIter6ClustersRefRemovalPPOnAA" ),
+      HitProducer = cms.string( "hltSiPixelRecHitsAfterSplittingPPOnAAForDmeson" )
     ),
     FPix = cms.PSet( 
       TTRHBuilder = cms.string( "hltESPTTRHBWithTrackAngle" ),
-      HitProducer = cms.string( "hltSiPixelRecHitsAfterSplittingPPOnAAForDmeson" ),
-      skipClusters = cms.InputTag( "hltFullIter6ClustersRefRemovalPPOnAA" )
+      skipClusters = cms.InputTag( "hltFullIter6ClustersRefRemovalPPOnAA" ),
+      HitProducer = cms.string( "hltSiPixelRecHitsAfterSplittingPPOnAAForDmeson" )
     ),
     TIB = cms.PSet(  ),
     TID = cms.PSet(  ),

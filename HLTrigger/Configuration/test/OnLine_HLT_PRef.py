@@ -1,6 +1,6 @@
 # hltGetConfiguration --full --data /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PRef --type PRef --unprescale --process HLTPRef --globaltag auto:run3_hlt_PRef --input file:RelVal_Raw_PRef_DATA.root
 
-# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PRef/V1 (CMSSW_12_3_0)
+# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PRef/V2 (CMSSW_12_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -9,7 +9,7 @@ from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 process = cms.Process( "HLTPRef" )
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PRef/V1')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PRef/V2')
 )
 
 process.transferSystem = cms.PSet( 

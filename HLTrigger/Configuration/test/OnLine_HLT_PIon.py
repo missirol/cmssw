@@ -1,6 +1,6 @@
 # hltGetConfiguration --full --data /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon --type PIon --unprescale --process HLTPIon --globaltag auto:run3_hlt_PIon --input file:RelVal_Raw_PIon_DATA.root
 
-# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V1 (CMSSW_12_3_0)
+# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V2 (CMSSW_12_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -9,7 +9,7 @@ from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 process = cms.Process( "HLTPIon" )
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V1')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V2')
 )
 
 process.transferSystem = cms.PSet( 

@@ -1,6 +1,6 @@
 # hltGetConfiguration --full --data /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/GRun --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
 
-# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/GRun/V1 (CMSSW_12_3_0)
+# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/GRun/V2 (CMSSW_12_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -9,7 +9,7 @@ from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 process = cms.Process( "HLTGRun" )
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/GRun/V1')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/GRun/V2')
 )
 
 process.transferSystem = cms.PSet( 

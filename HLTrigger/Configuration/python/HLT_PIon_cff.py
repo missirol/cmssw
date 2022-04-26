@@ -1,6 +1,6 @@
 # hltGetConfiguration --cff --data /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon --type PIon
 
-# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V1 (CMSSW_12_3_0)
+# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V2 (CMSSW_12_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -9,7 +9,7 @@ from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
 fragment = cms.ProcessFragment( "HLT" )
 
 fragment.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V1')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/PIon/V2')
 )
 
 fragment.transferSystem = cms.PSet( 
