@@ -1,4 +1,4 @@
-# /dev/CMSSW_12_3_0/GRun
+# /users/missirol/test/dev/CMSSW_12_3_0/CMSHLT_2288/IntegTest_v01/GRun
 
 import FWCore.ParameterSet.Config as cms
 
