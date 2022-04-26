@@ -126,9 +126,11 @@ def customisePixelLocalReconstruction(process):
     _load_if_missing(process, 'siPixelGainCalibrationForHLTGPU', 'CalibTracker.SiPixelESProducers.siPixelGainCalibrationForHLTGPU_cfi')
     _load_if_missing(process, 'siPixelROCsStatusAndMappingWrapperESProducer', 'CalibTracker.SiPixelESProducers.siPixelROCsStatusAndMappingWrapperESProducer_cfi')
 
-    process.esSeqGPU01 = cms.Sequence(
-      process.PixelCPEFastESProducer + process.siPixelGainCalibrationForHLTGPU + process.siPixelROCsStatusAndMappingWrapperESProducer
-    )
+#    process.esTaskGPU01 = cms.Task(
+#        process.PixelCPEFastESProducer
+#      , process.siPixelGainCalibrationForHLTGPU
+#      , process.siPixelROCsStatusAndMappingWrapperESProducer
+#    )
 
     # Modules and EDAliases
     # referenced in HLTDoLocalPixelTask
@@ -508,25 +510,25 @@ def customiseEcalLocalReconstruction(process):
     _load_if_missing(process, 'ecalLinearCorrectionsGPUESProducer', 'RecoLocalCalo.EcalRecProducers.ecalLinearCorrectionsGPUESProducer_cfi')
     _load_if_missing(process, 'ecalRecHitParametersGPUESProducer', 'RecoLocalCalo.EcalRecProducers.ecalRecHitParametersGPUESProducer_cfi')
 
-    process.esSeqGPU02 = cms.Sequence(
-        process.ecalElectronicsMappingGPUESProducer
-      + process.ecalGainRatiosGPUESProducer
-      + process.ecalPedestalsGPUESProducer
-      + process.ecalPulseCovariancesGPUESProducer
-      + process.ecalPulseShapesGPUESProducer
-      + process.ecalSamplesCorrelationGPUESProducer
-      + process.ecalTimeBiasCorrectionsGPUESProducer
-      + process.ecalTimeCalibConstantsGPUESProducer
-      + process.ecalMultifitParametersGPUESProducer
-      + process.ecalRechitADCToGeVConstantGPUESProducer
-      + process.ecalRechitChannelStatusGPUESProducer
-      + process.ecalIntercalibConstantsGPUESProducer
-      + process.ecalLaserAPDPNRatiosGPUESProducer
-      + process.ecalLaserAPDPNRatiosRefGPUESProducer
-      + process.ecalLaserAlphasGPUESProducer
-      + process.ecalLinearCorrectionsGPUESProducer
-      + process.ecalRecHitParametersGPUESProducer
-    )
+#    process.esTaskGPU02 = cms.Task(
+#        process.ecalElectronicsMappingGPUESProducer
+#      , process.ecalGainRatiosGPUESProducer
+#      , process.ecalPedestalsGPUESProducer
+#      , process.ecalPulseCovariancesGPUESProducer
+#      , process.ecalPulseShapesGPUESProducer
+#      , process.ecalSamplesCorrelationGPUESProducer
+#      , process.ecalTimeBiasCorrectionsGPUESProducer
+#      , process.ecalTimeCalibConstantsGPUESProducer
+#      , process.ecalMultifitParametersGPUESProducer
+#      , process.ecalRechitADCToGeVConstantGPUESProducer
+#      , process.ecalRechitChannelStatusGPUESProducer
+#      , process.ecalIntercalibConstantsGPUESProducer
+#      , process.ecalLaserAPDPNRatiosGPUESProducer
+#      , process.ecalLaserAPDPNRatiosRefGPUESProducer
+#      , process.ecalLaserAlphasGPUESProducer
+#      , process.ecalLinearCorrectionsGPUESProducer
+#      , process.ecalRecHitParametersGPUESProducer
+#    )
 
     # Modules and EDAliases
 
@@ -768,25 +770,25 @@ def customiseHcalLocalReconstruction(process):
         label1 = 'withTopoEff'
     )
 
-    process.esSeqGPU03 = cms.Sequence(
-        process.hcalElectronicsMappingGPUESProducer
-      + process.hcalChannelQualityGPUESProducer
-      + process.hcalGainsGPUESProducer
-      + process.hcalGainWidthsGPUESProducer
-      + process.hcalLUTCorrsGPUESProducer
-      + process.hcalConvertedPedestalsGPUESProducer
-      + process.hcalConvertedPedestalWidthsGPUESProducer
-      + process.hcalQIECodersGPUESProducer
-      + process.hcalRecoParamsWithPulseShapesGPUESProducer
-      + process.hcalRespCorrsGPUESProducer
-      + process.hcalTimeCorrsGPUESProducer
-      + process.hcalQIETypesGPUESProducer
-      + process.hcalSiPMParametersGPUESProducer
-      + process.hcalSiPMCharacteristicsGPUESProducer
-      + process.hcalMahiPulseOffsetsGPUESProducer
-      + process.hcalConvertedEffectivePedestalsGPUESProducer
-      + process.hcalConvertedEffectivePedestalWidthsGPUESProducer
-    )
+#    process.esTaskGPU03 = cms.Task(
+#        process.hcalElectronicsMappingGPUESProducer
+#      , process.hcalChannelQualityGPUESProducer
+#      , process.hcalGainsGPUESProducer
+#      , process.hcalGainWidthsGPUESProducer
+#      , process.hcalLUTCorrsGPUESProducer
+#      , process.hcalConvertedPedestalsGPUESProducer
+#      , process.hcalConvertedPedestalWidthsGPUESProducer
+#      , process.hcalQIECodersGPUESProducer
+#      , process.hcalRecoParamsWithPulseShapesGPUESProducer
+#      , process.hcalRespCorrsGPUESProducer
+#      , process.hcalTimeCorrsGPUESProducer
+#      , process.hcalQIETypesGPUESProducer
+#      , process.hcalSiPMParametersGPUESProducer
+#      , process.hcalSiPMCharacteristicsGPUESProducer
+#      , process.hcalMahiPulseOffsetsGPUESProducer
+#      , process.hcalConvertedEffectivePedestalsGPUESProducer
+#      , process.hcalConvertedEffectivePedestalWidthsGPUESProducer
+#    )
 
     # Modules and EDAliases
 
