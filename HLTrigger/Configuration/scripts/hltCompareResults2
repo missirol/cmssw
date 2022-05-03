@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""
+ hltCompareResults:
+  - script that analyses the outputs of hltIntegrationTests
+  - returns 0 if the tests pass, and 1 otherwise
+"""
+import os
+import sys
+import argparse
+import fnmatch
+
+def trigReportResultsDict(filepath, pathNames=None):
+  ret = {}
+  with open(filepath) as inpfile:
+    readHeader = readModuleResults = False
+    pathName = None
+    for line in inpfile:
+      if readHeader:
+        readHeader = False
+        readModuleResults = True
+      elif readModuleResults:
+        modResultsSplit = line.split()
+        if len(modResultsSplit) == 0:
+          readModuleResults = False
+        else:
+          assert modResultsSplit[0] == 'TrigReport'
+          assert int(modResultsSplit[1]) == 1
+          if pathName not in ret:
+            ret[pathName] = []
+          ret[pathName].append((
+            int(modResultsSplit[2]), # bit number
+            int(modResultsSplit[3]), # count: visited
+            int(modResultsSplit[4]), # count: passed
+            int(modResultsSplit[5]), # count: failed
+            int(modResultsSplit[6]), # count: error
+            str(modResultsSplit[7]), # module's name
+          ))
+      elif not line.startswith('TrigReport'):
+        continue
+      elif 'Modules in Path:' not in line:
+        continue
+      else:
+        pathName = line.split('Modules in Path:')[1].split()[0]
+        readHeader = pathName in pathNames or (pathNames == None)
+  return ret
+
+def trigReportsAreCompatible(res1, res2, pathName, rules):
+  diff = 0
+  for res1Idx, res1_i in enumerate(res1):
+    res2_i = res2[res1Idx]
+    if res1_i[0] != res2_i[0] or (not (res1_i[4] == res2_i[4] == 0)) or res1_i[5] != res2_i[5]:
+      return False
+    maxDiff = 0
+    for rule_i in rules:
+      if fnmatch.fnmatch(pathName, rule_i[0]) and fnmatch.fnmatch(res1_i[5], rule_i[1]):
+        maxDiff = rule_i[2]
+    # failure:
+    #  module diff exceeds per-module threshold (maxDiff)
+    #  plus diff induced by previous modules (diff)
+    if abs(res1_i[2]-res2_i[2]) > maxDiff+diff:
+      return False
+    # update diff
+    diff = abs(res1_i[2]-res2_i[2])
+  return True
+
+###
+### main
+###
+def main():
+
+  parser = argparse.ArgumentParser(
+   prog='./'+os.path.basename(__file__),
+   formatter_class=argparse.RawDescriptionHelpFormatter,
+   description=__doc__)
+
+  parser.add_argument('-d', '--dir-path', dest='dir_path', action='store', default='.',
+                      help='path to directory containing the results of the HLT-integration tests')
+
+  parser.add_argument('-p', '--paths-basename', dest='paths_basename', action='store', default='paths.txt',
+                      help='basename of .txt file in DIR containing the list of Paths (default: "paths.txt")')
+
+  parser.add_argument('-i', '--issues-basename', dest='issues_basename', action='store', default='issues.txt',
+                      help='basename of .txt file created in DIR with list of issues (default: "issues.txt")')
+
+  parser.add_argument('-f', '--full-menu-name', dest='full_menu_name', action='store', default='hlt',
+                      help='name used for the files in DIR referring to the full HLT menu (default: "hlt")')
+
+  parser.add_argument('-r', '--rules', dest='rules', nargs='+', default=['*:*:0'],
+                      help='List of rules to compare "Full-Menu vs Single-Path" results (default: [\'*:*:0\'])')
+
+  parser.add_argument('--dry-run', dest='dry_run', action='store_true', default=False,
+                      help='enable dry-run mode')
+
+  parser.add_argument('-v', '--verbosity', dest='verbosity', nargs='?', type=int, default=0, const=1,
+                      help='level of verbosity (default: 0)')
+
+  opts, opts_unknown = parser.parse_known_args()
+  ### -------------------------
+
+  if len(opts_unknown):
+    raise RuntimeError(f'unknown command-line arguments: {opts_unknown}')
+
+  if not os.path.isdir(opts.dir_path):
+    raise RuntimeError(f'invalid path to input directory [-d]: {opts.dir_path}')
+
+  # list of rules for comparing TrigReport outputs
+  #  - baseline rule (1st entry): expect no differences (zero events) for all Paths and Modules
+  comparisonRules = [(('*', '*', 0))]
+  for rule in opts.rules:
+    try:
+      rule_split = rule.split(':')
+      assert len(rule_split) == 3 and int(rule_split[2]) >= 0
+      comparisonRules.append(((str(rule_split[0]), str(rule_split[1]), int(rule_split[2]))))
+    except:
+      print(f'WARNING: invalid format for comparison rule (will be ignored): "{rule}"')
+      continue
+
+  # exit code of executable
+  exitCode = 0
+
+  # Output file contaning list of failed tests
+  issuesFilePath = os.path.join(opts.dir_path, opts.issues_basename)
+  os.system(f'rm -f {issuesFilePath} && touch {issuesFilePath}')
+
+  # Input file containing list of Paths
+  pathsFileName = opts.paths_basename
+  pathsFilePath = os.path.join(opts.dir_path, opts.paths_basename)
+  try:
+    with open(f'{pathsFilePath}') as pathsFile:
+      hltPaths = [line.rstrip() for line in pathsFile]
+  except:
+    print(f'ERROR: File \"{pathsFileName}\" does not exist (must contain the list of paths used in the integration tests).', file=sys.stderr)
+    os.system(f'echo "{pathsFileName}" >> {issuesFilePath}')
+    exitCode = 1
+    raise SystemExit(exitCode)
+
+  # TrigReports of full-menu test
+  retFullMenu = {}
+  hltFullMenuName = opts.full_menu_name
+  hltFullMenuPathNoExt = os.path.join(opts.dir_path, opts.full_menu_name)
+  if os.path.isfile(f'{hltFullMenuPathNoExt}.done'):
+    retFullMenu = trigReportResultsDict(filepath=f'{hltFullMenuPathNoExt}.log', pathNames=hltPaths)
+  else:
+    print(f'ERROR: Execution of the full HLT menu failed.\nPlease check the contents of \'{hltFullMenuName}.log\' for details.', file=sys.stderr)
+    os.system(f'echo "{hltFullMenuName}" >> {issuesFilePath}')
+    exitCode = 1
+    raise SystemExit(exitCode)
+
+  # TrigReports of single-Path tests
+  retSinglePath = {}
+  for pathName in hltPaths:
+    pathPathNoExt = os.path.join(opts.dir_path, pathName)
+    if os.path.isfile(f'{pathPathNoExt}.done'):
+      retSinglePath = trigReportResultsDict(filepath=f'{pathPathNoExt}.log', pathNames=[pathName])
+      if not trigReportsAreCompatible(retFullMenu[pathName], retSinglePath[pathName], pathName, comparisonRules):
+        logMsg1 = f'Inconsistencies found comparing the result of the trigger {pathName} run as part of the whole menu, or standalone.'
+        logMsg2 = f'Please compare the contents of \'{hltFullMenuName}.log\' and \'{pathName}.log\' for details.'
+        print(f'ERROR: {logMsg1}\n{logMsg2}', file=sys.stderr)
+        os.system(f'echo -e "{hltFullMenuName}\n{pathName}" >> {issuesFilePath}')
+        exitCode = 1
+
+      if len(retFullMenu[pathName]) > 0:
+        lastModuleName = retFullMenu[pathName][-1][5]
+        lastModulePassed = retFullMenu[pathName][-1][3]
+        lastModuleVisited = retFullMenu[pathName][-1][2]
+        if lastModulePassed == 0:
+          if lastModuleName != 'hltBoolFalse':
+            print(f'WARNING: path {pathName} did not accept any events')
+          elif lastModuleVisited == 0:
+            print(f'WARNING: path {pathName} was not fully exercised')
+    else:
+      print(f'ERROR: Execution of the trigger {pathName} failed.\nPlease check the contents of \'{pathName}.log\' for details.', file=sys.stderr)
+      os.system(f'echo -e "{hltFullMenuName}\n{pathName}" >> {issuesFilePath}')
+      exitCode = 1
+
+  raise SystemExit(exitCode)
+
+if __name__ == '__main__':
+  main()

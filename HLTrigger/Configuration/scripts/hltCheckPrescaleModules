@@ -17,7 +17,7 @@ if len(sys.argv) != 2:
   sys.exit(1)
 
 # whitelist paths exempt from validation
-whitelist = ('HLTriggerFirstPath', 'HLTriggerFinalPath')
+whitelist = ('HLTriggerFirstPath', 'HLTriggerFinalPath', 'Status_OnCPU', 'Status_OnGPU')
 
 # load the menu and get the "process" object
 menu = types.ModuleType('menu')

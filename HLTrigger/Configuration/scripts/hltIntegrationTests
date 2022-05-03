@@ -67,7 +67,7 @@ Usage:
   Note: '--events' is not supported together with '--size' or '--skip'.
 
 
-Exmples:
+Examples:
 
   $NAME /dev/CMSSW_4_2_0/GRun
 
@@ -76,13 +76,13 @@ Exmples:
 
   $NAME /dev/CMSSW_4_2_0/GRun -x --l1-emulator
 
-      will test the latest version of the GRun, running the L1 emulator.
+      will test the latest version of the GRun, running the L1T emulator.
 
 
   $NAME /users/fwyzard/physics/HLT/V6 -s adg:/cdaq/physics/Run2011/1e33/v1.3/HLT/V6
 
-      will test the paths from /users/fwyzard/physics/HLT/V6, using the environment from the
-      online menu \"1e33\" v1.3 V6
+      will test the paths from /users/fwyzard/physics/HLT/V6,
+      using the environment from the online menu /cdaq/physics/Run2011/1e33/v1.3/HLT/V6
 
 "
 
@@ -379,8 +379,50 @@ fi
 
 # compare HLT results
 log "Comparing the results of running each path by itself with those from the full menu"
-hltCompareResults
-STATUS=$?
+
+touch issues.txt
+
+# check if the menu as a whole was run
+if ! [ -f "hlt.done" ]; then
+  err "ERROR: Execution of the full HLT menu failed.\nPlease check the contents of 'hlt.log' for details."
+  cat >> issues.txt <<EOF
+hlt
+EOF
+  exit 1
+fi
+
+# compare the results of running each path by itself with those from the full menu
+STATUS=0
+for TRIGGER in $TRIGGERS; do
+  if ! [ -f ${TRIGGER}.done ]; then
+    err "ERROR: Execution of the trigger $TRIGGER failed.\nPlease check the contents of '$TRIGGER.log' for details."
+    STATUS=1
+    cat >> issues.txt <<EOF
+hlt
+$TRIGGER
+EOF
+    continue
+  fi
+  RESULT=$(cat "hlt.log"      | awk "/TrigReport ---------- Modules in Path: $TRIGGER ------------/"'{ while ($1 == "TrigReport") { print; getline; } }' | sed -e's|TrigReport     1 ....|TrigReport     1 xxxx|')
+  SINGLE=$(cat "$TRIGGER.log" | awk "/TrigReport ---------- Modules in Path: $TRIGGER ------------/"'{ while ($1 == "TrigReport") { print; getline; } }' | sed -e's|TrigReport     1 ....|TrigReport     1 xxxx|')
+  if [ "$RESULT" != "$SINGLE" ]; then
+    err "ERROR: Inconsistencies found comparing the result of the trigger $TRIGGER run as part of the whole menu, or standalone.\nPlease compare the contents of 'hlt.log' and '$TRIGGER.log' for details."
+    STATUS=1
+    cat >> issues.txt <<EOF
+hlt
+$TRIGGER
+EOF
+  fi
+  read VISIT PASS LAST <<< $(echo "$RESULT" | tail -n1 | awk '{ print $4, $5, $8; }')
+  if (( PASS == 0 )); then
+    if [ "$LAST" != "hltBoolFalse" ]; then
+      log "WARNING: path $TRIGGER did not accept any events"
+    elif (( VISIT == 0 )); then
+      log "WARNING: path $TRIGGER was not fully exercised"
+    fi
+  fi
+done
+
 log "exit status: $STATUS"
 log "done"
 
