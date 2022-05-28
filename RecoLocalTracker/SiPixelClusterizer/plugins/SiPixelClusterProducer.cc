@@ -114,6 +114,16 @@ void SiPixelClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
   auto output = std::make_unique<SiPixelClusterCollectionNew>();
   //FIXME: put a reserve() here
 
+for(auto const& detset : *inputDigi){
+  edm::LogPrint("") << "[SiPixelClusterProducer | " << __LINE__ << "] "
+    << " detId=" << detset.detId() << " size=" << detset.size();
+  int ndigi = 0;
+  for(auto const& digi : detset){
+    edm::LogPrint("") << "[SiPixelClusterProducer | " << __LINE__ << "]   "
+      << " ndigi=" << ndigi++ << " channel=" << digi.channel() << " row=" << digi.row()
+      << " column=" << digi.column() << " adc=" << digi.adc() << " flag=" << digi.flag();
+  }
+}
   // Step C: Iterate over DetIds and invoke the pixel clusterizer algorithm
   // on each DetUnit
   if (clusterMode_ == "PixelThresholdReclusterizer")
@@ -129,6 +139,17 @@ void SiPixelClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
     uint16_t id = 0;
     for (auto& cluster : clusters) {
       cluster.setOriginalId(id++);
+edm::LogPrint("") << "[SiPixelClusterProducer | " << __LINE__ << "] "
+  << " id=" << cluster.originalId() << " size=" << cluster.size()
+  << " sizeX=" << cluster.sizeX() << " sizeY=" << cluster.sizeY()
+  << " colSpan=" << cluster.colSpan() << " rowSpan=" << cluster.rowSpan()
+  << " minPixelRow=" << cluster.minPixelRow() << " maxPixelRow=" << cluster.maxPixelRow()
+  << " minPixelCol=" << cluster.minPixelCol() << " maxPixelCol=" << cluster.maxPixelCol();
+for(int idigi=0; idigi<cluster.size(); ++idigi){
+  auto const& pixel = cluster.pixel(idigi);
+  edm::LogPrint("") << "[SiPixelClusterProducer | " << __LINE__ << "]   "
+    << " idigi=" << idigi << " x=" << pixel.x << " y=" << pixel.y << " adc=" << pixel.adc;
+}
     }
   }
   e.put(tPutPixelClusters, std::move(output));

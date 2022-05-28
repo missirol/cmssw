@@ -261,6 +261,16 @@ void SiPixelRawToDigi::produce(edm::Event& ev, const edm::EventSetup& es) {
   if (errorsInEvent)
     LogDebug("SiPixelRawToDigi") << "Error words were stored in this event";
 
+for(auto const& detset : collection){
+  edm::LogPrint("") << "[SiPixelRawToDigi | " << __LINE__ << "] "
+    << " detId=" << detset.detId() << " size=" << detset.size();
+  int ndigi = 0;
+  for(auto const& digi : detset){
+    edm::LogPrint("") << "[SiPixelRawToDigi | " << __LINE__ << "]   "
+      << " ndigi=" << ndigi++ << " channel=" << digi.channel() << " row=" << digi.row()
+      << " column=" << digi.column() << " adc=" << digi.adc() << " flag=" << digi.flag();
+  }
+}
   ev.emplace(siPixelDigiCollectionToken_, std::move(collection));
   if (includeErrors_) {
     ev.emplace(errorPutToken_, std::move(errorcollection));

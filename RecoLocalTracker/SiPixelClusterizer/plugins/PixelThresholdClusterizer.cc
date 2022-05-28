@@ -148,6 +148,9 @@ void PixelThresholdClusterizer::clusterizeDetUnitT(const T& input,
   if (theLayer == 1)
     clusterThreshold = theClusterThreshold_L1;
 
+edm::LogPrint("") << "[PixelThresholdClusterizer | " << __LINE__ << "]   "
+  << " detId=" << theDetid << " layer=" << theLayer << " clusterThreshold=" << clusterThreshold;
+
   //  Copy PixelDigis to the buffer array; select the seed pixels
   //  on the way, and store them in theSeeds.
   if (end > begin)
@@ -250,6 +253,12 @@ void PixelThresholdClusterizer::copy_to_buffer(DigiIterator begin, DigiIterator 
       } else {
         (*theSiPixelGainCalibrationService_).calibrate(theDetid, begin, end, theConversionFactor, theOffset, electron);
       }
+edm::LogPrint("") << "[PixelThresholdClusterizer | " << __LINE__ << "]   "
+  << " copy_to_buffer(Digi) : detId=" << theDetid << " theLayer=" << theLayer << " (end-begin)=" << (end - begin);
+for(uint idx=0; idx<(end-begin); ++idx){
+  edm::LogPrint("") << "[PixelThresholdClusterizer | " << __LINE__ << "]   "
+    << " copy_to_buffer(Digi) :     electron[" << idx << "]=" << electron[idx];
+}
     } else {
       int i = 0;
       const float gain = theElectronPerADCGain;  // default: 1 ADC = 135 electrons
@@ -272,6 +281,11 @@ void PixelThresholdClusterizer::copy_to_buffer(DigiIterator begin, DigiIterator 
     int col = di->column();
     // VV: do not calibrate a fake pixel, it already has a unit of 10e-:
     int adc = (di->flag() != 0) ? di->adc() * 10 : electron[i];  // this is in electrons
+
+edm::LogPrint("") << "[PixelThresholdClusterizer | " << __LINE__ << "]   "
+  << " copy_to_buffer(Digi) :   row=" << row << " col=" << col << " flag=" << di->flag()
+  << " adc=" << adc << " adc()=" << di->adc() << " electron[" << i << "]=" << electron[i];
+
     i++;
 
 #ifdef PIXELREGRESSION

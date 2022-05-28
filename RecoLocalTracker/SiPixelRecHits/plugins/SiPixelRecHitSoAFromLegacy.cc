@@ -208,6 +208,12 @@ void SiPixelRecHitSoAFromLegacy::produce(edm::StreamID streamID, edm::Event& iEv
     uint32_t ndigi = 0;
     for (auto const& clust : dsv) {
       assert(clust.size() > 0);
+edm::LogPrint("") << "[SiPixelRecHitSoAFromLegacy | " << __LINE__ << "] "
+  << " id=" << clust.originalId() << " size=" << clust.size()
+  << " sizeX=" << clust.sizeX() << " sizeY=" << clust.sizeY()
+  << " colSpan=" << clust.colSpan() << " rowSpan=" << clust.rowSpan()
+  << " minPixelRow=" << clust.minPixelRow() << " maxPixelRow=" << clust.maxPixelRow()
+  << " minPixelCol=" << clust.minPixelCol() << " maxPixelCol=" << clust.maxPixelCol();
       for (int i = 0, nd = clust.size(); i < nd; ++i) {
         auto px = clust.pixel(i);
         xx.push_back(px.x);
@@ -215,6 +221,10 @@ void SiPixelRecHitSoAFromLegacy::produce(edm::StreamID streamID, edm::Event& iEv
         adc.push_back(px.adc);
         moduleInd.push_back(gind);
         clus.push_back(ic);
+edm::LogPrint("") << "[SiPixelRecHitSoAFromLegacy | " << __LINE__ << "]   "
+  << " ndigi=" << ndigi << " xx=" << xx.back() << "," << px.x << " yy=" << yy.back() << "," << px.y
+  << " adc=" << adc.back() << "," << px.adc << " moduleInd=" << moduleInd.back()<< ","
+  << gind << " clus=" << clus.back() << "," << ic;
         ++ndigi;
       }
 
