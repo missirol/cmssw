@@ -19,6 +19,9 @@ namespace triggerExpression {
     // (re)initialise the logical expression
     virtual void init(const Data& data) {}
 
+    // apply masking based on another Evaluator
+    virtual void mask(Evaluator*) {}
+
     // list CMSSW path patterns associated to the logical expression
     virtual std::vector<std::string> patterns() const { return {}; }
 

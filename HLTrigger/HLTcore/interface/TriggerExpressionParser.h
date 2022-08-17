@@ -40,7 +40,8 @@ namespace triggerExpression {
       unary = (operand[qi::_val = qi::_1] | (qi::lit("NOT") >> operand)[qi::_val = new_<OperatorNot>(qi::_1)]);
 
       expression =
-          unary[qi::_val = qi::_1] >> *((qi::lit("AND") >> unary)[qi::_val = new_<OperatorAnd>(qi::_val, qi::_1)] |
+          unary[qi::_val = qi::_1] >> *((qi::lit("MASKING") >> unary)[qi::_val = new_<OperatorMasking>(qi::_val, qi::_1)] |
+                                        (qi::lit("AND") >> unary)[qi::_val = new_<OperatorAnd>(qi::_val, qi::_1)] |
                                         (qi::lit("OR") >> unary)[qi::_val = new_<OperatorOr>(qi::_val, qi::_1)]);
     }
 

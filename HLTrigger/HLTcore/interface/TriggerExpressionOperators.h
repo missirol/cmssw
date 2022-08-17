@@ -14,6 +14,9 @@ namespace triggerExpression {
     // initialize the depending modules
     void init(const Data& data) override { m_arg->init(data); }
 
+    // mask the depending modules
+    void mask(Evaluator* arg) { m_arg->mask(arg); }
+
     // return the patterns from the depending modules
     std::vector<std::string> patterns() const override { return m_arg->patterns(); }
 
@@ -30,6 +33,12 @@ namespace triggerExpression {
     void init(const Data& data) override {
       m_arg1->init(data);
       m_arg2->init(data);
+    }
+
+    // mask the depending modules
+    void mask(Evaluator* arg) {
+      m_arg1->mask(arg);
+      m_arg2->mask(arg);
     }
 
     // return the patterns from the depending modules
@@ -65,7 +74,7 @@ namespace triggerExpression {
     OperatorAnd(Evaluator* arg1, Evaluator* arg2) : BinaryOperator(arg1, arg2) {}
 
     bool operator()(const Data& data) const override {
-      // force the execution af both arguments, otherwise precalers won't work properly
+      // force the execution of both arguments, otherwise prescalers won't work properly
       bool r1 = (*m_arg1)(data);
       bool r2 = (*m_arg2)(data);
       return r1 and r2;
@@ -83,7 +92,7 @@ namespace triggerExpression {
     OperatorOr(Evaluator* arg1, Evaluator* arg2) : BinaryOperator(arg1, arg2) {}
 
     bool operator()(const Data& data) const override {
-      // force the execution af both arguments, otherwise precalers won't work properly
+      // force the execution of both arguments, otherwise prescalers won't work properly
       bool r1 = (*m_arg1)(data);
       bool r2 = (*m_arg2)(data);
       return r1 or r2;
@@ -101,7 +110,7 @@ namespace triggerExpression {
     OperatorXor(Evaluator* arg1, Evaluator* arg2) : BinaryOperator(arg1, arg2) {}
 
     bool operator()(const Data& data) const override {
-      // force the execution af both arguments, otherwise precalers won't work properly
+      // force the execution of both arguments, otherwise prescalers won't work properly
       bool r1 = (*m_arg1)(data);
       bool r2 = (*m_arg2)(data);
       return r1 xor r2;
@@ -112,6 +121,25 @@ namespace triggerExpression {
       out << " XOR ";
       m_arg2->dump(out);
     }
+  };
+
+  class OperatorMasking : public BinaryOperator {
+  public:
+    OperatorMasking(Evaluator* arg1, Evaluator* arg2) : BinaryOperator(arg1, arg2) {}
+
+    bool operator()(const Data& data) const override {
+      // force the execution of both arguments, otherwise prescalers won't work properly
+      //!! (*m_arg2)(data); ??
+      return (*m_arg1)(data);
+    }
+
+    void init(const Data& data) override {
+      m_arg1->init(data);
+      m_arg2->init(data);
+      m_arg1->mask(m_arg2.get());
+    }
+
+    void dump(std::ostream& out) const override { m_arg1->dump(out); }
   };
 
 }  // namespace triggerExpression
