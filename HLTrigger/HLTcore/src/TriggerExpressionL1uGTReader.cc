@@ -87,4 +87,24 @@ namespace triggerExpression {
     }
   }
 
+  void L1uGTReader::mask(Evaluator* eval) {
+    if (eval == nullptr)
+      return;
+
+    L1uGTReader* l1ugtReader = dynamic_cast<L1uGTReader*>(eval);
+    if (l1ugtReader == nullptr)
+      return;
+
+    maskTriggers(*l1ugtReader);
+  }
+
+  void L1uGTReader::maskTriggers(L1uGTReader const& l1ugtReader) {
+    auto const& triggersToMask = l1ugtReader.triggers();
+    m_triggers.erase(std::remove_if(m_triggers.begin(), m_triggers.end(),
+      [&triggersToMask](auto const& foo) {
+        return std::find(triggersToMask.begin(), triggersToMask.end(), foo) != triggersToMask.end();
+      }),
+      m_triggers.end());
+  }
+
 }  // namespace triggerExpression

@@ -16,7 +16,17 @@ namespace triggerExpression {
 
     void init(const Data& data) override;
 
+    std::vector<std::string> patterns() const override { return std::vector<std::string>{m_pattern}; }
+
     void dump(std::ostream& out) const override;
+
+    bool can_mask() const override { return true; }
+
+    void mask(Evaluator* eval) override;
+
+    std::vector<std::pair<std::string, unsigned int> > triggers() const { return m_triggers; }
+
+    void maskTriggers(L1uGTReader const&);
 
   private:
     std::string m_pattern;

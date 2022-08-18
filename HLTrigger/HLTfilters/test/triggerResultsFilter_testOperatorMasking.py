@@ -2,6 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('HLT')
 process.options.wantSummary = True
+process.options.numberOfThreads = 1
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 #process.MessageLogger.cerr.INFO = cms.untracked.PSet(
@@ -52,9 +53,11 @@ def _addPath(process, name : str = '', triggerConditions = []):
   print('TrigReport | Check_'+name+' = ', getattr(process, filterName).triggerConditions.value())
   return process
 
-process = _addPath(process, '1', ['(HLT_Only* AND HLT_AlwaysFalse) MASKING HLT_AlwaysFalse'])
-process = _addPath(process, '2', ['(HLT_Only* AND HLT_AlwaysFalse) MASKING HLT_Always*'])
-process = _addPath(process, '3', ['HLT_Only* MASKING HLT_OnlyEven'])
+#process = _addPath(process, '1', ['(HLT_Only* AND HLT_AlwaysFalse) MASKING HLT_AlwaysFalse'])
+#process = _addPath(process, '2', ['(HLT_Only* AND HLT_AlwaysFalse) MASKING HLT_Always*'])
+#process = _addPath(process, '3', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING (HLT_OnlyEven OR HLT_OnlyOdd)'])
+process = _addPath(process, '4', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING (HLT_OnlyEven AND HLT_OnlyOdd)'])
+process = _addPath(process, '5', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING HLT_OnlyEven MASKING HLT_OnlyOdd'])
 
 # define an EndPath to analyze all other path results
 process.hltTrigReport = cms.EDAnalyzer( 'HLTrigReport',

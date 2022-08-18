@@ -2,6 +2,7 @@
 #define HLTrigger_HLTfilters_TriggerExpressionOperators_h
 
 #include <memory>
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "HLTrigger/HLTcore/interface/TriggerExpressionEvaluator.h"
 
 namespace triggerExpression {
@@ -15,7 +16,12 @@ namespace triggerExpression {
     void init(const Data& data) override { m_arg->init(data); }
 
     // mask the depending modules
-    void mask(Evaluator* arg) { m_arg->mask(arg); }
+    void mask(Evaluator* arg) {
+      if(arg != nullptr and not arg->can_mask())
+        edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask() call is a no-op:"
+          << " argument Evaluator \"" << *arg << "\" cannot apply masks";
+      m_arg->mask(arg);
+    }
 
     // return the patterns from the depending modules
     std::vector<std::string> patterns() const override { return m_arg->patterns(); }
@@ -37,6 +43,9 @@ namespace triggerExpression {
 
     // mask the depending modules
     void mask(Evaluator* arg) {
+      if(arg != nullptr and not arg->can_mask())
+        edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask() call is a no-op:"
+          << " argument Evaluator \"" << *arg << "\" cannot apply masks";
       m_arg1->mask(arg);
       m_arg2->mask(arg);
     }
@@ -45,8 +54,7 @@ namespace triggerExpression {
     std::vector<std::string> patterns() const override {
       std::vector<std::string> patterns = m_arg1->patterns();
       auto patterns2 = m_arg2->patterns();
-      patterns.insert(
-          patterns.end(), std::make_move_iterator(patterns2.begin()), std::make_move_iterator(patterns2.end()));
+      patterns.insert(patterns.end(), std::make_move_iterator(patterns2.begin()), std::make_move_iterator(patterns2.end()));
       return patterns;
     }
 

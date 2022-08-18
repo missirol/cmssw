@@ -21,27 +21,6 @@ namespace triggerExpression {
     return false;
   }
 
-  void PathReader::mask(Evaluator* eval) {
-    if (eval == nullptr)
-      return;
-
-    PathReader* pathReader = dynamic_cast<PathReader*>(eval);
-    if (pathReader == nullptr)
-      return;
-
-    maskTriggers(*pathReader);
-  }
-
-  void PathReader::maskTriggers(PathReader const& pathReader) {
-    auto const& triggersToMask = pathReader.triggers();
-    m_triggers.erase(
-      std::remove_if(m_triggers.begin(), m_triggers.end(),
-        [&triggersToMask](auto const& foo) {
-          return std::find(triggersToMask.begin(), triggersToMask.end(), foo) != triggersToMask.end();
-      }), m_triggers.end()
-    );
-  }
-
   void PathReader::dump(std::ostream& out) const {
     if (m_triggers.empty()) {
       out << "FALSE";
@@ -105,6 +84,27 @@ namespace triggerExpression {
         }
       }
     }
+  }
+
+  void PathReader::mask(Evaluator* eval) {
+    if (eval == nullptr)
+      return;
+
+    PathReader* pathReader = dynamic_cast<PathReader*>(eval);
+    if (pathReader == nullptr)
+      return;
+
+    maskTriggers(*pathReader);
+  }
+
+  void PathReader::maskTriggers(PathReader const& pathReader) {
+    auto const& triggersToMask = pathReader.triggers();
+    m_triggers.erase(
+      std::remove_if(m_triggers.begin(), m_triggers.end(),
+        [&triggersToMask](auto const& foo) {
+          return std::find(triggersToMask.begin(), triggersToMask.end(), foo) != triggersToMask.end();
+      }),
+      m_triggers.end());
   }
 
 }  // namespace triggerExpression
