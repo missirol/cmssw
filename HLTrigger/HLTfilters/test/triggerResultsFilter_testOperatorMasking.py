@@ -56,8 +56,10 @@ def _addPath(process, name : str = '', triggerConditions = []):
 #process = _addPath(process, '1', ['(HLT_Only* AND HLT_AlwaysFalse) MASKING HLT_AlwaysFalse'])
 #process = _addPath(process, '2', ['(HLT_Only* AND HLT_AlwaysFalse) MASKING HLT_Always*'])
 #process = _addPath(process, '3', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING (HLT_OnlyEven OR HLT_OnlyOdd)'])
-process = _addPath(process, '4', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING (HLT_OnlyEven AND HLT_OnlyOdd)'])
-process = _addPath(process, '5', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING HLT_OnlyEven MASKING HLT_OnlyOdd'])
+#process = _addPath(process, '4', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING (HLT_OnlyEven AND HLT_OnlyOdd)'])
+#process = _addPath(process, '5', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING HLT_OnlyEven MASKING HLT_OnlyOdd'])
+#process = _addPath(process, '6', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING HLT_Only* MASKING HLT_OnlyOdd'])
+process = _addPath(process, '7', ['(HLT_OnlyEven OR HLT_OnlyOdd) MASKING (HLT_OnlyEven MASKING HLT_OnlyOdd)'])
 
 # define an EndPath to analyze all other path results
 process.hltTrigReport = cms.EDAnalyzer( 'HLTrigReport',

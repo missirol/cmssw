@@ -18,8 +18,8 @@ namespace triggerExpression {
     // mask the depending modules
     void mask(Evaluator* arg) {
       if(arg != nullptr and not arg->can_mask())
-        edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask() call is a no-op:"
-          << " argument Evaluator \"" << *arg << "\" cannot apply masks";
+        edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask(arg) call is a no-op:"
+          << " arg Evaluator \"" << *arg << "\" cannot apply masks (arg->dump = \"" << *arg << "\", after masking)";
       m_arg->mask(arg);
     }
 
@@ -44,8 +44,8 @@ namespace triggerExpression {
     // mask the depending modules
     void mask(Evaluator* arg) {
       if(arg != nullptr and not arg->can_mask())
-        edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask() call is a no-op:"
-          << " argument Evaluator \"" << *arg << "\" cannot apply masks";
+        edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask(arg) call is a no-op:"
+          << " arg Evaluator \"" << *arg << "\" cannot apply masks (arg->dump = \"" << *arg << "\", after masking)";
       m_arg1->mask(arg);
       m_arg2->mask(arg);
     }
@@ -147,7 +147,9 @@ namespace triggerExpression {
       m_arg1->mask(m_arg2.get());
     }
 
-    void dump(std::ostream& out) const override { m_arg1->dump(out); }
+    void dump(std::ostream& out) const override {
+      m_arg1->dump(out);
+    }
   };
 
 }  // namespace triggerExpression
