@@ -19,7 +19,7 @@ namespace triggerExpression {
     void mask(Evaluator* arg) {
       if(arg != nullptr and not arg->can_mask())
         edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask(arg) call is a no-op:"
-          << " arg Evaluator \"" << *arg << "\" cannot apply masks (arg->dump = \"" << *arg << "\", after masking)";
+          << " arg Evaluator cannot apply masks (arg->dump = \"" << *arg << "\", after masking)";
       m_arg->mask(arg);
     }
 
@@ -45,7 +45,7 @@ namespace triggerExpression {
     void mask(Evaluator* arg) {
       if(arg != nullptr and not arg->can_mask())
         edm::LogWarning("NoOpEvaluatorMask") << "\tEvaluator::mask(arg) call is a no-op:"
-          << " arg Evaluator \"" << *arg << "\" cannot apply masks (arg->dump = \"" << *arg << "\", after masking)";
+          << " arg Evaluator cannot apply masks (arg->dump = \"" << *arg << "\", after masking)";
       m_arg1->mask(arg);
       m_arg2->mask(arg);
     }
