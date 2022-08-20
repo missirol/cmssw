@@ -16,7 +16,10 @@ namespace {
       return false;
     }
 
-    edm::LogPrint("testExpression") << "Parsed expression: \"" << expression << "\"";
+    std::ostringstream out;
+    expr->dump(out);
+    edm::LogPrint("testExpression") << "Parsed expression: \"" << expression << "\"\n               as: \"" << out.str()
+                                    << '"';
     return true;
   }
 
