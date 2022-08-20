@@ -35,6 +35,7 @@ TEST_CASE("Test TriggerExpressionParser", "[TriggerExpressionParser]") {
     REQUIRE(testExpression("NOTThisHLTPath AND TRUE AND NOT L1_A?_*"));
     REQUIRE(testExpression("NOT NOTThisHLTPath"));
     REQUIRE(testExpression("ThisHLTANDNOTThatORTheOther"));
+    REQUIRE(testExpression("TRUEPath AND NOTPath"));
     REQUIRE(testExpression("NOT L1_SEED1 AND L1_SEED2*"));
     REQUIRE(testExpression("NOT L1_SEED2 AND (HLT_PATH_? AND NOT HLT_PATH2_??_*)"));
     REQUIRE(testExpression("NOT (HLT_Path1 AND HLT_Path2)"));
@@ -51,5 +52,6 @@ TEST_CASE("Test TriggerExpressionParser", "[TriggerExpressionParser]") {
     REQUIRE(not testExpression("NOT (NOTHLT_Path OR HLT_Path2))"));
     REQUIRE(not testExpression("NOT NOT (HLT_Path1 AND L1_Seed_?? OR HLT_Path_*)"));
     REQUIRE(not testExpression("HLT_Path* NOT TRUE"));
+    REQUIRE(not testExpression("ThisPath ANDThatPath"));
   }
 }
