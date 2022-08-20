@@ -13,7 +13,7 @@ namespace {
     auto const* expr = triggerExpression::parse(expression);
 
     if (not expr) {
-      edm::LogWarning("InvalidInput") << "Couldn't parse trigger results expression \"" << expression << "\"";
+      edm::LogWarning("InvalidInput") << "Couldn't parse trigger-results expression \"" << expression << "\"";
       return false;
     }
 
@@ -56,9 +56,11 @@ TEST_CASE("Test TriggerExpressionParser", "[TriggerExpressionParser]") {
                            "Uninitialised_Path_Expression"));
     REQUIRE(testExpression("TRUEPath AND NOTPath",  //
                            "(Uninitialised_Path_Expression AND Uninitialised_Path_Expression)"));
-    REQUIRE(testExpression("NOT L1_SEED1 AND L1_SEED2*",  //
+    REQUIRE(testExpression("(NOT L1_SEED1) AND L1_SEED2*",  //
                            "((NOT Uninitialised_L1_Expression) AND Uninitialised_L1_Expression)"));
-    REQUIRE(testExpression("NOT L1_SEED2 AND (HLT_PATH_? AND NOT HLT_PATH2_??_*)",  //
+    REQUIRE(testExpression("NOT L1_SEED1 AND L1_SEED2*",  //
+                           "(NOT (Uninitialised_L1_Expression AND Uninitialised_L1_Expression))"));
+    REQUIRE(testExpression("(NOT L1_SEED2) AND (HLT_PATH_? AND NOT HLT_PATH2_??_*)",  //
                            "((NOT Uninitialised_L1_Expression) AND (Uninitialised_Path_Expression AND (NOT "
                            "Uninitialised_Path_Expression)))"));
     REQUIRE(testExpression("NOT (HLT_Path1 AND HLT_Path2)",  //
@@ -66,12 +68,14 @@ TEST_CASE("Test TriggerExpressionParser", "[TriggerExpressionParser]") {
     REQUIRE(testExpression("NOT (NOTHLT_Path OR HLT_Path2)",  //
                            "(NOT (Uninitialised_Path_Expression OR Uninitialised_Path_Expression))"));
     REQUIRE(testExpression(
-        "((L1_A AND HLT_B) OR Dataset_C) AND NOT (Status_D OR Name_E OR HLT_F*) AND L1_??_?_?",  //
+        "((L1_A AND HLT_B) OR Dataset_C) AND (NOT (Status_D OR Name_E OR HLT_F*)) AND L1_??_?_?",  //
         "((((Uninitialised_L1_Expression AND Uninitialised_Path_Expression) OR Uninitialised_Path_Expression)"
         " AND (NOT ((Uninitialised_Path_Expression OR Uninitialised_Path_Expression)"
         " OR Uninitialised_Path_Expression))) AND Uninitialised_L1_Expression)"));
     REQUIRE(testExpression("NOT (NOT (HLT_Path1 AND HLT_Path_*))",  //
                            "(NOT (NOT (Uninitialised_Path_Expression AND Uninitialised_Path_Expression)))"));
+    REQUIRE(testExpression("NOT NOT (HLT_Path1 AND L1_Seed_?? OR HLT_Path_*)",
+                           "(NOT (NOT ((Uninitialised_Path_Expression AND Uninitialised_L1_Expression) OR Uninitialised_Path_Expression)))"));
   }
 
   // examples of expressions not supported by the triggerExpression parser
@@ -80,7 +84,6 @@ TEST_CASE("Test TriggerExpressionParser", "[TriggerExpressionParser]") {
     REQUIRE(not testExpression("A && B"));
     REQUIRE(not testExpression("NOT L1_SEED1 ANDD L1_SEED2*"));
     REQUIRE(not testExpression("NOT (NOTHLT_Path OR HLT_Path2))"));
-    REQUIRE(not testExpression("NOT NOT (HLT_Path1 AND L1_Seed_?? OR HLT_Path_*)"));
     REQUIRE(not testExpression("HLT_Path* NOT TRUE"));
     REQUIRE(not testExpression("ThisPath ANDThatPath"));
   }
