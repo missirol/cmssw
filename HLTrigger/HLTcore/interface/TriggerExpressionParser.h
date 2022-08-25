@@ -31,14 +31,20 @@ namespace triggerExpression {
       operand_not = qi::lexeme[qi::lit("NOT") >> delimiter];
       operand_and = qi::lexeme[qi::lit("AND") >> delimiter];
       operand_or = qi::lexeme[qi::lit("OR") >> delimiter];
+      operand_masking = qi::lexeme[qi::lit("MASKING") >> delimiter];
 
       token_l1algo %= qi::raw[qi::lexeme["L1_" >> +(qi::char_("a-zA-Z0-9_*?"))]];
-      token_path %= qi::raw[qi::lexeme[+(qi::char_("a-zA-Z0-9_*?"))] - operand_not - operand_and - operand_or];
+      token_path %=
+          qi::raw[qi::lexeme[+(qi::char_("a-zA-Z0-9_*?"))] - operand_not - operand_and - operand_or - operand_masking];
 
       token = (token_true[qi::_val = new_<Constant>(true)] |         // TRUE
                token_false[qi::_val = new_<Constant>(false)] |       // FALSE
                token_l1algo[qi::_val = new_<L1uGTReader>(qi::_1)] |  // L1_*
-               token_path[qi::_val = new_<PathReader>(qi::_1)]);     // * (except "NOT", "AND" and "OR")
+               token_path[qi::_val = new_<PathReader>(qi::_1)]);     // * (except "NOT", "AND", "OR" and "MASKING")
+
+      // token_triggers is used to restrict "masking" to L1uGTReader and PathReader
+      token_triggers =
+          (token_l1algo[qi::_val = new_<L1uGTReader>(qi::_1)] | token_path[qi::_val = new_<PathReader>(qi::_1)]);
 
       parenthesis %= ('(' >> expression >> ')');
 
@@ -50,9 +56,10 @@ namespace triggerExpression {
 
       unary = ((operand_not >> unary)[qi::_val = new_<OperatorNot>(qi::_1)] | operand[qi::_val = qi::_1]);
 
-      expression =
-          unary[qi::_val = qi::_1] >> *((operand_and >> unary)[qi::_val = new_<OperatorAnd>(qi::_val, qi::_1)] |
-                                        (operand_or >> unary)[qi::_val = new_<OperatorOr>(qi::_val, qi::_1)]);
+      expression = unary[qi::_val = qi::_1] >>
+                   *((operand_and >> unary)[qi::_val = new_<OperatorAnd>(qi::_val, qi::_1)] |
+                     (operand_or >> unary)[qi::_val = new_<OperatorOr>(qi::_val, qi::_1)] |
+                     (operand_masking >> token_triggers)[qi::_val = new_<OperatorMasking>(qi::_val, qi::_1)]);
     }
 
   private:
@@ -66,11 +73,13 @@ namespace triggerExpression {
     terminal_rule operand_not;
     terminal_rule operand_and;
     terminal_rule operand_or;
+    terminal_rule operand_masking;
 
     name_rule token_l1algo;
     name_rule token_path;
 
     rule token;
+    rule token_triggers;
     rule parenthesis;
     rule element;
     rule prescale;

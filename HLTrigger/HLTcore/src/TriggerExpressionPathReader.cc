@@ -14,7 +14,9 @@ namespace triggerExpression {
     if (not data.hasHLT() && not data.usePathStatus())
       return false;
 
-    for (auto const& trigger : m_triggers)
+    auto const& triggers = m_useTriggersAfterMasking ? m_triggersAfterMasking : m_triggers;
+
+    for (auto const& trigger : triggers)
       if (data.passHLT(trigger.second))
         return true;
 
@@ -22,18 +24,28 @@ namespace triggerExpression {
   }
 
   void PathReader::dump(std::ostream& out) const {
+    // in the dump() method inherited from the Evaluator base class,
+    // show the full list of triggers (useTriggersAfterMasking == false),
+    // so that the dump of the masking operator is explicit, i.e. "A MASKING B"
+    dump(out, false);
+  }
+
+  void PathReader::dump(std::ostream& out, bool const useTriggersAfterMasking) const {
     if (not m_initialised) {
       out << "Uninitialised_Path_Expression";
       return;
     }
-    if (m_triggers.empty()) {
+
+    auto const& triggers = useTriggersAfterMasking ? m_triggersAfterMasking : m_triggers;
+
+    if (triggers.empty()) {
       out << "FALSE";
-    } else if (m_triggers.size() == 1) {
-      out << m_triggers[0].first;
+    } else if (triggers.size() == 1) {
+      out << triggers[0].first;
     } else {
-      out << "(" << m_triggers[0].first;
-      for (unsigned int i = 1; i < m_triggers.size(); ++i)
-        out << " OR " << m_triggers[i].first;
+      out << "(" << triggers[0].first;
+      for (unsigned int i = 1; i < triggers.size(); ++i)
+        out << " OR " << triggers[i].first;
       out << ")";
     }
   }
@@ -89,7 +101,36 @@ namespace triggerExpression {
       }
     }
 
+    m_triggersAfterMasking = m_triggers;
     m_initialised = true;
+  }
+
+  void PathReader::mask(Evaluator* eval) {
+    if (eval == nullptr)
+      return;
+
+    PathReader* pathReader = dynamic_cast<PathReader*>(eval);
+    if (pathReader == nullptr)
+      return;
+
+    maskTriggers(*pathReader);
+  }
+
+  void PathReader::maskTriggers(PathReader const& pathReader) {
+    m_useTriggersAfterMasking = true;
+    auto const& triggersToMask = pathReader.triggers();
+    // clang-format off
+    m_triggersAfterMasking.erase(
+      std::remove_if(
+        m_triggersAfterMasking.begin(),
+        m_triggersAfterMasking.end(),
+        [&triggersToMask](auto const& foo) {
+          return std::find(triggersToMask.begin(), triggersToMask.end(), foo) != triggersToMask.end();
+        }
+      ),
+      m_triggersAfterMasking.end()
+    );
+    // clang-format on
   }
 
 }  // namespace triggerExpression

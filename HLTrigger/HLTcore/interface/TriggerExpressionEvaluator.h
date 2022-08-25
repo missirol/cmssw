@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+
 namespace triggerExpression {
 
   class Data;
@@ -24,6 +26,17 @@ namespace triggerExpression {
 
     // dump the logical expression to the output stream
     virtual void dump(std::ostream& out) const = 0;
+
+    // this type of Evaluator can apply masks
+    virtual bool can_mask() const { return false; }
+
+    // apply masks based on another Evaluator
+    virtual void mask(Evaluator*) {
+      static std::string const name = typeid(*this).name();
+      edm::LogInfo("NoOpEvaluatorMask") << "\t" << name << "::mask(arg) call is a no-op:"
+                                        << " masking of " << name << " evaluators is not supported (dump = \"" << *this
+                                        << "\")";
+    }
 
     // virtual destructor
     virtual ~Evaluator() = default;
