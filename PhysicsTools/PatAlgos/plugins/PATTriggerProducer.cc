@@ -786,15 +786,13 @@ void PATTriggerProducer::produce(Event& iEvent, const EventSetup& iSetup) {
       packedPrescalesL1min = std::make_unique<PackedTriggerPrescales>(handleTriggerResults);
       packedPrescalesL1max = std::make_unique<PackedTriggerPrescales>(handleTriggerResults);
       const edm::TriggerNames& names = iEvent.triggerNames(*handleTriggerResults);
-      //std::cout << "Run " << iEvent.id().run() << ", LS " << iEvent.id().luminosityBlock() << ": pset " << set << std::endl;
       for (unsigned int i = 0, n = names.size(); i < n; ++i) {
-        auto pvdet = hltPrescaleProvider_.prescaleValuesInDetail(iEvent, iSetup, names.triggerName(i));
-        //int hltprescale = hltConfig_.prescaleValue(set, names.triggerName(i));
+        auto pvdet = hltPrescaleProvider_.prescaleValuesInDetail<double, int>(iEvent, iSetup, names.triggerName(i));
         if (pvdet.first.empty()) {
           packedPrescalesL1max->addPrescaledTrigger(i, 1);
           packedPrescalesL1min->addPrescaledTrigger(i, 1);
         } else {
-          int pmin = -1, pmax = -1;
+          double pmin = -1, pmax = -1;
           for (const auto& p : pvdet.first) {
             pmax = std::max(pmax, p.second);
             if (p.second > 0 && (pmin == -1 || pmin > p.second))

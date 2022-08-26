@@ -88,7 +88,7 @@ void CandidateTriggerObjectProducer::produce(edm::Event& iEvent, const edm::Even
     //matching with regexp filter name. More than 1 matching filter is allowed
     if (TString(*iHLT).Contains(TRegexp(TString(triggerName_)))) {
       triggerInMenu[*iHLT] = true;
-      const std::pair<int, int> prescales(hltPrescaleProvider_.prescaleValues(iEvent, iSetup, *iHLT));
+      auto const prescales = hltPrescaleProvider_.prescaleValues<double, int>(iEvent, iSetup, *iHLT);
       if (prescales.first * prescales.second == 1)
         triggerUnprescaled[*iHLT] = true;
     }
