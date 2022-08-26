@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 //
 // class declaration
@@ -186,11 +187,9 @@ public:
   /// HLT prescale value in specific prescale set for a specific trigger path
   template <typename T = unsigned int>
   T prescaleValue(unsigned int set, const std::string& trigger) const {
-    //limit to only 4 allowed types
-    static_assert(std::is_same_v<T, unsigned int> or std::is_same_v<T, FractionalPrescale> or std::is_same_v<T, int> or
-                      std::is_same_v<T, double>,
-                  "Please use prescaleValue<unsigned int>, prescaleValue<int>, prescaleValue<double>, or "
-                  "prescaleValue<FractionalPrescale>,\n note int and unsigned int will be depreated soon");
+    static_assert(std::is_same_v<T, double> or std::is_same_v<T, FractionalPrescale>,
+                  "\n\tPlease use prescaleValue<double> or prescaleValue<FractionalPrescale>"
+                  "\n\t(other types for HLT prescales are not supported anymore by HLTConfigProvider");
     return hltConfigData_->prescaleValue(set, trigger);
   }
 
