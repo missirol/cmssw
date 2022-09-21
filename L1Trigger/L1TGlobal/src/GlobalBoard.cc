@@ -1194,10 +1194,10 @@ const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::semirando
       out.push_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision));
     else {
       edm::LogWarning("L1TGlobal::semirandomNumber")
-          << "\n The inital prescale counter obtained by L1TGlobal::semirandomNumber is wrong."
-          << "\n This is probably do to the floating-point precision. Using the PS value."
+          << "\n The initial prescale counter obtained by L1TGlobal::semirandomNumber is wrong."
+          << "\n This is probably due to floating-point precision. Using the PS value."
           << "\n semirandom = " << semirandom << "\n PS = " << ps << "\n nps = " << nps
-          << " <-- it should be in the range [0 , " << ps << "]" << std::endl;
+          << " <-- it should be in the range [0 , " << ps << "]";
     }
   }
 
@@ -1208,9 +1208,9 @@ const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::semirando
 const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::zeroPrescaleCounters(
     const std::vector<double>& prescaleFactorsAlgoTrig) {
   std::vector<PrescaleCounter> out;
-
+  out.reserve(prescaleFactorsAlgoTrig.size());
   for (size_t iAlgo = 0; iAlgo < prescaleFactorsAlgoTrig.size(); iAlgo++) {
-    out.push_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision));
+    out.emplace_back(prescaleFactorsAlgoTrig[iAlgo], m_precision);
   }
 
   return out;
@@ -1219,13 +1219,10 @@ const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::zeroPresc
 bool l1t::GlobalBoard::PrescaleCounter::operator()() {
   trigger_counter += single_step;
 
-  if (prescale_count == 0)
+  if (prescale_count == 0 or trigger_counter < prescale_count)
     return false;
 
-  if (trigger_counter >= prescale_count) {
-    trigger_counter -= prescale_count;
-    return true;
-  }
+  trigger_counter -= prescale_count;
 
-  return false;
+  return true;
 }
