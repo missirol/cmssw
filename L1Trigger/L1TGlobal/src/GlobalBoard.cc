@@ -1018,7 +1018,7 @@ void l1t::GlobalBoard::runFDL(edm::Event& iEvent,
         // Make sure algo bit in range, warn otherwise
         if (iBit < prescaleFactorsAlgoTrig.size()) {
           if (prescaleFactorsAlgoTrig.at(iBit) != 1) {
-            const bool triggered = m_prescaleCounterAlgoTrig.at(inBxInEvent).at(iBit)();
+            const bool triggered = m_prescaleCounterAlgoTrig.at(inBxInEvent).at(iBit).accept();
 
             if (triggered) {
               temp_algPrescaledOr = true;
@@ -1210,13 +1210,13 @@ const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::zeroPresc
   std::vector<PrescaleCounter> out;
   out.reserve(prescaleFactorsAlgoTrig.size());
   for (size_t iAlgo = 0; iAlgo < prescaleFactorsAlgoTrig.size(); iAlgo++) {
-    out.emplace_back(prescaleFactorsAlgoTrig[iAlgo], m_precision);
+    out.emplace_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision));
   }
 
   return out;
 }
 
-bool l1t::GlobalBoard::PrescaleCounter::operator()() {
+bool l1t::GlobalBoard::PrescaleCounter::accept() {
   trigger_counter += single_step;
 
   if (prescale_count == 0 or trigger_counter < prescale_count)

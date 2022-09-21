@@ -287,7 +287,7 @@ namespace l1t {
             trigger_counter(initial_counter) {}
 
       // function to increment the prescale counter and return the decision
-      bool operator()();
+      bool accept();
     };
 
     // prescale counters: NumberPhysTriggers counters per bunch cross in event
