@@ -16,6 +16,7 @@
 #include <bitset>
 #include <cassert>
 #include <vector>
+#include <cmath>
 
 // user include files
 #include "FWCore/Utilities/interface/typedefs.h"
@@ -165,10 +166,6 @@ namespace l1t {
     /// pointer to Tau data list
     inline const BXVector<const GlobalExtBlk*>* getCandL1External() const { return m_candL1External; }
 
-    //initializer prescale counter using a semi-random value between [1, prescale value]
-    static const std::vector<double> semirandomNumber(const edm::Event& iEvent,
-                                                      const std::vector<double>& prescaleFactorsAlgoTrig);
-
     /*  Drop individual EtSums for Now
     /// pointer to ETM data list
     inline const l1t::EtSum* getCandL1ETM() const
@@ -246,9 +243,6 @@ namespace l1t {
     // cache  of maps
     std::vector<AlgorithmEvaluation::ConditionEvaluationMap> m_conditionResultMaps;
 
-    /// prescale counters: NumberPhysTriggers counters per bunch cross in event
-    std::vector<std::vector<double>> m_prescaleCounterAlgoTrig;
-
     bool m_firstEv;
     bool m_firstEvLumiSegment;
     uint m_currentLumi;
@@ -277,6 +271,33 @@ namespace l1t {
 
     // start the PS counter from a random value between [1,PS] instead of PS
     bool m_semiRandomInitialPSCounters = false;
+
+    // precision for fractional prescales
+    static const size_t m_precision = 2;
+
+    // struct to increment the prescale according to fractional prescale logic in firmware
+    struct PrescaleCounter {
+      const size_t prescale_count;
+      const size_t single_step;
+      size_t trigger_counter;
+
+      PrescaleCounter(float prescale, size_t prec, size_t initial_counter = 0)
+          : prescale_count(std::round(prescale * std::pow(10, prec))),
+            single_step(std::pow(10, prec)),
+            trigger_counter(initial_counter) {}
+
+      // function to increment the prescale counter and return the decision
+      bool operator()();
+    };
+
+    // prescale counters: NumberPhysTriggers counters per bunch cross in event
+    std::vector<std::vector<PrescaleCounter>> m_prescaleCounterAlgoTrig;
+
+    // initializer prescale counters using a semi-random value between [0, prescale value * 10 ^ precision - 1]
+    static const std::vector<PrescaleCounter> semirandomNumber(const edm::Event& iEvent,
+                                                               const std::vector<double>& prescaleFactorsAlgoTrig);
+    // initialize prescale counters to zero
+    static const std::vector<PrescaleCounter> zeroPrescaleCounters(const std::vector<double>& prescaleFactorsAlgoTrig);
   };
 
 }  // namespace l1t
