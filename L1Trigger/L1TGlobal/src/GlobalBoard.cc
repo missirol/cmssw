@@ -1184,14 +1184,12 @@ const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::semirando
   double const semirandom = std::rand();
 
   for (size_t iAlgo = 0; iAlgo < prescaleFactorsAlgoTrig.size(); iAlgo++) {
-    auto ps = std::round(prescaleFactorsAlgoTrig[iAlgo] * std::pow(10, m_precision));
-    auto nps = semirandom - floor(semirandom / ps) * ps;
+    int ps = std::lround(prescaleFactorsAlgoTrig[iAlgo] * std::pow(10, m_precision));
+    int nps = semirandom - floor(semirandom / ps) * ps;
 
     // if nps=ps or a wrong value (<0,>ps) use zero
     if (nps >= 0 and nps < ps)
       out.push_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision, nps));
-    else if (nps == ps)
-      out.push_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision));
     else {
       edm::LogWarning("L1TGlobal::semirandomNumber")
           << "\n The initial prescale counter obtained by L1TGlobal::semirandomNumber is wrong."

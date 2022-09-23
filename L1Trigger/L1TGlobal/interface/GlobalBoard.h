@@ -281,8 +281,8 @@ namespace l1t {
       const size_t single_step;
       size_t trigger_counter;
 
-      PrescaleCounter(float prescale, size_t prec, size_t initial_counter = 0)
-          : prescale_count(std::round(prescale * std::pow(10, prec))),
+      PrescaleCounter(double prescale, size_t prec, size_t initial_counter = 0)
+          : prescale_count(std::lround(prescale * std::pow(10, prec))),
             single_step(std::pow(10, prec)),
             trigger_counter(initial_counter) {}
 
