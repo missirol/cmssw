@@ -974,7 +974,7 @@ void l1t::GlobalBoard::runFDL(edm::Event& iEvent,
     auto const& prescaleCountersAlgoTrig = m_semiRandomInitialPSCounters
                                                ? semirandomNumber(iEvent, prescaleFactorsAlgoTrig)
                                                : zeroPrescaleCounters(prescaleFactorsAlgoTrig);
-					       
+
     for (int iBxInEvent = 0; iBxInEvent <= totalBxInEvent; ++iBxInEvent) {
       m_prescaleCounterAlgoTrig.push_back(prescaleCountersAlgoTrig);
     }
@@ -992,7 +992,7 @@ void l1t::GlobalBoard::runFDL(edm::Event& iEvent,
     for (int iBxInEvent = 0; iBxInEvent <= totalBxInEvent; ++iBxInEvent) {
       m_prescaleCounterAlgoTrig.push_back(prescaleCountersAlgoTrig);
     }
-    
+
     m_firstEvLumiSegment = false;
     m_currentLumi = iEvent.luminosityBlock();
   }
