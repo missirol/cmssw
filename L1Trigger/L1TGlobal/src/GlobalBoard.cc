@@ -971,8 +971,12 @@ void l1t::GlobalBoard::runFDL(edm::Event& iEvent,
   // prescale counters are reset at the beginning of the luminosity segment
   if (m_firstEv) {
     // prescale counters: numberPhysTriggers counters per bunch cross
-    m_prescaleCounterAlgoTrig.resize(totalBxInEvent+1, m_semiRandomInitialPSCounters ? semirandomNumber(iEvent, prescaleFactorsAlgoTrig) : zeroPrescaleCounters(prescaleFactorsAlgoTrig));
-    m_prescaleCounterAlgoTrig.shrink_to_fit();
+    auto const& prescaleCountersAlgoTrig =
+        m_semiRandomInitialPSCounters ? semirandomNumber(iEvent, prescaleFactorsAlgoTrig) : zeroPrescaleCounters(prescaleFactorsAlgoTrig);
+
+    for (int iBxInEvent = 0; iBxInEvent <= totalBxInEvent; ++iBxInEvent) {
+      m_prescaleCounterAlgoTrig.push_back(prescaleCountersAlgoTrig);
+    }
 
     m_firstEv = false;
     m_currentLumi = iEvent.luminosityBlock();
@@ -981,8 +985,12 @@ void l1t::GlobalBoard::runFDL(edm::Event& iEvent,
   // update and clear prescales at the beginning of the luminosity segment
   if (m_firstEvLumiSegment || (m_currentLumi != iEvent.luminosityBlock() && m_resetPSCountersEachLumiSec)) {
     m_prescaleCounterAlgoTrig.clear();
-    m_prescaleCounterAlgoTrig.resize(totalBxInEvent+1, m_semiRandomInitialPSCounters ? semirandomNumber(iEvent, prescaleFactorsAlgoTrig) : zeroPrescaleCounters(prescaleFactorsAlgoTrig));
-    m_prescaleCounterAlgoTrig.shrink_to_fit();
+    auto const& prescaleCountersAlgoTrig =
+        m_semiRandomInitialPSCounters ? semirandomNumber(iEvent, prescaleFactorsAlgoTrig) : zeroPrescaleCounters(prescaleFactorsAlgoTrig);
+
+    for (int iBxInEvent = 0; iBxInEvent <= totalBxInEvent; ++iBxInEvent) {
+      m_prescaleCounterAlgoTrig.push_back(prescaleCountersAlgoTrig);
+    }
     
     m_firstEvLumiSegment = false;
     m_currentLumi = iEvent.luminosityBlock();
