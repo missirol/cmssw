@@ -1180,6 +1180,7 @@ const std::vector<l1t::GlobalBoard::PrescaleCounter> l1t::GlobalBoard::semirando
     if (nps >= 0 and nps < ps)
       out.push_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision, nps));
     else {
+      out.push_back(PrescaleCounter(prescaleFactorsAlgoTrig[iAlgo], m_precision, 0));
       edm::LogWarning("L1TGlobal::semirandomNumber")
           << "\n The initial prescale counter obtained by L1TGlobal::semirandomNumber is wrong."
           << "\n This is probably due to floating-point precision. Using the PS value."
