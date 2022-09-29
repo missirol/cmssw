@@ -3598,6 +3598,7 @@ namespace PFClusterCudaHCAL {
       }
     }
     __syncthreads();
+
     if (threadIdx.x == 0) {
       *pcrhFracSize = totalSeedFracOffset;
       //printf("At the end of topoClusterContraction, found *pcrhFracSize = %d\n", *pcrhFracSize);
@@ -3747,8 +3748,11 @@ namespace PFClusterCudaHCAL {
       else
         pfrh_edgeMask[idx] = 0;
     }
+    __syncthreads();//!!
 
     do {
+      __syncthreads();//!!
+
       if (threadIdx.x == 0) {
         notDone = false;
       }
@@ -3780,6 +3784,9 @@ namespace PFClusterCudaHCAL {
           }
         }
       }
+
+      __syncthreads();//!!
+
       if (threadIdx.x == 0)
         iter++;
 
@@ -3793,7 +3800,6 @@ namespace PFClusterCudaHCAL {
       if (threadIdx.x == 0) {
         notDone = false;
       }
-
       __syncthreads();
 
       // Even linking
@@ -3804,7 +3810,6 @@ namespace PFClusterCudaHCAL {
           pfrh_parent[i] = (int)max(i, pfrh_edgeList[idx]);
         }
       }
-
       __syncthreads();
 
       // edgeParent
@@ -3825,12 +3830,16 @@ namespace PFClusterCudaHCAL {
         }
       }
 
+      __syncthreads();//!!
+
       if (threadIdx.x == 0)
         iter++;
 
       __syncthreads();
 
     } while (notDone);
+
+    __syncthreads();//!!
 
     if (threadIdx.x == 0)
       *topoIter = iter;
@@ -4393,18 +4402,9 @@ namespace PFClusterCudaHCAL {
       ::PFClustering::HCAL::ScratchDataGPU& scratchGPU,
       float (&timer)[8]) {
 
-#ifdef DEBUG_GPU_HCAL
-    cudaProfilerStart();
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start, cudaStream);
-#endif
-
     int nRH = inputPFRecHits.size;
 
     // Combined seeding & topo clustering thresholds, array initialization
-
     seedingTopoThreshKernel_HCAL<<<(nRH + 31) / 32, 64, 0, cudaStream>>>(nRH,
                                                                          inputPFRecHits.pfrh_energy.get(),
                                                                          inputPFRecHits.pfrh_x.get(),
@@ -4424,23 +4424,6 @@ namespace PFClusterCudaHCAL {
                                                                          outputGPU.topoSeedList.get(),
                                                                          outputGPU.pfc_iter.get());
 
-    cudaCheck(cudaStreamSynchronize(cudaStream));
-
-#ifdef DEBUG_GPU_HCAL
-    cudaEventRecord(stop, cudaStream);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&timer[0], start, stop);
-    cudaEventRecord(start, cudaStream);
-#endif
-
-    //    prepareTopoInputsSerial<<<1, 1, 4 * (8+4) * sizeof(int), cudaStream>>>(
-    //        nRH,
-    //        outputGPU.nEdges.get(),
-    //        outputGPU.pfrh_passTopoThresh.get(),
-    //        inputPFRecHits.pfrh_neighbours.get(),
-    //        scratchGPU.pfrh_edgeId.get(),
-    //        scratchGPU.pfrh_edgeList.get());
-
     // Topo clustering
     // Fill edgeId, edgeList arrays with rechit neighbors
     // Has a bug when using more than 128 threads..
@@ -4450,34 +4433,6 @@ namespace PFClusterCudaHCAL {
                                                                            inputPFRecHits.pfrh_neighbours.get(),
                                                                            scratchGPU.pfrh_edgeId.get(),
                                                                            scratchGPU.pfrh_edgeList.get());
-    cudaCheck(cudaStreamSynchronize(cudaStream));
-
-    //    prepareTopoInputs<<<1, 256, 256 * (8+4) * sizeof(int), cudaStream>>>(
-    //        nRH,
-    //        outputGPU.nEdges.get(),
-    //        outputGPU.pfrh_passTopoThresh.get(),
-    //        inputPFRecHits.pfrh_neighbours.get(),
-    //        scratchGPU.pfrh_edgeId.get(),
-    //        scratchGPU.pfrh_edgeList.get());
-
-#ifdef DEBUG_GPU_HCAL
-    cudaEventRecord(stop, cudaStream);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&timer[4], start, stop);
-    //printf("\nprepareTopoInputs took %f ms\n", timer[4]);
-
-    compareEdgeArrays<<<1, 1, 0, cudaStream>>>(outputGPU.nEdges.get(),
-                                               scratchGPU.pfrh_edgeId.get(),
-                                               scratchGPU.pfrh_edgeList.get(),
-                                               nEdges,
-                                               inputGPU.pfrh_edgeId.get(),
-                                               inputGPU.pfrh_edgeList.get(),
-                                               nRH,
-                                               inputGPU.pfNeighFourInd.get(),
-                                               inputPFRecHits.pfrh_neighbours.get());
-
-    cudaEventRecord(start, cudaStream);
-#endif
 
     // Topo clustering
     topoClusterLinking<<<1, 512, 0, cudaStream>>>(nRH,
@@ -4486,10 +4441,8 @@ namespace PFClusterCudaHCAL {
                                                   scratchGPU.pfrh_edgeId.get(),
                                                   scratchGPU.pfrh_edgeList.get(),
                                                   scratchGPU.pfrh_edgeMask.get(),
-                                                  //inputGPU.pfrh_edgeMask.get(),
                                                   outputGPU.pfrh_passTopoThresh.get(),
                                                   outputGPU.topoIter.get());
-    cudaCheck(cudaStreamSynchronize(cudaStream));
 
     topoClusterContraction<<<1, 512, 0, cudaStream>>>(nRH,
                                                       outputGPU.pfrh_topoId.get(),
@@ -4504,13 +4457,6 @@ namespace PFClusterCudaHCAL {
                                                       outputGPU.pcrh_frac.get(),
                                                       outputGPU.pcrhFracSize.get());
 
-#ifdef DEBUG_GPU_HCAL
-    cudaEventRecord(stop, cudaStream);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&timer[1], start, stop);
-    cudaEventRecord(start, cudaStream);
-#endif
-
     dim3 grid((nRH + 31) / 32, (nRH + 31) / 32);
     dim3 block(32, 32);
 
@@ -4522,13 +4468,6 @@ namespace PFClusterCudaHCAL {
                                                  outputGPU.seedFracOffsets.get(),
                                                  scratchGPU.rhcount.get(),
                                                  outputGPU.pcrh_fracInd.get());
-
-#ifdef DEBUG_GPU_HCAL
-    cudaEventRecord(stop, cudaStream);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&timer[2], start, stop);
-    cudaEventRecord(start, cudaStream);
-#endif
 
     hcalFastCluster_selection<<<nRH, 256, 0, cudaStream>>>(nRH,
                                                            inputPFRecHits.pfrh_x.get(),
@@ -4553,11 +4492,5 @@ namespace PFClusterCudaHCAL {
                                                            inputGPU.pfc_prevPos4.get(),
                                                            inputGPU.pfc_energy.get(),
                                                            outputGPU.pfc_iter.get());
-#ifdef DEBUG_GPU_HCAL
-    cudaEventRecord(stop, cudaStream);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&timer[3], start, stop);
-    cudaProfilerStop();
-#endif
   }
 }  // namespace PFClusterCudaHCAL
