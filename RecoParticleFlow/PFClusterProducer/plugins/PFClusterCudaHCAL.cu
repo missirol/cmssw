@@ -3832,13 +3832,8 @@ namespace PFClusterCudaHCAL {
 
     } while (notDone);
 
-    *topoIter = iter;
-#ifdef DEBUG_GPU_HCAL
-//    if (threadIdx.x == 0) {
-//        printf("*** Topo clustering converged in %d iterations ***\n", iter);
-//    }
-//    __syncthreads();
-#endif
+    if (threadIdx.x == 0)
+      *topoIter = iter;
   }
 
   __device__ __forceinline__ void sortSwap(int* toSort, int a, int b) {
@@ -3898,6 +3893,7 @@ namespace PFClusterCudaHCAL {
   }
 
   __device__ __forceinline__ int scan1Inclusive(int idata, volatile int* s_Data, int size) {
+    assert(size == 32);
     int pos = 2 * threadIdx.x - (threadIdx.x & (size - 1));
     s_Data[pos] = 0;
     pos += size;
@@ -3905,7 +3901,9 @@ namespace PFClusterCudaHCAL {
 
     for (int offset = 1; offset < size; offset <<= 1) {
       int t = s_Data[pos] + s_Data[pos - offset];
+      __syncwarp();
       s_Data[pos] = t;
+      __syncwarp();
     }
 
     return s_Data[pos];
