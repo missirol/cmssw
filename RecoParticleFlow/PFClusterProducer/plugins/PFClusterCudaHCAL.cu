@@ -3480,6 +3480,30 @@ namespace PFClusterCudaHCAL {
     }
   }
 
+  // assign parent-index to every RecHit:
+  // pfrh_passTopoThresh ? min(idx, idxs of valid neighbours) : -1
+  __global__ void findRecHitParents(int size,
+                                    int* const pfrh_passTopoThresh,
+                                    int* const pfrh_neighbours,
+                                    int* pfrh_topoId) {
+    auto const thread = threadIdx.x + blockIdx.x * blockDim.x;
+    auto const stride = blockDim.x * gridDim.x;
+
+    for (auto idx = thread; idx < size; idx += stride) {
+      int parent = pfrh_topoId[idx];
+      if (parent < 0) {
+        continue;
+      }
+      for (int nei_j = 0; nei_j < 8; ++nei_j) {
+        int const rhid_j = pfrh_neighbours[idx * 8 + nei_j];
+        if (rhid_j >= 0 and pfrh_passTopoThresh[rhid_j]) {
+          parent = min(parent, rhid_j);
+        }
+      }
+      pfrh_topoId[idx] = parent;
+    }
+  }
+
   // pfrh_parent: RecHit index -> first parent
   // pfrh_parent_new (after this kernel): RecHit index -> oldest parent in the chain
   __global__ void contractRecHitParentArray(size_t size, int* pfrh_parent, int* pfrh_parent_new) {
@@ -3733,17 +3757,11 @@ namespace PFClusterCudaHCAL {
         pfrh_edgeMask[idx] = 0;
     }
 
-//////////////////////
-
     do {
       if (threadIdx.x == 0) {
         notDone = false;
       }
       __syncthreads();
-
-
-
-
 
       // Odd linking
       for (int idx = thread; idx < nEdges; idx += stride) {
@@ -3753,10 +3771,6 @@ namespace PFClusterCudaHCAL {
         }
       }
       __syncthreads();
-
-
-
-
 
       // edgeParent
       for (int idx = thread; idx < nEdges; idx += stride) {
@@ -3784,8 +3798,6 @@ namespace PFClusterCudaHCAL {
       if (!notDone)
         break;
 
-      __syncthreads();//!!
-
       if (threadIdx.x == 0) {
         notDone = false;
       }
@@ -3795,12 +3807,10 @@ namespace PFClusterCudaHCAL {
       // Even linking
       for (int idx = thread; idx < nEdges; idx += stride) {
         int i = pfrh_edgeId[idx];  // Get edge topo id
-        //if (pfrh_edgeMask[idx] > 0 && pfrh_passTopoThresh[i] && isRightEdge(idx, nEdges, pfrh_edgeId, pfrh_edgeMask)) {
         if (pfrh_edgeMask[idx] > 0 && isRightEdge(idx, nEdges, pfrh_edgeId, pfrh_edgeMask)) {
           pfrh_parent[i] = (int)max(i, pfrh_edgeList[idx]);
         }
       }
-
       __syncthreads();
 
       // edgeParent
@@ -4431,6 +4441,7 @@ namespace PFClusterCudaHCAL {
     cudaEventRecord(start, cudaStream);
 #endif
 
+/*!!
     prepareTopoInputsSerial<<<1, 1, 4 * (8+4) * sizeof(int), cudaStream>>>(
         nRH,
         outputGPU.nEdges.get(),
@@ -4488,15 +4499,26 @@ namespace PFClusterCudaHCAL {
                                                   outputGPU.pfrh_passTopoThresh.get(),
                                                   outputGPU.topoIter.get());
     cudaCheck(cudaStreamSynchronize(cudaStream));
+!!*/
 
     auto const threadsPerBlock = 256;
     auto const numBlocks = (nRH + threadsPerBlock - 1) / threadsPerBlock;
 
+    findRecHitParents<<<numBlocks, threadsPerBlock, 0, cudaStream>>>(
+      nRH,
+      outputGPU.pfrh_passTopoThresh.get(),
+      inputPFRecHits.pfrh_neighbours.get(),
+      outputGPU.pfrh_topoId.get()
+    );
+    cudaCheck(cudaGetLastError());
+
     contractRecHitParentArray<<<numBlocks, threadsPerBlock, 0, cudaStream>>>
       (nRH, outputGPU.pfrh_topoId.get(), scratchGPU.rhcount.get());
+    cudaCheck(cudaGetLastError());
 
     arrayCopyAndReset<<<numBlocks, threadsPerBlock, 0, cudaStream>>>
       (nRH, scratchGPU.rhcount.get(), outputGPU.pfrh_topoId.get(), 0);
+    cudaCheck(cudaGetLastError());
 
     topoClusterContraction<<<1, 512, 0, cudaStream>>>(nRH,
                                                       outputGPU.pfrh_topoId.get(),
@@ -4510,6 +4532,7 @@ namespace PFClusterCudaHCAL {
                                                       outputGPU.pcrh_fracInd.get(),
                                                       outputGPU.pcrh_frac.get(),
                                                       outputGPU.pcrhFracSize.get());
+    cudaCheck(cudaGetLastError());
 
 #ifdef DEBUG_GPU_HCAL
     cudaEventRecord(stop, cudaStream);
