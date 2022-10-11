@@ -52,6 +52,7 @@ namespace PFClusterCudaHCAL {
 
   void PFRechitToPFCluster_HCAL_entryPoint(
       cudaStream_t cudaStream,
+      bool const useNewMethod,
       int nEdges,
       ::hcal::PFRecHitCollection<::pf::common::DevStoragePolicy> const& inputPFRecHits,
       ::PFClustering::HCAL::InputDataGPU& inputGPU,

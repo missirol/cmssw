@@ -58,6 +58,7 @@ private:
 
   edm::EDGetTokenT<cms::cuda::Product<hcal::PFRecHitCollection<pf::common::DevStoragePolicy>>> InputPFRecHitSoA_Token_;
 
+  bool const useNewMethod_;
   bool initCuda_ = true;
   int nRH_ = 0;
 
@@ -85,6 +86,7 @@ private:
 
 PFClusterProducerCudaHCAL::PFClusterProducerCudaHCAL(const edm::ParameterSet& conf)
   : InputPFRecHitSoA_Token_{consumes(conf.getParameter<edm::InputTag>("PFRecHitsLabelIn"))},
+    useNewMethod_{conf.getParameter<bool>("useNewMethod")},
     _produceSoA{conf.getParameter<bool>("produceSoA")},
     _produceLegacy{conf.getParameter<bool>("produceLegacy")},
     _rechitsLabel{consumes(conf.getParameter<edm::InputTag>("recHitsSource"))} {
@@ -327,7 +329,8 @@ void PFClusterProducerCudaHCAL::acquire(edm::Event const& event,
     cudaCheck(cudaStreamSynchronize(cudaStream));
 
   // Calling cuda kernels
-  PFClusterCudaHCAL::PFRechitToPFCluster_HCAL_entryPoint(cudaStream, totalNeighbours, PFRecHits, inputGPU, outputCPU, outputGPU, scratchGPU, kernelTimers);
+  PFClusterCudaHCAL::PFRechitToPFCluster_HCAL_entryPoint(cudaStream, useNewMethod_,
+    totalNeighbours, PFRecHits, inputGPU, outputCPU, outputGPU, scratchGPU, kernelTimers);
 
   // Data transfer from GPU
   if (cudaStreamQuery(cudaStream) != cudaSuccess)
@@ -399,6 +402,19 @@ void PFClusterProducerCudaHCAL::produce(edm::Event& event, const edm::EventSetup
   //   ctx.emplace(event, OutputPFRecHitSoA_Token_, std::move(outputGPU.PFClusters)); // SoA "PFClusters" still need to be defined.
 
   if (_produceLegacy) {
+
+
+//!!    int const foo = useNewMethod_ ? 20 : 10;
+//!!    for (int rh = 0; rh < nRH_; rh++) {
+//!!      auto const topoId = outputCPU.pfrh_topoId[rh];
+//!!      auto const isSeed = outputCPU.pfrh_isSeed[rh];
+//!!      auto const seedFracOffset = outputCPU.seedFracOffsets[rh];
+//!!      auto const topoSeedCount = outputCPU.topoSeedCount[topoId];
+//!!      printf("CPU%d - idx=%05d parent=%d\n", foo, rh, topoId);
+//!!      printf("        isSeed=%d seedFracOffset=%d topoSeedCount=%d\n", isSeed, seedFracOffset, topoSeedCount);
+//!!    }
+
+
 
     auto pfClustersFromCuda = std::make_unique<reco::PFClusterCollection>();
     pfClustersFromCuda->reserve(nRH_);

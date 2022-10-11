@@ -3491,7 +3491,7 @@ namespace PFClusterCudaHCAL {
 
     for (auto idx = thread; idx < size; idx += stride) {
       int parent = pfrh_topoId[idx];
-      if (parent < 0) {
+      if (parent <= 0) {
         continue;
       }
       for (int nei_j = 0; nei_j < 8; ++nei_j) {
@@ -3727,6 +3727,14 @@ namespace PFClusterCudaHCAL {
     return false;
   }
 
+  __global__ void showRecHits(int foo, int size, int* pfrh_topoId) {
+    auto const thread = threadIdx.x + blockIdx.x * blockDim.x;
+    auto const stride = blockDim.x * gridDim.x;
+    for (auto idx = thread; idx < size; idx += stride) {
+      printf("GPU%d - idx=%05d parent=%d\n", foo, idx, pfrh_topoId[idx]);
+    }
+  }
+
   __global__ void topoClusterLinking(int nRH,
                                      int* nEdgesIn,
                                      int* pfrh_parent,
@@ -3735,7 +3743,7 @@ namespace PFClusterCudaHCAL {
                                      int* pfrh_edgeMask,
                                      const int* pfrh_passTopoThresh,
                                      int* topoIter) {
-    __shared__ bool notDone;
+    __shared__ int notDone;
     __shared__ int iter, nEdges;
 
     auto const thread = blockIdx.x * blockDim.x + threadIdx.x;
@@ -3759,7 +3767,7 @@ namespace PFClusterCudaHCAL {
 
     do {
       if (threadIdx.x == 0) {
-        notDone = false;
+        notDone = 0;
       }
       __syncthreads();
 
@@ -3783,7 +3791,7 @@ namespace PFClusterCudaHCAL {
           // edgeMask set to true if elements of edgeId and edgeList are different
           if (pfrh_edgeId[idx] != pfrh_edgeList[idx]) {
             pfrh_edgeMask[idx] = 1;
-            notDone = true;
+            atomicAdd(&notDone, 1);
           } else {
             pfrh_edgeMask[idx] = 0;
           }
@@ -3795,11 +3803,11 @@ namespace PFClusterCudaHCAL {
 
       __syncthreads();
 
-      if (!notDone)
+      if (notDone == 0)
         break;
 
       if (threadIdx.x == 0) {
-        notDone = false;
+        notDone = 0;
       }
 
       __syncthreads();
@@ -3824,7 +3832,7 @@ namespace PFClusterCudaHCAL {
           // edgeMask set to true if elements of edgeId and edgeList are different
           if (pfrh_edgeId[idx] != pfrh_edgeList[idx]) {
             pfrh_edgeMask[idx] = 1;
-            notDone = true;
+            atomicAdd(&notDone, 1);
           } else {
             pfrh_edgeMask[idx] = 0;
           }
@@ -3836,7 +3844,7 @@ namespace PFClusterCudaHCAL {
 
       __syncthreads();
 
-    } while (notDone);
+    } while (notDone > 0);
 
     if (threadIdx.x == 0)
       *topoIter = iter;
@@ -4393,6 +4401,7 @@ namespace PFClusterCudaHCAL {
 
   void PFRechitToPFCluster_HCAL_entryPoint(
       cudaStream_t cudaStream,
+      bool const useNew,
       int nEdges,
       ::hcal::PFRecHitCollection<::pf::common::DevStoragePolicy> const& inputPFRecHits,
       ::PFClustering::HCAL::InputDataGPU& inputGPU,
@@ -4410,6 +4419,9 @@ namespace PFClusterCudaHCAL {
 #endif
 
     auto const nRH = inputPFRecHits.size;
+
+    auto const threadsPerBlock = 256;
+    auto const numBlocks = (nRH + threadsPerBlock - 1) / threadsPerBlock;
 
     // Combined seeding & topo clustering thresholds, array initialization
 
@@ -4431,8 +4443,10 @@ namespace PFClusterCudaHCAL {
                                                                          outputGPU.topoSeedOffsets.get(),
                                                                          outputGPU.topoSeedList.get(),
                                                                          outputGPU.pfc_iter.get());
+    cudaCheck(cudaGetLastError());
 
-    cudaCheck(cudaStreamSynchronize(cudaStream));
+//!!    showRecHits<<<1, 1, 0, cudaStream>>>(useNew ? 20 : 10, nRH, outputGPU.pfrh_topoId.get());
+//!!    cudaCheck(cudaGetLastError());
 
 #ifdef DEBUG_GPU_HCAL
     cudaEventRecord(stop, cudaStream);
@@ -4441,7 +4455,8 @@ namespace PFClusterCudaHCAL {
     cudaEventRecord(start, cudaStream);
 #endif
 
-/*!!
+  if (not useNew) {
+
     prepareTopoInputsSerial<<<1, 1, 4 * (8+4) * sizeof(int), cudaStream>>>(
         nRH,
         outputGPU.nEdges.get(),
@@ -4449,6 +4464,7 @@ namespace PFClusterCudaHCAL {
         inputPFRecHits.pfrh_neighbours.get(),
         scratchGPU.pfrh_edgeId.get(),
         scratchGPU.pfrh_edgeList.get());
+    cudaCheck(cudaGetLastError());
 
 //    // Topo clustering
 //    // Fill edgeId, edgeList arrays with rechit neighbors
@@ -4459,8 +4475,7 @@ namespace PFClusterCudaHCAL {
 //                                                                           inputPFRecHits.pfrh_neighbours.get(),
 //                                                                           scratchGPU.pfrh_edgeId.get(),
 //                                                                           scratchGPU.pfrh_edgeList.get());
-
-    cudaCheck(cudaStreamSynchronize(cudaStream));
+//    cudaCheck(cudaGetLastError());
 
     //    prepareTopoInputs<<<1, 256, 256 * (8+4) * sizeof(int), cudaStream>>>(
     //        nRH,
@@ -4469,25 +4484,7 @@ namespace PFClusterCudaHCAL {
     //        inputPFRecHits.pfrh_neighbours.get(),
     //        scratchGPU.pfrh_edgeId.get(),
     //        scratchGPU.pfrh_edgeList.get());
-
-#ifdef DEBUG_GPU_HCAL
-    cudaEventRecord(stop, cudaStream);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&timer[4], start, stop);
-    //printf("\nprepareTopoInputs took %f ms\n", timer[4]);
-
-    compareEdgeArrays<<<1, 1, 0, cudaStream>>>(outputGPU.nEdges.get(),
-                                               scratchGPU.pfrh_edgeId.get(),
-                                               scratchGPU.pfrh_edgeList.get(),
-                                               nEdges,
-                                               inputGPU.pfrh_edgeId.get(),
-                                               inputGPU.pfrh_edgeList.get(),
-                                               nRH,
-                                               inputGPU.pfNeighFourInd.get(),
-                                               inputPFRecHits.pfrh_neighbours.get());
-
-    cudaEventRecord(start, cudaStream);
-#endif
+    //    cudaCheck(cudaGetLastError());
 
     // Topo clustering
     topoClusterLinking<<<1, 512, 0, cudaStream>>>(nRH,
@@ -4498,12 +4495,9 @@ namespace PFClusterCudaHCAL {
                                                   scratchGPU.pfrh_edgeMask.get(),
                                                   outputGPU.pfrh_passTopoThresh.get(),
                                                   outputGPU.topoIter.get());
-    cudaCheck(cudaStreamSynchronize(cudaStream));
-!!*/
-
-    auto const threadsPerBlock = 256;
-    auto const numBlocks = (nRH + threadsPerBlock - 1) / threadsPerBlock;
-
+    cudaCheck(cudaGetLastError());
+  }
+  else {
     findRecHitParents<<<numBlocks, threadsPerBlock, 0, cudaStream>>>(
       nRH,
       outputGPU.pfrh_passTopoThresh.get(),
@@ -4511,6 +4505,9 @@ namespace PFClusterCudaHCAL {
       outputGPU.pfrh_topoId.get()
     );
     cudaCheck(cudaGetLastError());
+  }
+//!!    showRecHits<<<1, 1, 0, cudaStream>>>(useNew ? 21 : 11, nRH, outputGPU.pfrh_topoId.get());
+//!!    cudaCheck(cudaGetLastError());
 
     contractRecHitParentArray<<<numBlocks, threadsPerBlock, 0, cudaStream>>>
       (nRH, outputGPU.pfrh_topoId.get(), scratchGPU.rhcount.get());
@@ -4519,6 +4516,9 @@ namespace PFClusterCudaHCAL {
     arrayCopyAndReset<<<numBlocks, threadsPerBlock, 0, cudaStream>>>
       (nRH, scratchGPU.rhcount.get(), outputGPU.pfrh_topoId.get(), 0);
     cudaCheck(cudaGetLastError());
+
+//!!    showRecHits<<<1, 1, 0, cudaStream>>>(useNew ? 22 : 12, nRH, outputGPU.pfrh_topoId.get());
+//!!    cudaCheck(cudaGetLastError());
 
     topoClusterContraction<<<1, 512, 0, cudaStream>>>(nRH,
                                                       outputGPU.pfrh_topoId.get(),
