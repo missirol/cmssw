@@ -229,3 +229,5 @@ process.schedule = cms.Schedule(process.HBHEPFCPUGPUTask)
 process.schedule.extend([process.endjob_step,process.FEVTDEBUGHLToutput_step])
 
 process.options.numberOfThreads = cms.untracked.uint32(8)
+
+process.hltParticleFlowClusterHBHEonGPU.useNewMethod = cms.bool(False)

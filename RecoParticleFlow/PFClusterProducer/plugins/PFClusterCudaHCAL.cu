@@ -3766,9 +3766,12 @@ namespace PFClusterCudaHCAL {
     }
 
     do {
+      __syncthreads();
+
       if (threadIdx.x == 0) {
         notDone = 0;
       }
+
       __syncthreads();
 
       // Odd linking
@@ -3805,6 +3808,8 @@ namespace PFClusterCudaHCAL {
 
       if (notDone == 0)
         break;
+
+      __syncthreads();
 
       if (threadIdx.x == 0) {
         notDone = 0;
