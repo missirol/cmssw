@@ -3508,6 +3508,32 @@ namespace PFClusterCudaHCAL {
     } while (notDone);
   }
 
+  // pfrh_parent: RecHit index -> first parent
+  // pfrh_parent_new (after this kernel): RecHit index -> oldest parent in the chain
+  __global__ void contractRecHitParentArray(size_t size, int* pfrh_parent, int* pfrh_parent_new) {
+    auto const thread = threadIdx.x + blockIdx.x * blockDim.x;
+    auto const stride = blockDim.x * gridDim.x;
+
+    for (auto idx = thread; idx < size; idx += stride) {
+      int parent = pfrh_parent[idx];
+      while (parent >= 0 and parent != pfrh_parent[parent]) {
+        parent = pfrh_parent[parent];
+      }
+      pfrh_parent_new[idx] = parent;
+    }
+  }
+
+  // copies foo[idx] to bar[idx], and sets foo[idx] to val
+  __global__ void arrayCopyAndReset(size_t size, int* foo, int* bar, int val) {
+    auto const thread = threadIdx.x + blockIdx.x * blockDim.x;
+    auto const stride = blockDim.x * gridDim.x;
+
+    for (auto idx = thread; idx < size; idx += stride) {
+      bar[idx] = foo[idx];
+      foo[idx] = val;
+    }
+  }
+
   // Contraction in a single block
   __global__ void topoClusterContraction(size_t size,
                                          int* pfrh_parent,
@@ -3521,35 +3547,22 @@ namespace PFClusterCudaHCAL {
                                          int* pcrhfracind,
                                          float* pcrhfrac,
                                          int* pcrhFracSize) {
-    __shared__ int notDone, totalSeedOffset, totalSeedFracOffset;
+    __shared__ int totalSeedOffset, totalSeedFracOffset;
+
+    assert(gridDim.x == 1);
+
+    auto const thread = threadIdx.x + blockIdx.x * blockDim.x;
+    auto const stride = blockDim.x * gridDim.x;
+
     if (threadIdx.x == 0) {
-      notDone = 0;
       totalSeedOffset = 0;
       totalSeedFracOffset = 0;
       *pcrhFracSize = 0;
     }
     __syncthreads();
 
-    do {
-      volatile bool threadNotDone = false;
-      for (int i = threadIdx.x; i < size; i += blockDim.x) {
-        int parent = pfrh_parent[i];
-        if (parent >= 0 && parent != pfrh_parent[parent]) {
-          threadNotDone = true;
-          pfrh_parent[i] = pfrh_parent[parent];
-        }
-      }
-      if (threadIdx.x == 0)
-        notDone = 0;
-      __syncthreads();
-
-      atomicAdd(&notDone, (int)threadNotDone);
-      __syncthreads();
-
-    } while (notDone);
-
     // Now determine the number of seeds and rechits in each topo cluster
-    for (int rhIdx = threadIdx.x; rhIdx < size; rhIdx += blockDim.x) {
+    for (int rhIdx = thread; rhIdx < size; rhIdx += stride) {
       int topoId = pfrh_parent[rhIdx];
       if (topoId > -1) {
         // Valid topo cluster
@@ -3562,7 +3575,7 @@ namespace PFClusterCudaHCAL {
     __syncthreads();
 
     // Determine offsets for topo ID seed array
-    for (int topoId = threadIdx.x; topoId < size; topoId += blockDim.x) {
+    for (int topoId = thread; topoId < size; topoId += stride) {
       if (topoSeedCount[topoId] > 0) {
         // This is a valid topo ID
         int offset = atomicAdd(&totalSeedOffset, topoSeedCount[topoId]);
@@ -3572,7 +3585,7 @@ namespace PFClusterCudaHCAL {
     __syncthreads();
 
     // Fill arrays of seed indicies per topo ID
-    for (int rhIdx = threadIdx.x; rhIdx < size; rhIdx += blockDim.x) {
+    for (int rhIdx = thread; rhIdx < size; rhIdx += stride) {
       int topoId = pfrh_parent[rhIdx];
       if (topoId > -1 && pfrh_isSeed[rhIdx]) {
         // Valid topo cluster
@@ -3583,7 +3596,7 @@ namespace PFClusterCudaHCAL {
     __syncthreads();
 
     // Determine seed offsets for rechit fraction array
-    for (int rhIdx = threadIdx.x; rhIdx < size; rhIdx += blockDim.x) {
+    for (int rhIdx = thread; rhIdx < size; rhIdx += stride) {
       rhCount[rhIdx] = 1;  // Reset this counter array
 
       int topoId = pfrh_parent[rhIdx];
@@ -3598,6 +3611,7 @@ namespace PFClusterCudaHCAL {
       }
     }
     __syncthreads();
+
     if (threadIdx.x == 0) {
       *pcrhFracSize = totalSeedFracOffset;
       //printf("At the end of topoClusterContraction, found *pcrhFracSize = %d\n", *pcrhFracSize);
@@ -4495,6 +4509,19 @@ namespace PFClusterCudaHCAL {
                                                   outputGPU.pfrh_passTopoThresh.get(),
                                                   outputGPU.topoIter.get());
     cudaCheck(cudaStreamSynchronize(cudaStream));
+
+    auto const threadsPerBlock = 256;
+    auto const numBlocks = (nRH + threadsPerBlock - 1) / threadsPerBlock;
+
+    // find the oldest grandparent of every RecHit, and
+    // save this information temporarily in the array scratchGPU.rhcount
+    contractRecHitParentArray<<<numBlocks, threadsPerBlock, 0, cudaStream>>>
+      (nRH, outputGPU.pfrh_topoId.get(), scratchGPU.rhcount.get());
+
+    // copy the oldest-grandparent array to outputGPU.pfrh_topoId, and
+    // re-initialise all elements of scratchGPU.rhcount to 0
+    arrayCopyAndReset<<<numBlocks, threadsPerBlock, 0, cudaStream>>>
+      (nRH, scratchGPU.rhcount.get(), outputGPU.pfrh_topoId.get(), 0);
 
     topoClusterContraction<<<1, 512, 0, cudaStream>>>(nRH,
                                                       outputGPU.pfrh_topoId.get(),
