@@ -4438,24 +4438,24 @@ namespace PFClusterCudaHCAL {
     cudaEventRecord(start, cudaStream);
 #endif
 
-    //    prepareTopoInputsSerial<<<1, 1, 4 * (8+4) * sizeof(int), cudaStream>>>(
-    //        nRH,
-    //        outputGPU.nEdges.get(),
-    //        outputGPU.pfrh_passTopoThresh.get(),
-    //        inputPFRecHits.pfrh_neighbours.get(),
-    //        scratchGPU.pfrh_edgeId.get(),
-    //        scratchGPU.pfrh_edgeList.get());
+    prepareTopoInputsSerial<<<1, 1, 4 * (8+4) * sizeof(int), cudaStream>>>(
+        nRH,
+        outputGPU.nEdges.get(),
+        outputGPU.pfrh_passTopoThresh.get(),
+        inputPFRecHits.pfrh_neighbours.get(),
+        scratchGPU.pfrh_edgeId.get(),
+        scratchGPU.pfrh_edgeList.get());
 
-    // Topo clustering
-    // Fill edgeId, edgeList arrays with rechit neighbors
-    // Has a bug when using more than 128 threads..
-    prepareTopoInputs<<<1, 128, 128 * (8 + 4) * sizeof(int), cudaStream>>>(nRH,
-                                                                           outputGPU.nEdges.get(),
-                                                                           outputGPU.pfrh_passTopoThresh.get(),
-                                                                           inputPFRecHits.pfrh_neighbours.get(),
-                                                                           scratchGPU.pfrh_edgeId.get(),
-                                                                           scratchGPU.pfrh_edgeList.get());
-    cudaCheck(cudaStreamSynchronize(cudaStream));
+//    // Topo clustering
+//    // Fill edgeId, edgeList arrays with rechit neighbors
+//    // Has a bug when using more than 128 threads..
+//    prepareTopoInputs<<<1, 128, 128 * (8 + 4) * sizeof(int), cudaStream>>>(nRH,
+//                                                                           outputGPU.nEdges.get(),
+//                                                                           outputGPU.pfrh_passTopoThresh.get(),
+//                                                                           inputPFRecHits.pfrh_neighbours.get(),
+//                                                                           scratchGPU.pfrh_edgeId.get(),
+//                                                                           scratchGPU.pfrh_edgeList.get());
+//    cudaCheck(cudaStreamSynchronize(cudaStream));
 
     //    prepareTopoInputs<<<1, 256, 256 * (8+4) * sizeof(int), cudaStream>>>(
     //        nRH,
