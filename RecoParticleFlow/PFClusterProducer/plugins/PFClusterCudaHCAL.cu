@@ -3743,18 +3743,17 @@ namespace PFClusterCudaHCAL {
                                      int* pfrh_edgeMask,
                                      const int* pfrh_passTopoThresh,
                                      int* topoIter) {
-    __shared__ int notDone;
-    __shared__ int iter, nEdges;
+    __shared__ int nEdges;
 
-    auto const thread = blockIdx.x * blockDim.x + threadIdx.x;
-    auto const stride = blockDim.x * gridDim.x;
+    assert(gridDim.x == 1);
 
     if (threadIdx.x == 0) {
-      *topoIter = 0;
-      iter = 0;
       nEdges = *nEdgesIn;
     }
     __syncthreads();
+
+    auto const thread = blockIdx.x * blockDim.x + threadIdx.x;
+    auto const stride = blockDim.x * gridDim.x;
 
     // Check if pairs in edgeId,edgeList contain a rh not passing topo threshold
     // If found, set the mask to 0
@@ -3764,26 +3763,22 @@ namespace PFClusterCudaHCAL {
       else
         pfrh_edgeMask[idx] = 0;
     }
+    __syncthreads();
 
-    do {
-      __syncthreads();
-
-      if (threadIdx.x == 0) {
-        notDone = 0;
-      }
-
-      __syncthreads();
+    bool isDone = false;
+    while (not isDone) {
 
       // Odd linking
       for (int idx = thread; idx < nEdges; idx += stride) {
         int const id = pfrh_edgeId[idx];  // Get edge topo id
         if (pfrh_edgeMask[idx] > 0 && isLeftEdge(idx, pfrh_edgeId, pfrh_edgeMask)) {
-          pfrh_parent[id] = (int)min(id, pfrh_edgeList[idx]);
+          pfrh_parent[id] = min(id, pfrh_edgeList[idx]);
         }
       }
       __syncthreads();
 
       // edgeParent
+      isDone = true;
       for (int idx = thread; idx < nEdges; idx += stride) {
         if (pfrh_edgeMask[idx] > 0) {
           int id = pfrh_edgeId[idx];          // Get edge topo id
@@ -3794,28 +3789,16 @@ namespace PFClusterCudaHCAL {
           // edgeMask set to true if elements of edgeId and edgeList are different
           if (pfrh_edgeId[idx] != pfrh_edgeList[idx]) {
             pfrh_edgeMask[idx] = 1;
-            atomicAdd(&notDone, 1);
+            isDone = false;
           } else {
             pfrh_edgeMask[idx] = 0;
           }
         }
       }
-
-      if (threadIdx.x == 0)
-        iter++;
-
       __syncthreads();
 
-      if (notDone == 0)
+      if (isDone)
         break;
-
-      __syncthreads();
-
-      if (threadIdx.x == 0) {
-        notDone = 0;
-      }
-
-      __syncthreads();
 
       // Even linking
       for (int idx = thread; idx < nEdges; idx += stride) {
@@ -3827,6 +3810,7 @@ namespace PFClusterCudaHCAL {
       __syncthreads();
 
       // edgeParent
+      isDone = true;
       for (int idx = thread; idx < nEdges; idx += stride) {
         if (pfrh_edgeMask[idx] > 0) {
           int id = pfrh_edgeId[idx];          // Get edge topo id
@@ -3837,22 +3821,14 @@ namespace PFClusterCudaHCAL {
           // edgeMask set to true if elements of edgeId and edgeList are different
           if (pfrh_edgeId[idx] != pfrh_edgeList[idx]) {
             pfrh_edgeMask[idx] = 1;
-            atomicAdd(&notDone, 1);
+            isDone = false;
           } else {
             pfrh_edgeMask[idx] = 0;
           }
         }
       }
-
-      if (threadIdx.x == 0)
-        iter++;
-
       __syncthreads();
-
-    } while (notDone > 0);
-
-    if (threadIdx.x == 0)
-      *topoIter = iter;
+    }
   }
 
   __device__ __forceinline__ void sortSwap(int* toSort, int a, int b) {
