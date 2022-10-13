@@ -15,7 +15,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2022_realistic', '
 # Input source
 process.source = cms.Source('PoolSource',
     fileNames = cms.untracked.vstring(
-        '/store/relval/CMSSW_12_5_0_pre5/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU_125X_mcRun3_2022_realistic_v3-v2/10000/c6a923e7-c221-498a-bf9c-845212176a93.root'
+        '/store/relval/CMSSW_12_6_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/125X_mcRun3_2022_realistic_v3-v1/2580000/2d96539c-b321-401f-b7b2-51884a5d421f.root',
     )
 )
 
