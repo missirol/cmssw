@@ -49,7 +49,7 @@ process.L1TUtmTriggerMenuRcdSource = cms.ESSource('EmptyESSource',
 )
 
 process.L1TriggerMenu = cms.ESProducer('L1TUtmTriggerMenuESProducer',
-    L1TriggerMenuFile = cms.string('test/Collisions2022_FracPrescaleTest_L1Menu.xml'),
+    L1TriggerMenuFile = cms.string('test/L1Menu_L1TGlobalUnitTests_v1_0_0.xml'),
 )
 
 process.L1TGlobalPrescalesVetosFractRcdSource = cms.ESSource('EmptyESSource',
@@ -62,10 +62,10 @@ process.L1TGlobalPrescalesVetosFract = cms.ESProducer('L1TGlobalPrescalesVetosFr
     TriggerMenuLuminosity = cms.string('startup'),
     Verbosity = cms.int32(0),
     AlgoBxMaskDefault = cms.int32(1),
-    PrescaleXMLFile   = cms.string('test/Collisions2022_FracPrescaleTest_UGT_BASE_RS_Prescales.xml'),
-    AlgoBxMaskXMLFile = cms.string('test/Collisions2022_FracPrescaleTest_UGT_BASE_RS_AlgoBxMask.xml'),
-    FinOrMaskXMLFile  = cms.string('test/Collisions2022_FracPrescaleTest_UGT_BASE_RS_FinOrMask.xml'),
-    VetoMaskXMLFile   = cms.string('test/Collisions2022_FracPrescaleTest_UGT_BASE_RS_VetoMask.xml'),
+    PrescaleXMLFile   = cms.string('test/UGT_BASE_RS_PRESCALES_L1MenuL1TGlobalUnitTests_v1_0_0.xml'),
+    AlgoBxMaskXMLFile = cms.string('test/UGT_BASE_RS_ALGOBX_MASK_L1MenuL1TGlobalUnitTests_v1_0_0.xml'),
+    FinOrMaskXMLFile  = cms.string('test/UGT_BASE_RS_FINOR_MASK_L1MenuL1TGlobalUnitTests_v1_0_0.xml'),
+    VetoMaskXMLFile   = cms.string('test/UGT_BASE_RS_VETO_MASK_L1MenuL1TGlobalUnitTests_v1_0_0.xml'),
 )
 
 # EventData modules
@@ -93,7 +93,9 @@ process.simGtStage2Digis = cms.EDProducer('L1TGlobalProducer',
     PrescaleSet = cms.uint32(2),
     RequireMenuToMatchAlgoBlkInput = cms.bool(False),
     TauInputTag = cms.InputTag('simCaloStage2Digis'),
-    useMuonShowers = cms.bool(True)
+    useMuonShowers = cms.bool(True),
+    resetPSCountersEachLumiSec = cms.bool(False),
+    semiRandomInitialPSCounters = cms.bool(False)
 )
 
 # Task definition

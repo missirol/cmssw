@@ -17,23 +17,20 @@ cmsRun "${TESTDIR}"/testL1TGlobalProducer_cfg.py &> log_testL1TGlobalProducer \
 
 # expected PathSummary of test job
 cat <<@EOF > log_testL1TGlobalProducer_expected
-==================  L1 Trigger Report  =====================================================================
-
- L1T menu Name   : L1Menu_Collisions2022_FracPrescale_Test
- L1T menu Version: 0.10
- L1T menu Comment: Test menu with Mu5, EG, jet, ZB, and MB seeds. 
-
     Bit                  Algorithm Name                  Init    PScd  Final   PS Factor     Num Bx Masked
 ============================================================================================================
-       0                               L1_SingleMu3       489    323    323       1.5          0
-       1                               L1_SingleEG3       984    654    654       1.5          0
-       2                              L1_SingleJet8      1000    660    660       1.5          0
-       3                                L1_ZeroBias      1000    660    660       1.5          0
-       4                          L1_MinimumBiasHF0      1000    660    660       1.5          0
-                                                      Final OR Count = 893
+      21                              L1_SingleMu22       246    246    246         1          0
+     194                      L1_SingleIsoEG32er2p5       215      0      0         0          0
+     286                 L1_Mu22er2p1_IsoTau30er2p1       161    134    134       1.2          0
+     318                        L1_SingleJet90er2p5       665    100    100      6.65          0
+     428                         L1_ETMHF80_HTT60er       132     38     38       3.4          0
+     459                                L1_ZeroBias      1000     19     19      50.1          0
+     461              L1_MinimumBiasHF0_AND_BptxAND       982    798    798      1.23          0
+     480                   L1_FirstCollisionInOrbit         0      0      0         1          0
+                                                      Final OR Count = 872
 @EOF
 
 # compare to expected output of test job
-sed -n '/L1 Trigger Report  =/,/Final OR Count =/p' log_testL1TGlobalProducer \
+sed -n '/Init    PScd  Final   PS Factor/,/Final OR Count =/p' log_testL1TGlobalProducer \
  | diff log_testL1TGlobalProducer_expected - \
  || die "differences in expected log report" $?
