@@ -1,6 +1,6 @@
-# hltGetConfiguration --full --data /dev/CMSSW_12_4_0/GRun --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
+# hltGetConfiguration --full --data /users/missirol/test/dev/CMSSW_12_4_0/CMSHLT_2523/Test01/GRun --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
 
-# /dev/CMSSW_12_4_0/GRun/V154 (CMSSW_12_4_0)
+# /users/missirol/test/dev/CMSSW_12_4_0/CMSHLT_2523/Test01/GRun/V1 (CMSSW_12_4_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -12,7 +12,7 @@ process = cms.Process( "HLTGRun" )
 process.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA()
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_12_4_0/GRun/V154')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_4_0/CMSHLT_2523/Test01/GRun/V1')
 )
 
 process.transferSystem = cms.PSet( 

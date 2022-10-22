@@ -1,6 +1,6 @@
-# hltGetConfiguration --full --data /dev/CMSSW_12_4_0/PIon --type PIon --unprescale --process HLTPIon --globaltag auto:run3_hlt_PIon --input file:RelVal_Raw_PIon_DATA.root
+# hltGetConfiguration --full --data /users/missirol/test/dev/CMSSW_12_4_0/CMSHLT_2523/Test01/PIon --type PIon --unprescale --process HLTPIon --globaltag auto:run3_hlt_PIon --input file:RelVal_Raw_PIon_DATA.root
 
-# /dev/CMSSW_12_4_0/PIon/V154 (CMSSW_12_4_0)
+# /users/missirol/test/dev/CMSSW_12_4_0/CMSHLT_2523/Test01/PIon/V1 (CMSSW_12_4_0)
 
 import FWCore.ParameterSet.Config as cms
 
@@ -12,7 +12,7 @@ process = cms.Process( "HLTPIon" )
 process.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA()
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_12_4_0/PIon/V154')
+  tableName = cms.string('/users/missirol/test/dev/CMSSW_12_4_0/CMSHLT_2523/Test01/PIon/V1')
 )
 
 process.transferSystem = cms.PSet( 
