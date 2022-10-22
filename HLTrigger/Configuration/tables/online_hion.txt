@@ -176,8 +176,6 @@ HLT_HIL1NotBptxOR_v*
 HLT_HIL1UnpairedBunchBptxMinus_v*
 HLT_HIL1UnpairedBunchBptxPlus_v*
 
-
-
 HLT_HIUPC_DoubleEG2_BptxAND_SinglePixelTrack_MaxPixelTrack_v*              # CMSHLT-2471
 HLT_HIUPC_DoubleEG2_NotMBHF2AND_SinglePixelTrack_MaxPixelTrack_v*          # CMSHLT-2471
 HLT_HIUPC_DoubleEG2_NotMBHF2AND_v*                                         # CMSHLT-2471
@@ -232,6 +230,8 @@ HLT_HIUPC_ZDC1nXOR_MBHF2AND_PixelTrackMultiplicity40_v*                    # CMS
 HLT_HIUPC_ZeroBias_MinPixelCluster400_MaxPixelCluster10000_v*              # CMSHLT-2471
 HLT_HIUPC_ZeroBias_SinglePixelTrackLowPt_MaxPixelCluster400_v*             # CMSHLT-2471
 HLT_HIUPC_ZeroBias_SinglePixelTrack_MaxPixelTrack_v*                       # CMSHLT-2471
+
+HLT_HIMinimumBias_v* # CMSHLT-2251
 
 HLT_HIOnlineMonitorGroup_v* # CMSHLT-2245
 
