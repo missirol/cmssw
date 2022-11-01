@@ -134,10 +134,7 @@ std::shared_ptr<onlinebeammonitor::NoCache> OnlineBeamMonitor::globalBeginLumino
   // Always create a beamspot group for each lumi weather we have results or not! Each Beamspot will be of unknown type!
 
   processedLumis_.push_back(iLumi.id().luminosityBlock());
-  //Read BeamSpot from DB
-  ESHandle<BeamSpotOnlineObjects> bsHLTHandle;
-  ESHandle<BeamSpotOnlineObjects> bsLegacyHandle;
-  ESHandle<BeamSpotObjects> bsTransientHandle;
+
   //int lastLumiHLT_ = 0;
   //int lastLumiLegacy_ = 0;
   std::string startTimeStamp_ = "0";
@@ -150,9 +147,11 @@ std::shared_ptr<onlinebeammonitor::NoCache> OnlineBeamMonitor::globalBeginLumino
   std::string lumiRangeHLT_ = "0 - 0";
   std::string lumiRangeLegacy_ = "0 - 0";
 
+  beamSpotsMap_.clear();
+
   if (auto bsHLTHandle = iSetup.getHandle(bsHLTToken_)) {
     auto const& spotDB = *bsHLTHandle;
-
+try {
     //lastLumiHLT_ = spotDB.lastAnalyzedLumi();
     startTimeStampHLT_ = spotDB.startTime();
     stopTimeStampHLT_ = spotDB.endTime();
@@ -182,14 +181,15 @@ std::shared_ptr<onlinebeammonitor::NoCache> OnlineBeamMonitor::globalBeginLumino
     } else {
       aSpot->setType(reco::BeamSpot::Fake);
     }
-    //LogInfo("OnlineBeamMonitor")
-    //  << *aSpot << std::endl;
+} catch (std::exception const& e) {
+  edm::LogError("OnlineBeamMonitor") << e.what();
+}
   } else {
     LogInfo("OnlineBeamMonitor") << "Database BeamSpot is not valid at lumi: " << iLumi.id().luminosityBlock();
   }
   if (auto bsLegacyHandle = iSetup.getHandle(bsLegacyToken_)) {
     auto const& spotDB = *bsLegacyHandle;
-
+try {
     // translate from BeamSpotObjects to reco::BeamSpot
     BeamSpot::Point apoint(spotDB.x(), spotDB.y(), spotDB.z());
 
@@ -220,15 +220,16 @@ std::shared_ptr<onlinebeammonitor::NoCache> OnlineBeamMonitor::globalBeginLumino
     } else {
       aSpot->setType(reco::BeamSpot::Fake);
     }
-    //LogInfo("OnlineBeamMonitor")
-    //  << *aSpot << std::endl;
+} catch (std::exception const& e) {
+  edm::LogError("OnlineBeamMonitor") << e.what();
+}
   } else {
     LogInfo("OnlineBeamMonitor") << "Database BeamSpot is not valid at lumi: " << iLumi.id().luminosityBlock();
   }
   if (auto bsTransientHandle = iSetup.getHandle(bsTransientToken_)) {
     auto const& spotDB = *bsTransientHandle;
     //std::cout << " from the DB " << spotDB << std::endl;
-
+try {
     // translate from BeamSpotObjects to reco::BeamSpot
     BeamSpot::Point apoint(spotDB.x(), spotDB.y(), spotDB.z());
 
@@ -314,8 +315,9 @@ std::shared_ptr<onlinebeammonitor::NoCache> OnlineBeamMonitor::globalBeginLumino
 
       outFile.close();
     }
-    //LogInfo("OnlineBeamMonitor")
-    //  << *aSpot << std::endl;
+} catch (std::exception const& e) {
+  edm::LogError("OnlineBeamMonitor") << e.what();
+}
   } else {
     LogInfo("OnlineBeamMonitor") << "Database BeamSpot is not valid at lumi: " << iLumi.id().luminosityBlock();
   }
