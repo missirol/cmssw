@@ -84,14 +84,12 @@ if __name__ == '__main__':
   print('''# %s
 
 import FWCore.ParameterSet.Config as cms
-
 ''' % config.menu.name)
 
   for stream in sorted(process.streams.__dict__):
-    if re.match(r'^Physics|Parking', stream):
+    if re.match(r'^(Physics|Parking)', stream):
       print('''
 # stream %s
-
 ''' % stream)
       ds = sorted(process.streams.__dict__[stream])
       for dataset in ds:
@@ -102,10 +100,8 @@ import FWCore.ParameterSet.Config as cms
 %s.l1tResults = cms.InputTag('')
 %s.throw      = cms.bool(False)
 %s.triggerConditions = %s
-
 ''' % (name, name, name, name, name, process.datasets.__dict__[dataset])
         else:
           dump = '''# dataset %s not found
-
 ''' % (dataset, )
         print(dump)
