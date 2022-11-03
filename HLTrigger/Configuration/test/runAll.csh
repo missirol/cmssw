@@ -2,6 +2,23 @@
 
 eval `scram runtime -csh`
 
+setenv HLTConfDBProxyOpts "" # db-proxy options
+while ( $#argv != 0 )
+  switch ( "$1" )
+    case "--dbproxy":
+      setenv HLTConfDBProxyOpts "${HLTConfDBProxyOpts} --dbproxy"
+      shift; breaksw
+    case "--dbproxyhost":
+      setenv HLTConfDBProxyOpts "${HLTConfDBProxyOpts} --dbproxyhost $2"
+      shift; shift; breaksw
+    case "--dbproxyport":
+      setenv HLTConfDBProxyOpts "${HLTConfDBProxyOpts} --dbproxyport $2"
+      shift; shift; breaksw
+    default:
+      shift; breaksw
+  endsw
+end
+
 echo
 date +%F\ %a\ %T
 echo

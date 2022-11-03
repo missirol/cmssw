@@ -3,6 +3,7 @@
 """
 import argparse
 import subprocess
+import os
 import re
 
 import FWCore.ParameterSet.Config as cms

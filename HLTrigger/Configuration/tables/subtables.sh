@@ -1,7 +1,17 @@
-#! /bin/bash
+#!/bin/bash
 #
 # utility functions used to generate HLT tables from master table in ConfDB
 #
+
+HLTConfDBProxyOpts="" # db-proxy options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dbproxy) HLTConfDBProxyOpts="${HLTConfDBProxyOpts} --dbproxy"; shift;;
+    --dbproxyhost) HLTConfDBProxyOpts="${HLTConfDBProxyOpts} --dbproxyhost $2"; shift; shift;;
+    --dbproxyport) HLTConfDBProxyOpts="${HLTConfDBProxyOpts} --dbproxyport $2"; shift; shift;;
+    *) shift;;
+  esac
+done
 
 # load common HLT functions
 if [ -f "$CMSSW_BASE/src/HLTrigger/Configuration/common/utils.sh" ]; then
@@ -73,7 +83,7 @@ function makeCreateConfig() {
       if [ -f $workDir/$JAR ]; then
         continue
       fi
-      # download to a temporay file and use an atomic move (in case an other istance is downloading the same file
+      # download to a temporary file and use an atomic move (in case another instance is downloading the same file)
       local TMPJAR=$(mktemp -p "$workDir" .${JAR}.XXXXXXXXXX)
       curl -s -L "$baseUrl/$JAR" -o "$TMPJAR"
       mv -n "$TMPJAR" "$workDir/$JAR"
@@ -141,6 +151,7 @@ function runCreateConfig() {
     -Xmx1024m \
     -classpath "$CLASSPATH" \
     confdb.db.ConfDBCreateConfig \
+    "${HLTConfDBProxyOpts}" \
     --dbHost $DBHOST \
     --dbName $DBNAME \
     --dbUser $DBUSER \

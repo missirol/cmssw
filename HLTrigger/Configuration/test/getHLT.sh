@@ -6,14 +6,21 @@ TARGET="/dev/CMSSW_12_4_0/\$TABLE"         # no explicit version, take the most 
 
 TABLES="GRun HIon PIon PRef"               # $TABLE in the above variable will be expanded to these TABLES
 
-# print extra messages ?
-VERBOSE=false
+VERBOSE=false # print extra messages ?
+HLTConfDBProxyOpts="" # db-proxy options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -v) VERBOSE=true; shift;;
+    -q) VERBOSE=false; shift;;
+    --dbproxy) HLTConfDBProxyOpts="${HLTConfDBProxyOpts} --dbproxy"; shift;;
+    --dbproxyhost) HLTConfDBProxyOpts="${HLTConfDBProxyOpts} --dbproxyhost $2"; shift; shift;;
+    --dbproxyport) HLTConfDBProxyOpts="${HLTConfDBProxyOpts} --dbproxyport $2"; shift; shift;;
+    *) shift;;
+  esac
+done
 
 # this is used for brace expansion
 TABLES_=$(echo $TABLES | sed -e's/ \+/,/g')
-
-[ "$1" == "-v" ] && { VERBOSE=true;  shift; }
-[ "$1" == "-q" ] && { VERBOSE=false; shift; }
 
 function log() {
   $VERBOSE && echo -e "$@"
@@ -44,15 +51,14 @@ function getConfigForCVS() {
   log "  dumping HLT cffs for $NAME from $CONFIG"
 
   # do not use any conditions or L1 override
-  hltGetConfiguration --cff --data $CONFIG --type $NAME > HLT_${NAME}_cff.py
+  hltGetConfiguration $HLTConfDBProxyOpts --cff --data $CONFIG --type $NAME > HLT_${NAME}_cff.py
 }
 
 function getContentForCVS() {
   local CONFIG="$1"
 
   log "  dumping EventContet"
-  $GETCONTENT $CONFIG
-  rm -f hltOutput*_cff.py* hltScouting_cff.py*
+  $GETCONTENT $HLTConfDBProxyOpts $CONFIG
 }
 
 function getDatasetsForCVS() {
@@ -60,7 +66,7 @@ function getDatasetsForCVS() {
   local TARGET="$2"
 
   log "  dumping Primary Dataset"
-  $GETDATASETS $CONFIG > $TARGET
+  $GETDATASETS $HLTConfDBProxyOpts $CONFIG > $TARGET
 }
 
 function getConfigForOnline() {
@@ -86,11 +92,11 @@ function getConfigForOnline() {
   log "  dumping full HLT for $NAME from $CONFIG"
   # override L1 menus
   if [ "$NAME" == "Fake" ]; then
-    hltGetConfiguration --full --data $CONFIG --type $NAME --unprescale --process HLT$NAME --globaltag "auto:run1_hlt_${NAME}" --input "file:RelVal_Raw_${NAME}_DATA.root" > OnLine_HLT_$NAME.py
+    hltGetConfiguration $HLTConfDBProxyOpts --full --data $CONFIG --type $NAME --unprescale --process HLT$NAME --globaltag "auto:run1_hlt_${NAME}" --input "file:RelVal_Raw_${NAME}_DATA.root" > OnLine_HLT_$NAME.py
   elif [ "$NAME" == "Fake1" ] || [ "$NAME" == "Fake2" ] || [ "$NAME" == "2018" ]; then
-    hltGetConfiguration --full --data $CONFIG --type $NAME --unprescale --process HLT$NAME --globaltag "auto:run2_hlt_${NAME}" --input "file:RelVal_Raw_${NAME}_DATA.root" > OnLine_HLT_$NAME.py
+    hltGetConfiguration $HLTConfDBProxyOpts --full --data $CONFIG --type $NAME --unprescale --process HLT$NAME --globaltag "auto:run2_hlt_${NAME}" --input "file:RelVal_Raw_${NAME}_DATA.root" > OnLine_HLT_$NAME.py
   else
-    hltGetConfiguration --full --data $CONFIG --type $NAME --unprescale --process HLT$NAME --globaltag "auto:run3_hlt_${NAME}" --input "file:RelVal_Raw_${NAME}_DATA.root" > OnLine_HLT_$NAME.py
+    hltGetConfiguration $HLTConfDBProxyOpts --full --data $CONFIG --type $NAME --unprescale --process HLT$NAME --globaltag "auto:run3_hlt_${NAME}" --input "file:RelVal_Raw_${NAME}_DATA.root" > OnLine_HLT_$NAME.py
   fi
 
 }
