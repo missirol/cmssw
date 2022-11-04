@@ -26,14 +26,6 @@ endif
 
 foreach gtag ( $1 )
 
-  if ( $gtag == DATA ) then
-    set flags  = ""
-    set infix  = hlt
-  else
-    set flags  = --mc
-    set infix  = mc
-  endif
-
   foreach table ( $tables )
 
     echo
@@ -41,30 +33,26 @@ foreach gtag ( $1 )
     touch  ${name}
     rm -rf ${name}*
 
-    set config = `grep tableName OnLine_HLT_${table}.py | cut -f2 -d "'"`
-    if ($table == Fake) then
-      set basegt = auto:run1_${infix}_${table}
-    else if ( ($table == Fake1) || ($table == Fake2) || ($table == 2018) ) then
-      set basegt = auto:run2_${infix}_${table}
+    if ( ${gtag} == DATA ) then
+      cp OnLine_HLT_${table}.py ${name}.py
     else
-      set basegt = auto:run3_${infix}_${table}
+      sed "s|_customInfo\['realData'  \]\=  True|_customInfo\['realData'  \]\=  False|g" OnLine_HLT_${table}.py > ${name}.py
     endif
-    set autogt = "--globaltag=${basegt}"
+
     set infile = file:../RelVal_Raw_${table}_${gtag}.root
 
-#   -x "--l1-emulator" -x "--l1 L1GtTriggerMenu_L1Menu_Collisions2012_v1_mc" 
-
-    echo "`date +%T` hltIntegrationTests${HLTConfDBProxyOpts} $config -d $name -i $infile -n 100 -j 4 $flags -x ${autogt} -x --type=$table >& $name.log"
-    time hltIntegrationTests${HLTConfDBProxyOpts} $config -d $name -i $infile -n 100 -j 4 $flags -x ${autogt} -x --type=$table >& $name.log
+    echo "`date +%T` hltIntegrationTests ${name}.py -d $name -i $infile -n 100 -j 4 >& $name.log"
+    time hltIntegrationTests ${name}.py -d $name -i $infile -n 100 -j 4 #>& $name.log
     set STATUS = $?
+
     echo "`date +%T` exit status: $STATUS"
-    rm -f  ${name}/*.root
+    rm -f ${name}/*.root
 
     if ($STATUS != 0) then
       touch ${name}/issues.txt
       foreach line ("`cat ${name}/issues.txt`")
-	cp ${name}/${line}.py   ${name}_${line}.py
-	cp ${name}/${line}.log  ${name}_${line}.log
+        cp ${name}/${line}.py  ${name}_${line}.py
+        cp ${name}/${line}.log ${name}_${line}.log
       end
     endif
 
@@ -75,4 +63,3 @@ end
 echo
 echo Finish $0 $1 $2
 date +%F\ %a\ %T
-#

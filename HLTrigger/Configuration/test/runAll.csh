@@ -19,6 +19,9 @@ while ( $#argv != 0 )
   endsw
 end
 
+# remove spurious whitespaces and tabs from HLTConfDBProxyOpts
+setenv HLTConfDBProxyOpts "`echo ${HLTConfDBProxyOpts} | xargs`"
+
 echo
 date +%F\ %a\ %T
 echo
