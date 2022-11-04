@@ -64,3 +64,5 @@ echo "Resulting log files:"
 ls -l *.log
 echo
 date +%F\ %a\ %T
+
+unsetenv HLTConfDBProxyOpts
