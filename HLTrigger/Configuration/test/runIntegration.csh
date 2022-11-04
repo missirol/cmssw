@@ -30,13 +30,14 @@ foreach gtag ( $1 )
 
     echo
     set name = HLT_Integration_${table}_${gtag}
-    touch  ${name}
+    touch ${name}
     rm -rf ${name}*
 
     if ( ${gtag} == DATA ) then
       cp OnLine_HLT_${table}.py ${name}.py
     else
-      sed "s|_customInfo\['realData'  \]\=  True|_customInfo\['realData'  \]\=  False|g" OnLine_HLT_${table}.py > ${name}.py
+      sed "s|_customInfo\['realData'  \]\=  True|_customInfo\['realData'  \]\=  False|g" \
+        OnLine_HLT_${table}.py > ${name}.py
     endif
 
     set infile = file:../RelVal_Raw_${table}_${gtag}.root

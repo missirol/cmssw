@@ -204,18 +204,15 @@ while true; do
       shift 1
       ;;
     "--dbproxy" )
-      DBPROXYOPTS="$DBPROXYOPTS --dbproxy"
-      EXTRA="$EXTRA --dbproxy"
+      DBPROXYOPTS="${DBPROXYOPTS} --dbproxy"
       shift 1
       ;;
     "--dbproxyhost" )
-      DBPROXYOPTS="$DBPROXYOPTS --dbproxyhost $2"
-      EXTRA="$EXTRA --dbproxyhost $2"
+      DBPROXYOPTS="${DBPROXYOPTS} --dbproxyhost $2"
       shift 2
       ;;
     "--dbproxyport" )
-      DBPROXYOPTS="$DBPROXYOPTS --dbproxyport $2"
-      EXTRA="$EXTRA --dbproxyport $2"
+      DBPROXYOPTS="${DBPROXYOPTS} --dbproxyport $2"
       shift 2
       ;;
     "--" )
@@ -242,20 +239,21 @@ else
   MENU="$1"
 fi
 
-
-# run the tests
+# create empty output directory
 rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR"
 
-# if menu = local cfg file, copy it to output directory, and use that copy for ensuing steps
+# if MENU = local cfg file, copy it to output directory
+# (that copy will be customised and used for the integration tests)
 if [ -f "${MENU}" ]; then
   cp "${MENU}" "${WORKDIR}"/hlt.py
 fi
 
+# move to, and run tests from, the output directory
 cd "$WORKDIR"
 
 if [ -f hlt.py ]; then
-
+  # customise cfg file
   printf "\n%s" "WARNING -- HLT configuration taken from local cmsRun cfg file (${MENU}):"
   printf " %s\n%s\n%s\n\n" "options \${DATA} and \${EXTRA} will be ignored !" "  DATA=\"${DATA}\"" "  EXTRA=\"${EXTRA}\""
 
@@ -319,6 +317,7 @@ process.source.eventsToProcess = cms.untracked.VEventRange( '$(echo $EVENTS | se
 @EOF
 elif (( $SKIP > 0 )); then
   cat >> hlt.py << @EOF
+
 # event selection customised by hltIntegrationTests
 process.source.skipEvents = cms.untracked.uint32( $SKIP )
 @EOF
@@ -390,7 +389,7 @@ if [ "$SETUP" ]; then
   if [ "${MENUNAME}" ]; then
     log "Extracting setup_cff dump"
     # we use $MENUNAME here, not $SETUP, as we force the same DB / converter as the main menu
-    # this is the hltGetConfiguration behaviour and would be confusing if you had to 
+    # this is the hltGetConfiguration behaviour and would be confusing if you had to
     # specify converter/db on the setup menu on hltIntegrationTests but not on hltGetConfiguration
     read SETUP_Vx SETUP_DB _ <<< $(parse_HLT_menu "${MENUNAME}")
     hltConfigFromDB --${SETUP_Vx} --${SETUP_DB} ${DBPROXYOPTS} --cff --configName "$SETUP" \
@@ -450,4 +449,3 @@ log "done"
 # done
 cd ..
 exit $STATUS
-
