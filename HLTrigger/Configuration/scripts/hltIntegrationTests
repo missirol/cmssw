@@ -255,6 +255,7 @@ fi
 
 # create all dumps
 log "Extracting full menu dump"
+echo hltGetConfiguration "$MENU" --full --offline $DATA $INPUT --unprescale --process "TEST$(date -u +'%Y%m%d%H%M%S')" --max-events $SIZE $EXTRA
 hltGetConfiguration "$MENU" --full --offline $DATA $INPUT --unprescale --process "TEST$(date -u +'%Y%m%d%H%M%S')" --max-events $SIZE $EXTRA > hlt.py
 
 # if missing, add a simplified HLTriggerFinalPath
