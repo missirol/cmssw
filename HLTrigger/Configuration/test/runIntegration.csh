@@ -26,18 +26,18 @@ endif
 
 foreach gtag ( $1 )
 
+  if ( $gtag == DATA ) then
+    set extraflags = "-x realData=1 -x globalTag=@"
+  else
+    set extraflags = "-x realData=0 -x globalTag=@"
+  endif
+
   foreach table ( $tables )
 
     echo
     set name = HLT_Integration_${table}_${gtag}
     touch ${name}
     rm -rf ${name}*
-
-    if ( $gtag == DATA ) then
-      set extraflags = "-x realData=1 -x globalTag=@"
-    else
-      set extraflags = "-x realData=0 -x globalTag=@"
-    endif
 
     set infile = file:../RelVal_Raw_${table}_${gtag}.root
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""getEventContent.py: create EventContent-cff file of an HLT configuration from the ConfDB database
+"""getEventContent.py: print EventContent cff fragment of a ConfDB configuration
 """
 import argparse
 import subprocess
