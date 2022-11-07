@@ -335,6 +335,7 @@ streamPhysicsHITestRaw_datasetHITestRaw_selector.l1tResults = cms.InputTag('')
 streamPhysicsHITestRaw_datasetHITestRaw_selector.throw      = cms.bool(False)
 streamPhysicsHITestRaw_datasetHITestRaw_selector.triggerConditions = cms.vstring(
     'HLT_HIMinimumBias_v1',
+    'HLT_HIRandom_v2',
     'HLT_HIUPC_DoubleEG2_BptxAND_SinglePixelTrack_MaxPixelTrack_v3',
     'HLT_HIUPC_DoubleEG2_NotMBHF2AND_SinglePixelTrack_MaxPixelTrack_v3',
     'HLT_HIUPC_DoubleEG2_NotMBHF2AND_v3',
@@ -392,6 +393,7 @@ streamPhysicsHITestRawPrime_datasetHITestRawPrime_selector.l1tResults = cms.Inpu
 streamPhysicsHITestRawPrime_datasetHITestRawPrime_selector.throw      = cms.bool(False)
 streamPhysicsHITestRawPrime_datasetHITestRawPrime_selector.triggerConditions = cms.vstring(
     'HLT_HIMinimumBias_v1',
+    'HLT_HIRandom_v2',
     'HLT_HIZeroBias_v3'
 )
 
