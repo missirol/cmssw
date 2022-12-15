@@ -85,6 +85,7 @@ void ThroughputService::preGlobalBeginRun(edm::GlobalContext const& gc) {
 
     // define a callback that can book the histograms
     auto bookTransactionCallback = [&, this](DQMStore::IBooker& booker, DQMStore::IGetter&) {
+      auto scope = dqm::reco::DQMStore::IBooker::UseRunScope(booker);
       booker.setCurrentFolder(m_dqm_path);
       m_sourced_events = booker.book1D("throughput_sourced", "Throughput (sourced events)", bins, 0., range);
       m_sourced_events->setXTitle("time [s]");
@@ -95,7 +96,7 @@ void ThroughputService::preGlobalBeginRun(edm::GlobalContext const& gc) {
     };
 
     // book MonitorElement's for this run
-    edm::Service<DQMStore>()->meBookerGetter(bookTransactionCallback);
+    edm::Service<dqm::legacy::DQMStore>()->meBookerGetter(bookTransactionCallback);
   } else {
     m_sourced_events = nullptr;
     m_retired_events = nullptr;
