@@ -48,8 +48,8 @@ private:
   std::unordered_map<std::string, unsigned int> binIndexMap_;
 
   edm::EDGetTokenT<edm::TriggerResults> triggerResultsToken_;
-  edm::EDGetTokenT<trigger::TriggerEvent> triggerSummaryTokenAOD_;
-  edm::EDGetTokenT<trigger::TriggerEventWithRefs> triggerSummaryTokenRAW_;
+  edm::EDGetTokenT<trigger::TriggerEvent> triggerEventToken_;
+  edm::EDGetTokenT<trigger::TriggerEventWithRefs> triggerEventWithRefsToken_;
 
   HLTConfigProvider hltConfigProvider_;
 };
@@ -74,33 +74,32 @@ HLTFiltersDQMonitor::HLTFiltersDQMonitor(const edm::ParameterSet& iConfig)
 
     triggerResultsToken_ = consumes<edm::TriggerResults>(triggerResultsInputTag);
 
-    auto triggerSummaryAODInputTag = iConfig.getParameter<edm::InputTag>("triggerSummaryAOD");
-    if (triggerSummaryAODInputTag.process().empty()) {
-      triggerSummaryAODInputTag =
-          edm::InputTag(triggerSummaryAODInputTag.label(), triggerSummaryAODInputTag.instance(), processName_);
-    } else if (triggerSummaryAODInputTag.process() != processName_) {
+    auto triggerEventInputTag = iConfig.getParameter<edm::InputTag>("triggerEvent");
+    if (triggerEventInputTag.process().empty()) {
+      triggerEventInputTag = edm::InputTag(triggerEventInputTag.label(), triggerEventInputTag.instance(), processName_);
+    } else if (triggerEventInputTag.process() != processName_) {
       edm::LogWarning("HLTFiltersDQMonitor")
           << "edm::TriggerResults process name '" << processName_
-          << "' differs from trigger::TriggerEvent process name '" << triggerSummaryAODInputTag.process()
+          << "' differs from trigger::TriggerEvent process name '" << triggerEventInputTag.process()
           << "' -> plugin will not produce DQM outputs";
       initFailed_ = true;
       return;
     }
-    triggerSummaryTokenAOD_ = consumes<trigger::TriggerEvent>(triggerSummaryAODInputTag);
+    triggerEventToken_ = consumes<trigger::TriggerEvent>(triggerEventInputTag);
 
-    auto triggerSummaryRAWInputTag = iConfig.getParameter<edm::InputTag>("triggerSummaryRAW");
-    if (triggerSummaryRAWInputTag.process().empty()) {
-      triggerSummaryRAWInputTag =
-          edm::InputTag(triggerSummaryRAWInputTag.label(), triggerSummaryRAWInputTag.instance(), processName_);
-    } else if (triggerSummaryRAWInputTag.process() != processName_) {
+    auto triggerEventWithRefsInputTag = iConfig.getParameter<edm::InputTag>("triggerEventWithRefs");
+    if (triggerEventWithRefsInputTag.process().empty()) {
+      triggerEventWithRefsInputTag =
+          edm::InputTag(triggerEventWithRefsInputTag.label(), triggerEventWithRefsInputTag.instance(), processName_);
+    } else if (triggerEventWithRefsInputTag.process() != processName_) {
       edm::LogWarning("HLTFiltersDQMonitor")
           << "edm::TriggerResults process name '" << processName_
-          << "' differs from trigger::TriggerEventWithRefs process name '" << triggerSummaryRAWInputTag.process()
+          << "' differs from trigger::TriggerEventWithRefs process name '" << triggerEventWithRefsInputTag.process()
           << "' -> plugin will not produce DQM outputs";
       initFailed_ = true;
       return;
     }
-    triggerSummaryTokenRAW_ = mayConsume<trigger::TriggerEventWithRefs>(triggerSummaryRAWInputTag);
+    triggerEventWithRefsToken_ = mayConsume<trigger::TriggerEventWithRefs>(triggerEventWithRefsInputTag);
   }
 }
 
@@ -290,8 +289,11 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
   auto const& triggerResults = iEvent.getHandle(triggerResultsToken_);
 
   if (not triggerResults.isValid()) {
-    edm::LogWarning("HLTFiltersDQMonitor") << "invalid handle to edm::TriggerResults (InputTag: \"triggerResults\")"
-                                           << " -> plugin will not fill DQM outputs for this event";
+    edm::EDConsumerBase::Labels labels;
+    labelsForToken(triggerResultsToken_, labels);
+    edm::LogWarning("HLTFiltersDQMonitor")
+        << "invalid handle to edm::TriggerResults (InputTag: \"" << labels.module << ":" << labels.productInstance
+        << ":" << labels.process << "\") -> plugin will not fill DQM outputs for this event";
     return;
   }
 
@@ -309,7 +311,7 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
 
     if (binIndexMap_.find(iPathName) == binIndexMap_.end()) {
-      throw cms::Exception("HLTFiltersDQMonitor")
+      throw cms::Exception("HLTFiltersDQMonitorInvalidBinLabel")
           << "invalid key for bin-index map (name of Path in HLT-menu ME): \"" << iPathName << "\"";
     }
     auto const ibin = binIndexMap_[iPathName];
@@ -319,27 +321,39 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
   }
 
-  auto const& triggerEventAOD = iEvent.getHandle(triggerSummaryTokenAOD_);
-  edm::Handle<trigger::TriggerEventWithRefs> triggerEventRAW;
+  auto const& triggerEventHandle = iEvent.getHandle(triggerEventToken_);
+  edm::Handle<trigger::TriggerEventWithRefs> triggerEventWithRefs;
 
-  bool useTriggerEventAOD = true;
-  if (not triggerEventAOD.isValid()) {
-    useTriggerEventAOD = false;
-    edm::LogInfo("HLTFiltersDQMonitor")
-        << "invalid handle to trigger::TriggerEvent (InputTag: \"triggerSummaryAOD\"),"
-        << " will attempt to access trigger::TriggerEventWithRefs (InputTag: \"triggerSummaryRAW\")";
+  bool useTriggerEvent = true;
+  if (not triggerEventHandle.isValid()) {
+    useTriggerEvent = false;
 
-    triggerEventRAW = iEvent.getHandle(triggerSummaryTokenRAW_);
-    if (not triggerEventRAW.isValid()) {
+    edm::EDConsumerBase::Labels triggerEventLabels;
+    labelsForToken(triggerEventToken_, triggerEventLabels);
+
+    edm::EDConsumerBase::Labels triggerEventWithRefsLabels;
+    labelsForToken(triggerEventWithRefsToken_, triggerEventWithRefsLabels);
+
+    edm::LogInfo("HLTFiltersDQMonitor") << "invalid handle to trigger::TriggerEvent (InputTag: \""
+                                        << triggerEventLabels.module << ":" << triggerEventLabels.productInstance << ":"
+                                        << triggerEventLabels.process
+                                        << "\"), will attempt to access trigger::TriggerEventWithRefs (InputTag:\""
+                                        << triggerEventWithRefsLabels.module << ":"
+                                        << triggerEventWithRefsLabels.productInstance << ":"
+                                        << triggerEventWithRefsLabels.process << "\")";
+
+    triggerEventWithRefs = iEvent.getHandle(triggerEventWithRefsToken_);
+    if (not triggerEventWithRefs.isValid()) {
       edm::LogWarning("HLTFiltersDQMonitor")
-          << "invalid handle to trigger::TriggerEventWithRefs (InputTag: \"triggerSummaryRAW\")"
-          << " -> plugin will not fill DQM outputs for this event";
+          << "invalid handle to trigger::TriggerEventWithRefs (InputTag: \"" << triggerEventWithRefsLabels.module << ":"
+          << triggerEventWithRefsLabels.productInstance << ":" << triggerEventWithRefsLabels.process
+          << "\") -> plugin will not fill DQM outputs for this event";
       return;
     }
   }
 
-  auto const triggerEventSize = useTriggerEventAOD ? triggerEventAOD->sizeFilters() : triggerEventRAW->size();
-  LogTrace("HLTFiltersDQMonitor") << "[HLTFiltersDQMonitor::analyze] useTriggerEventAOD = " << useTriggerEventAOD
+  auto const triggerEventSize = useTriggerEvent ? triggerEventHandle->sizeFilters() : triggerEventWithRefs->size();
+  LogTrace("HLTFiltersDQMonitor") << "[HLTFiltersDQMonitor::analyze] useTriggerEvent = " << useTriggerEvent
                                   << ", triggerEventSize = " << triggerEventSize;
 
   // fill MonitorElements for PrimaryDatasets and Paths
@@ -375,7 +389,7 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
         if (meDatasetProf) {
           auto const ibinKey = idset + "." + iPathName;
           if (binIndexMap_.find(ibinKey) == binIndexMap_.end()) {
-            throw cms::Exception("HLTFiltersDQMonitor")
+            throw cms::Exception("HLTFiltersDQMonitorInvalidBinLabel")
                 << "invalid key for bin-index map (name of Path in Dataset ME): \"" << ibinKey << "\"";
           }
           auto const ibin = binIndexMap_[ibinKey];
@@ -392,25 +406,24 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
 
         auto const& mePathProf = mePathMap_.at(mePathName);
 
-        unsigned int indexLastFilterPathModules = triggerResults->index(pathIndex) + 1;
+        unsigned int indexLastFilterInPath = triggerResults->index(pathIndex) + 1;
         LogTrace("HLTFiltersDQMonitor") << "[HLTFiltersDQMonitor::analyze]         "
-                                        << "indexLastFilterPathModules = " << indexLastFilterPathModules;
+                                        << "indexLastFilterInPath = " << indexLastFilterInPath;
         // identify module corresponding to last filter executed in the path
-        while (indexLastFilterPathModules > 0) {
-          --indexLastFilterPathModules;
-          auto const& labelLastFilterPathModules =
-              hltConfigProvider_.moduleLabel(pathIndex, indexLastFilterPathModules);
-          unsigned int const indexLastFilterFilters =
-              useTriggerEventAOD
-                  ? triggerEventAOD->filterIndex(edm::InputTag(labelLastFilterPathModules, "", processName_))
-                  : triggerEventRAW->filterIndex(edm::InputTag(labelLastFilterPathModules, "", processName_));
+        while (indexLastFilterInPath > 0) {
+          --indexLastFilterInPath;
+          auto const& labelLastFilterInPath = hltConfigProvider_.moduleLabel(pathIndex, indexLastFilterInPath);
+          auto const labelLastFilterInPathTag = edm::InputTag(labelLastFilterInPath, "", processName_);
+          unsigned int const indexLastFilterInTriggerEvent =
+              useTriggerEvent ? triggerEventHandle->filterIndex(labelLastFilterInPathTag)
+                              : triggerEventWithRefs->filterIndex(labelLastFilterInPathTag);
           LogTrace("HLTFiltersDQMonitor") << "[HLTFiltersDQMonitor::analyze]           "
-                                          << "indexLastFilterPathModules = " << indexLastFilterPathModules
-                                          << ", labelLastFilterPathModules = " << labelLastFilterPathModules
-                                          << ", indexLastFilterFilters = " << indexLastFilterFilters
+                                          << "indexLastFilterInPath = " << indexLastFilterInPath
+                                          << ", labelLastFilterInPath = " << labelLastFilterInPath
+                                          << ", indexLastFilterInTriggerEvent = " << indexLastFilterInTriggerEvent
                                           << " (triggerEventSize = " << triggerEventSize << ")";
-          if (indexLastFilterFilters < triggerEventSize) {
-            if (this->skipModuleByType(hltConfigProvider_.moduleType(labelLastFilterPathModules))) {
+          if (indexLastFilterInTriggerEvent < triggerEventSize) {
+            if (this->skipModuleByType(hltConfigProvider_.moduleType(labelLastFilterInPath))) {
               continue;
             }
             break;
@@ -419,12 +432,12 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
         // number of modules in the path
         unsigned int const sizeModulesPath = hltConfigProvider_.size(pathIndex);
         LogTrace("HLTFiltersDQMonitor") << "[HLTFiltersDQMonitor::analyze]         "
-                                        << "-> selected indexLastFilterPathModules = " << indexLastFilterPathModules
+                                        << "-> selected indexLastFilterInPath = " << indexLastFilterInPath
                                         << " (HLTConfigProvider::size(" << pathIndex << ") = " << sizeModulesPath
                                         << ")";
-        if (indexLastFilterPathModules >= sizeModulesPath) {
+        if (indexLastFilterInPath >= sizeModulesPath) {
           edm::LogError("HLTFiltersDQMonitor")
-              << " selected index (" << indexLastFilterPathModules << ") for last filter of path \"" << iPathName
+              << " selected index (" << indexLastFilterInPath << ") for last filter of path \"" << iPathName
               << "\" is inconsistent with number of modules in the path (" << sizeModulesPath << ")";
           continue;
         }
@@ -444,9 +457,9 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
           // index of the module in the path [0,sizeModulesPath)
           unsigned int const slotModule = hltConfigProvider_.moduleIndex(pathIndex, moduleLabel);
           bool filterAccept = false;
-          if (slotModule < indexLastFilterPathModules) {
+          if (slotModule < indexLastFilterInPath) {
             filterAccept = true;
-          } else if (slotModule == indexLastFilterPathModules) {
+          } else if (slotModule == indexLastFilterInPath) {
             filterAccept = pathAccept;
           }
           LogTrace("HLTFiltersDQMonitor")
@@ -457,7 +470,7 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
 
           auto const ibinKey = idset + "." + iPathName + "." + moduleLabel;
           if (binIndexMap_.find(ibinKey) == binIndexMap_.end()) {
-            throw cms::Exception("HLTFiltersDQMonitor")
+            throw cms::Exception("HLTFiltersDQMonitorInvalidBinLabel")
                 << "invalid key for bin-index map (name of Module in Path ME): \"" << ibinKey << "\"";
           }
           auto const ibin = binIndexMap_[ibinKey];
@@ -473,7 +486,7 @@ void HLTFiltersDQMonitor::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 bool HLTFiltersDQMonitor::skipStreamByName(std::string const& streamName) const {
   return ((streamName.find("Physics") == std::string::npos) and (streamName.find("Scouting") == std::string::npos) and
-          (streamName.find("Parking") == std::string::npos) and (streamName == "A"));
+          (streamName.find("Parking") == std::string::npos) and (streamName != "A"));
 }
 
 bool HLTFiltersDQMonitor::skipPathMonitorElement(std::string const& pathName) const {
@@ -492,9 +505,9 @@ void HLTFiltersDQMonitor::fillDescriptions(edm::ConfigurationDescriptions& descr
   desc.add<std::string>("folderName", "HLT/Filters");
   desc.add<std::string>("efficPlotNamePrefix", "effic_");
   desc.add<edm::InputTag>("triggerResults", edm::InputTag("TriggerResults::HLT"));
-  desc.add<edm::InputTag>("triggerSummaryAOD", edm::InputTag("hltTriggerSummaryAOD::HLT"));
-  desc.add<edm::InputTag>("triggerSummaryRAW", edm::InputTag("hltTriggerSummaryRAW::HLT"));
-  descriptions.addWithDefaultLabel(desc);
+  desc.add<edm::InputTag>("triggerEvent", edm::InputTag("hltTriggerSummaryAOD::HLT"));
+  desc.add<edm::InputTag>("triggerEventWithRefs", edm::InputTag("hltTriggerSummaryRAW::HLT"));
+  descriptions.add("dqmHLTFiltersDQMonitor", desc);
 }
 
 DEFINE_FWK_MODULE(HLTFiltersDQMonitor);
