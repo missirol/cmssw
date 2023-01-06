@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
+import sys
+import imp
+import re
+import itertools
 
-from __future__ import print_function
-import sys, imp, re, itertools
-from HLTrigger.Configuration.Tools.frozendict import frozendict
 import FWCore.ParameterSet.Config as cms
+from HLTrigger.Configuration.Tools.frozendict import frozendict
 
 debug = True
 
@@ -22,19 +24,21 @@ whitelist_labels = [
 def whitelist(module):
   return module.label in whitelist_labels or module.type in whitelist_types
 
+def iterate(arg):
+  return (not isinstance(arg, str) and '__iter__' in dir(arg))
 
 def freeze(arg):
   if type(arg) == dict:
-    return frozendict((k, freeze(v)) for (k, v) in arg.iteritems())
-  elif '__iter__' in dir(arg):
+    return frozendict((k, freeze(v)) for (k, v) in iter(arg.items()))
+  elif iterate(arg):
     return tuple( freeze(v) for v in arg )
   else:
     return arg
 
 def unfreeze(arg):
   if type(arg) == frozendict:
-    return dict((k, unfreeze(v)) for (k, v) in arg.iteritems())
-  elif '__iter__' in dir(arg):
+    return dict((k, unfreeze(v)) for (k, v) in iter(arg.items()))
+  elif iterate(arg):
     return list( unfreeze(v) for v in arg )
   else:
     return arg
@@ -43,12 +47,12 @@ def pythonize(arg):
   if 'parameters_' in dir(arg):
     arg = arg.parameters_()
 
-  if 'value' in dir(arg):
+  elif 'value' in dir(arg):
     arg = arg.value()
 
   if type(arg) == dict:
-    return frozendict((k, pythonize(v)) for (k, v) in arg.iteritems())
-  elif '__iter__' in dir(arg):
+    return frozendict((k, pythonize(v)) for (k, v) in iter(arg.items()))
+  elif iterate(arg):
     return tuple( pythonize(v) for v in arg )
   else:
     return arg
@@ -65,7 +69,6 @@ class Module(object):
     self.type   = module.type_()
     self.params = pythonize(module.parameters_())
     self.__rehash()
-
 
   def key(self):
     return self.hash
@@ -85,9 +88,9 @@ class Module(object):
   def apply_rename(self, groups):
     modified = False
     newparams = unfreeze(self.params)
-    for label, (group, check) in groups.iteritems():
-      for k, p in newparams.iteritems():
-        if '__iter__' in dir(p):
+    for label, (group, check) in iter(groups.items()):
+      for k, p in iter(newparams.items()):
+        if iterate(p):
           if any(self.__check(v, check) for v in p):
             newparams[k] = tuple(self.__sub(v, check, label) for v in p)
             modified = True
@@ -99,8 +102,6 @@ class Module(object):
     if modified:
       self.params = frozendict(newparams)
       self.__rehash()
-
-
 
 
 class ModuleList(object):
@@ -117,7 +118,7 @@ class ModuleList(object):
 
   def __init__(self, *args):
     for arg in args:
-      if '__iter__' in dir(arg):
+      if iterate(arg):
         self.extend(arg)
       else:
         self.append(arg)
@@ -147,52 +148,50 @@ class ModuleList(object):
   def dump(self):
     for m in self.modules:
       print("%s = (%s) {" % (m.label, m.type))
-      for k, v in m.params.iteritems():
+      for k, v in iter(m.params.items()):
         print("\t%s = %s" % (k, v))
       print('}')
       print()
 
 
-
 def findDuplicates(process):
   modules = ModuleList( 
-    process._Process__analyzers.itervalues(), 
-    process._Process__producers.itervalues(),
-    process._Process__filters.itervalues() 
+    iter(process._Process__analyzers.values()),
+    iter(process._Process__producers.values()),
+    iter(process._Process__filters.values())
   )
 
   oldups = 0
   groups = modules.group()
-  dups   = sum(len(g[0]) for g in groups.itervalues()) - len(groups)
+  dups   = sum(len(g[0]) for g in iter(groups.values())) - len(groups)
 
   index = 1
   while(dups != oldups):
     if debug:
       dump = open('step%d.sed' % index, 'w')
-      for target, (group, regexp) in groups.iteritems():
+      for target, (group, regexp) in iter(groups.items()):
         dump.write('s#\\<\\(%s\\)\\>#%s#g\n' % ('\\|'.join(group), target))
       dump.close()
       dump = open('step%d.txt' % index, 'w')
-      for target, (group, regexp) in groups.iteritems():
+      for target, (group, regexp) in iter(groups.items()):
         dump.write('#%s\n%s\n\n' % ( target, '\n'.join(group)))
       dump.close()
     print("found %3d duplicates in %3d groups" % (dups, len(groups)))
     oldups = dups
     modules.apply_rename(groups)
     groups = modules.group()
-    dups   = sum(len(g[0]) for g in groups.itervalues()) - len(groups)
+    dups   = sum(len(g[0]) for g in iter(groups.values())) - len(groups)
     index  = index + 1
 
   dump = open('groups.sed', 'w')
-  for target, (group, regexp) in groups.iteritems():
+  for target, (group, regexp) in iter(groups.items()):
     dump.write('s#\\<\\(%s\\)\\>#%s#\n' % ('\\|'.join(group), target))
   dump.close()
 
   dump = open('groups.txt', 'w')
-  for target, (group, regexp) in groups.iteritems():
+  for target, (group, regexp) in iter(groups.items()):
     dump.write('#%s\n%s\n\n' % ( target, '\n'.join(group)))
   dump.close()
-
 
 
 def main():
@@ -203,12 +202,9 @@ def main():
   except:
     config = sys.stdin
   else:
-    config = open(configname)
+    config = open(configname).read()
   exec(config, globals(), hlt.__dict__)
-  config.close()
   findDuplicates(hlt.process)
-
 
 if __name__ == "__main__":
     main()
-
