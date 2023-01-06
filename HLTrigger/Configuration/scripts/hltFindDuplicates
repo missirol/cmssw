@@ -1,11 +1,33 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+"""hltFindDuplicates: script to find duplicate modules of an HLT configuration.
 
-from __future__ import print_function
-import sys, imp, re, itertools
-from HLTrigger.Configuration.Tools.frozendict import frozendict
+Input.
+ Path to a local cmsRun configuration file, or stdin.
+
+Output.
+ A directory containing
+ (1) the input cmsRun configuration, and
+ (2) text files listing the groups of duplicate modules.
+
+Examples.
+
+ # input: local configuration file
+ hltFindDuplicates tmp.py -o output_dir
+
+ # input: stdin
+ hltConfigFromDB --configName /dev/CMSSW_X_Y_0/GRun/Vn | hltFindDuplicates -o output_dir
+ hltGetConfiguration /dev/CMSSW_X_Y_0/GRun/Vn | hltFindDuplicates -o output_dir -x realData=0 globalTag=@
+"""
+import os
+import sys
+import argparse
+import re
+import itertools
+import shutil
+
 import FWCore.ParameterSet.Config as cms
 
-debug = True
+from HLTrigger.Configuration.Tools.frozendict import frozendict
 
 whitelist_types = [
   'HLTPrescaler',
@@ -22,19 +44,21 @@ whitelist_labels = [
 def whitelist(module):
   return module.label in whitelist_labels or module.type in whitelist_types
 
+def iterate(arg):
+  return (not isinstance(arg, str) and '__iter__' in dir(arg))
 
 def freeze(arg):
   if type(arg) == dict:
-    return frozendict((k, freeze(v)) for (k, v) in arg.iteritems())
-  elif '__iter__' in dir(arg):
+    return frozendict((k, freeze(v)) for (k, v) in iter(arg.items()))
+  elif iterate(arg):
     return tuple( freeze(v) for v in arg )
   else:
     return arg
 
 def unfreeze(arg):
   if type(arg) == frozendict:
-    return dict((k, unfreeze(v)) for (k, v) in arg.iteritems())
-  elif '__iter__' in dir(arg):
+    return dict((k, unfreeze(v)) for (k, v) in iter(arg.items()))
+  elif iterate(arg):
     return list( unfreeze(v) for v in arg )
   else:
     return arg
@@ -43,29 +67,34 @@ def pythonize(arg):
   if 'parameters_' in dir(arg):
     arg = arg.parameters_()
 
-  if 'value' in dir(arg):
+  elif 'value' in dir(arg):
     arg = arg.value()
 
   if type(arg) == dict:
-    return frozendict((k, pythonize(v)) for (k, v) in arg.iteritems())
-  elif '__iter__' in dir(arg):
+    return frozendict((k, pythonize(v)) for (k, v) in iter(arg.items()))
+  elif iterate(arg):
     return tuple( pythonize(v) for v in arg )
   else:
     return arg
 
+def mkdirp(dirpath):
+  try:
+    os.makedirs(dirpath)
+  except OSError:
+    if not os.path.isdir(dirpath):
+      raise
 
 class Module(object):
-  type   = ''
-  label  = ''
+  type = ''
+  label = ''
   params = frozendict()
-  hash   = 0
+  hash = 0
 
   def __init__(self, module):
-    self.label  = module.label_()
-    self.type   = module.type_()
+    self.label = module.label_()
+    self.type = module.type_()
     self.params = pythonize(module.parameters_())
     self.__rehash()
-
 
   def key(self):
     return self.hash
@@ -85,9 +114,9 @@ class Module(object):
   def apply_rename(self, groups):
     modified = False
     newparams = unfreeze(self.params)
-    for label, (group, check) in groups.iteritems():
-      for k, p in newparams.iteritems():
-        if '__iter__' in dir(p):
+    for label, (group, check) in iter(groups.items()):
+      for k, p in iter(newparams.items()):
+        if iterate(p):
           if any(self.__check(v, check) for v in p):
             newparams[k] = tuple(self.__sub(v, check, label) for v in p)
             modified = True
@@ -95,13 +124,9 @@ class Module(object):
           if self.__check(p, check):
             newparams[k] = self.__sub(p, check, label)
             modified = True
-
     if modified:
       self.params = frozendict(newparams)
       self.__rehash()
-
-
-
 
 class ModuleList(object):
   modules = []
@@ -117,7 +142,7 @@ class ModuleList(object):
 
   def __init__(self, *args):
     for arg in args:
-      if '__iter__' in dir(arg):
+      if iterate(arg):
         self.extend(arg)
       else:
         self.append(arg)
@@ -128,16 +153,14 @@ class ModuleList(object):
   def group(self):
     groups = dict()
     self.sort()
-    i = 0
     for v, g in itertools.groupby(self.modules, Module.key):
       group = list(g)
       if len(group) > 1:
-        i = i + 1
         g = [ m.label for m in group ]
         g.sort()
-        l = 'hltGroup%d' %i
         r = re.compile(r'^(%s)($|:)' % r'|'.join(g))
-        groups[l] = (g, r)
+        g_key = f'{group[0].type} ({g[0]})'
+        groups[g_key] = (g, r)
     return groups
 
   def apply_rename(self, groups):
@@ -147,68 +170,137 @@ class ModuleList(object):
   def dump(self):
     for m in self.modules:
       print("%s = (%s) {" % (m.label, m.type))
-      for k, v in m.params.iteritems():
+      for k, v in iter(m.params.items()):
         print("\t%s = %s" % (k, v))
       print('}')
       print()
 
+def findDuplicates(process, output_dir, verbosity):
+  mkdirp(output_dir)
 
-
-def findDuplicates(process):
   modules = ModuleList( 
-    process._Process__analyzers.itervalues(), 
-    process._Process__producers.itervalues(),
-    process._Process__filters.itervalues() 
+    iter(process.analyzers_().values()),
+    iter(process.producers_().values()),
+    iter(process.filters_().values())
   )
 
   oldups = 0
   groups = modules.group()
-  dups   = sum(len(g[0]) for g in groups.itervalues()) - len(groups)
+  dups = sum(len(g[0]) for g in groups.values()) - len(groups)
 
   index = 1
-  while(dups != oldups):
-    if debug:
-      dump = open('step%d.sed' % index, 'w')
-      for target, (group, regexp) in groups.iteritems():
+  while dups != oldups:
+    if verbosity > 0:
+      dump = open(os.path.join(output_dir, f'step{index}.sed'), 'w')
+      for target in sorted(groups.keys()):
+        (group, regexp) = groups[target]
         dump.write('s#\\<\\(%s\\)\\>#%s#g\n' % ('\\|'.join(group), target))
       dump.close()
-      dump = open('step%d.txt' % index, 'w')
-      for target, (group, regexp) in groups.iteritems():
-        dump.write('#%s\n%s\n\n' % ( target, '\n'.join(group)))
+      dump = open(os.path.join(output_dir, f'step{index}.txt'), 'w')
+      for target in sorted(groups.keys()):
+        (group, regexp) = groups[target]
+        dump.write('# %s\n%s\n\n' % ( target, '\n'.join(group)))
       dump.close()
     print("found %3d duplicates in %3d groups" % (dups, len(groups)))
     oldups = dups
     modules.apply_rename(groups)
     groups = modules.group()
-    dups   = sum(len(g[0]) for g in groups.itervalues()) - len(groups)
-    index  = index + 1
+    dups = sum(len(g[0]) for g in groups.values()) - len(groups)
+    index += 1
 
-  dump = open('groups.sed', 'w')
-  for target, (group, regexp) in groups.iteritems():
+  dump = open(os.path.join(output_dir, 'groups.sed'), 'w')
+  for target in sorted(groups.keys()):
+    (group, regexp) = groups[target]
     dump.write('s#\\<\\(%s\\)\\>#%s#\n' % ('\\|'.join(group), target))
   dump.close()
 
-  dump = open('groups.txt', 'w')
-  for target, (group, regexp) in groups.iteritems():
-    dump.write('#%s\n%s\n\n' % ( target, '\n'.join(group)))
+  dump = open(os.path.join(output_dir, 'groups.txt'), 'w')
+  for target in sorted(groups.keys()):
+    (group, regexp) = groups[target]
+    dump.write('# %s\n%s\n\n' % ( target, '\n'.join(group)))
   dump.close()
 
+##
+## main
+##
+if __name__ == '__main__':
 
+    ### args
+    parser = argparse.ArgumentParser(
+        prog = './'+os.path.basename(__file__),
+        formatter_class = argparse.RawDescriptionHelpFormatter,
+        description = __doc__,
+        argument_default = argparse.SUPPRESS,
+    )
 
-def main():
-  # parse the HLT configuration from standard input or from the given file
-  hlt = imp.new_module('hlt')
-  try:
-    configname = sys.argv[1]
-  except:
-    config = sys.stdin
-  else:
-    config = open(configname)
-  exec(config, globals(), hlt.__dict__)
-  config.close()
-  findDuplicates(hlt.process)
+    # menu: name of ConfDB config, or local cmsRun cfg file, or stdin
+    parser.add_argument('menu',
+                        nargs = '?',
+                        metavar = 'MENU',
+                        default = None,
+                        help = 'Path to cmsRun configuration file (if not specified, stdin is used)')
 
+    # output-dir: path to directory containing output files
+    parser.add_argument('-o', '--output-dir',
+                        metavar = 'OUTPUT_DIR',
+                        default = 'hltFindDuplicates_output',
+                        help = 'Path to directory containing output files')
 
-if __name__ == "__main__":
-    main()
+    # menu arguments: list of arguments to be applied to the cmsRun configuration file
+    # (via argparse, VarParsing, or similar)
+    parser.add_argument('-x', '--menu-args',
+                        nargs = '+',
+                        metavar = 'MENU_ARGS',
+                        default = [],
+                        help = 'List of arguments (each without whitespaces) to be applied to the cmsRun configuration file')
 
+    # verbosity: level of verbosity to stdout/stderr and in output files
+    parser.add_argument('-v', '--verbosity',
+                        metavar = 'VERBOSITY',
+                        type = int,
+                        default = 1,
+                        help = 'Verbosity level')
+
+    # parse command line arguments and options
+    opts = parser.parse_args()
+
+    print('-'*25)
+    print('hltFindDuplicates')
+    print('-'*25)
+
+    # create new output directory
+    if os.path.exists(opts.output_dir):
+        log_msg = 'Failed to create output directory (a directory or file already exists under that path)'
+        raise RuntimeError(f'{log_msg}: {opts.output_dir}')
+
+    mkdirp(opts.output_dir)
+    output_config_filepath = os.path.join(opts.output_dir, 'config.py')
+
+    print(f'output directory: {opts.output_dir}')
+    print('-'*25)
+
+    # parse the HLT configuration from a local cfg file, or from standard input
+    hlt = {'process': None, 'fragment': None}
+
+    if opts.menu != None:
+        if not os.path.isfile(opts.menu):
+            raise RuntimeError(f'Invalid path to input file (file does not exist): {opts.menu}')
+        shutil.copyfile(opts.menu, output_config_filepath)
+    else:
+        with open(output_config_filepath, 'w') as config_file:
+            config_file.write(sys.stdin.read())
+
+    sys.argv = [sys.argv[0], output_config_filepath] + opts.menu_args
+    exec(open(output_config_filepath).read(), globals(), hlt)
+
+    # find cms.Process object
+    process = None
+    if hlt['process'] != None:
+        process = hlt['process']
+    if hlt['fragment'] != None:
+        process = hlt['fragment']
+
+    if process == None or not isinstance(process, cms.Process):
+        raise RuntimeError('Failed to find object of type cms.Process !')
+
+    findDuplicates(process, output_dir=opts.output_dir, verbosity=opts.verbosity)
