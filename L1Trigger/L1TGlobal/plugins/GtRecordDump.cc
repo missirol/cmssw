@@ -10,26 +10,26 @@
 ///
 
 //
-//  This simple module simply retreives the YellowParams object from the event
+//  This simple module simply retrieves the YellowParams object from the event
 //  setup, and sends its payload as an INFO message, for debugging purposes.
 //
 
-#include "FWCore/Framework/interface/MakerMacros.h"
-
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
-//#include "FWCore/ParameterSet/interface/InputTag.h"
 
 // system include files
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <map>
 
 // user include files
 //   base class
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -54,40 +54,36 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/MessageLogger/interface/MessageDrop.h"
 
-using namespace edm;
-using namespace std;
-
 namespace l1t {
 
   // class declaration
   class GtRecordDump : public edm::one::EDAnalyzer<edm::one::WatchRuns> {
   public:
     explicit GtRecordDump(const edm::ParameterSet&);
-    ~GtRecordDump() override{};
+    ~GtRecordDump() override = default;
+
+    static void fillDescriptions(edm::ConfigurationDescriptions& iDesc);
+
     void beginRun(edm::Run const&, edm::EventSetup const&) override {}
     void analyze(const edm::Event&, const edm::EventSetup&) override;
     void endRun(edm::Run const&, edm::EventSetup const&) override;
 
-    InputTag uGtAlgInputTag;
-    InputTag uGtExtInputTag;
-    EDGetToken egToken;
-    EDGetToken muToken;
-    EDGetToken tauToken;
-    EDGetToken jetToken;
-    EDGetToken etsumToken;
-    EDGetToken uGtAlgToken;
-    EDGetToken uGtExtToken;
-    EDGetToken uGtObjectMapToken;
+    edm::EDGetToken egToken;
+    edm::EDGetToken muToken;
+    edm::EDGetToken tauToken;
+    edm::EDGetToken jetToken;
+    edm::EDGetToken etsumToken;
+    edm::EDGetToken uGtObjectMapToken;
 
     void dumpTestVectors(int bx,
                          std::ofstream& myCout,
-                         Handle<BXVector<l1t::Muon>> muons,
-                         Handle<BXVector<l1t::EGamma>> egammas,
-                         Handle<BXVector<l1t::Tau>> taus,
-                         Handle<BXVector<l1t::Jet>> jets,
-                         Handle<BXVector<l1t::EtSum>> etsums,
-                         Handle<BXVector<GlobalAlgBlk>> uGtAlg,
-                         Handle<BXVector<GlobalExtBlk>> uGtExt);
+                         edm::Handle<BXVector<l1t::Muon>> muons,
+                         edm::Handle<BXVector<l1t::EGamma>> egammas,
+                         edm::Handle<BXVector<l1t::Tau>> taus,
+                         edm::Handle<BXVector<l1t::Jet>> jets,
+                         edm::Handle<BXVector<l1t::EtSum>> etsums,
+                         edm::Handle<BXVector<GlobalAlgBlk>> uGtAlg,
+                         edm::Handle<BXVector<GlobalExtBlk>> uGtExt);
 
     cms_uint64_t formatMuon(std::vector<l1t::Muon>::const_iterator mu);
     unsigned int formatEG(std::vector<l1t::EGamma>::const_iterator eg);
@@ -122,16 +118,12 @@ namespace l1t {
   };
 
   GtRecordDump::GtRecordDump(const edm::ParameterSet& iConfig) {
-    uGtAlgInputTag = iConfig.getParameter<InputTag>("uGtAlgInputTag");
-    uGtExtInputTag = iConfig.getParameter<InputTag>("uGtExtInputTag");
-    egToken = consumes<BXVector<l1t::EGamma>>(iConfig.getParameter<InputTag>("egInputTag"));
-    muToken = consumes<BXVector<l1t::Muon>>(iConfig.getParameter<InputTag>("muInputTag"));
-    tauToken = consumes<BXVector<l1t::Tau>>(iConfig.getParameter<InputTag>("tauInputTag"));
-    jetToken = consumes<BXVector<l1t::Jet>>(iConfig.getParameter<InputTag>("jetInputTag"));
-    etsumToken = consumes<BXVector<l1t::EtSum>>(iConfig.getParameter<InputTag>("etsumInputTag"));
-    uGtAlgToken = consumes<BXVector<GlobalAlgBlk>>(uGtAlgInputTag);
-    uGtExtToken = consumes<BXVector<GlobalExtBlk>>(uGtExtInputTag);
-    uGtObjectMapToken = consumes<GlobalObjectMapRecord>(iConfig.getParameter<InputTag>("uGtObjectMapInputTag"));
+    egToken = consumes<BXVector<l1t::EGamma>>(iConfig.getParameter<edm::InputTag>("egInputTag"));
+    muToken = consumes<BXVector<l1t::Muon>>(iConfig.getParameter<edm::InputTag>("muInputTag"));
+    tauToken = consumes<BXVector<l1t::Tau>>(iConfig.getParameter<edm::InputTag>("tauInputTag"));
+    jetToken = consumes<BXVector<l1t::Jet>>(iConfig.getParameter<edm::InputTag>("jetInputTag"));
+    etsumToken = consumes<BXVector<l1t::EtSum>>(iConfig.getParameter<edm::InputTag>("etsumInputTag"));
+    uGtObjectMapToken = consumes<GlobalObjectMapRecord>(iConfig.getParameter<edm::InputTag>("uGtObjectMapInputTag"));
 
     m_minBx = iConfig.getParameter<int>("minBx");
     m_maxBx = iConfig.getParameter<int>("maxBx");
@@ -142,9 +134,10 @@ namespace l1t {
     m_minBxVectors = iConfig.getParameter<int>("minBxVec");
     m_maxBxVectors = iConfig.getParameter<int>("maxBxVec");
     m_dumpTestVectors = iConfig.getParameter<bool>("dumpVectors");
-    std::string fileName = iConfig.getParameter<std::string>("tvFileName");
-    if (m_dumpTestVectors)
+    if (m_dumpTestVectors) {
+      auto const& fileName = iConfig.getParameter<std::string>("tvFileName");
       m_testVectorFile.open(fileName.c_str());
+    }
     m_tvVersion = iConfig.getParameter<int>("tvVersion");
 
     m_bxOffset = iConfig.getParameter<int>("bxOffset");
@@ -155,40 +148,71 @@ namespace l1t {
     std::string preScaleFileName = iConfig.getParameter<std::string>("psFileName");
     unsigned int preScColumn = iConfig.getParameter<int>("psColumn");
 
-    m_gtUtil = std::make_unique<L1TGlobalUtil>(
-        iConfig, consumesCollector(), *this, uGtAlgInputTag, uGtExtInputTag, l1t::UseEventSetupIn::Event);
+    m_gtUtil = std::make_unique<L1TGlobalUtil>(iConfig.getParameter<edm::InputTag>("uGtAlgInputTag"),
+                                               iConfig.getParameter<edm::InputTag>("uGtExtInputTag"),
+                                               iConfig.getParameter<bool>("ReadPrescalesFromFile"),
+                                               consumesCollector(),
+                                               l1t::UseEventSetupIn::Event);
     m_gtUtil->OverridePrescalesAndMasks(preScaleFileName, preScColumn);
+  }
+
+  void GtRecordDump::fillDescriptions(edm::ConfigurationDescriptions& iDesc) {
+    edm::ParameterSetDescription ps;
+    ps.add<edm::InputTag>("egInputTag");
+    ps.add<edm::InputTag>("muInputTag");
+    ps.add<edm::InputTag>("tauInputTag");
+    ps.add<edm::InputTag>("jetInputTag");
+    ps.add<edm::InputTag>("etsumInputTag");
+    ps.add<edm::InputTag>("uGtObjectMapInputTag");
+    ps.add<int>("minBx");
+    ps.add<int>("maxBx");
+    ps.add<bool>("dumpGTRecord");
+    ps.add<bool>("dumpGTObjectMap");
+    ps.add<bool>("dumpTrigResults");
+    ps.add<int>("minBxVec");
+    ps.add<int>("maxBxVec");
+    ps.add<bool>("dumpVectors");
+    ps.add<std::string>("tvFileName");
+    ps.add<int>("tvVersion");
+    ps.add<int>("bxOffset");
+    ps.add<std::string>("psFileName");
+    ps.add<int>("psColumn");
+    ps.add<edm::InputTag>("uGtAlgInputTag");
+    ps.add<edm::InputTag>("uGtExtInputTag");
+    ps.add<bool>("ReadPrescalesFromFile");
+
+    iDesc.addWithDefaultLabel(ps);
   }
 
   // loop over events
   void GtRecordDump::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup) {
     //inputs
-    Handle<BXVector<l1t::EGamma>> egammas;
+    edm::Handle<BXVector<l1t::EGamma>> egammas;
     iEvent.getByToken(egToken, egammas);
 
-    Handle<BXVector<l1t::Muon>> muons;
+    edm::Handle<BXVector<l1t::Muon>> muons;
     iEvent.getByToken(muToken, muons);
 
-    Handle<BXVector<l1t::Tau>> taus;
+    edm::Handle<BXVector<l1t::Tau>> taus;
     iEvent.getByToken(tauToken, taus);
 
-    Handle<BXVector<l1t::Jet>> jets;
+    edm::Handle<BXVector<l1t::Jet>> jets;
     iEvent.getByToken(jetToken, jets);
 
-    Handle<BXVector<l1t::EtSum>> etsums;
+    edm::Handle<BXVector<l1t::EtSum>> etsums;
     iEvent.getByToken(etsumToken, etsums);
 
-    Handle<BXVector<GlobalAlgBlk>> uGtAlg;
-    iEvent.getByToken(uGtAlgToken, uGtAlg);
+    edm::Handle<BXVector<GlobalAlgBlk>> uGtAlg;
+    iEvent.getByToken(m_gtUtil->helper().l1tAlgBlkToken(), uGtAlg);
 
-    Handle<BXVector<GlobalExtBlk>> uGtExt;
-    iEvent.getByToken(uGtExtToken, uGtExt);
+    edm::Handle<BXVector<GlobalExtBlk>> uGtExt;
+    iEvent.getByToken(m_gtUtil->helper().l1tExtBlkToken(), uGtExt);
 
-    Handle<GlobalObjectMapRecord> gtObjectMapRecord;
+    edm::Handle<GlobalObjectMapRecord> gtObjectMapRecord;
     iEvent.getByToken(uGtObjectMapToken, gtObjectMapRecord);
 
     //Fill the L1 result maps
-    m_gtUtil->retrieveL1(iEvent, evSetup, uGtAlgToken);
+    m_gtUtil->retrieveL1(iEvent, evSetup);
 
     LogDebug("GtRecordDump") << "retrieved L1 data " << endl;
 
@@ -599,13 +623,13 @@ namespace l1t {
 
   void GtRecordDump::dumpTestVectors(int bx,
                                      std::ofstream& myOutFile,
-                                     Handle<BXVector<l1t::Muon>> muons,
-                                     Handle<BXVector<l1t::EGamma>> egammas,
-                                     Handle<BXVector<l1t::Tau>> taus,
-                                     Handle<BXVector<l1t::Jet>> jets,
-                                     Handle<BXVector<l1t::EtSum>> etsums,
-                                     Handle<BXVector<GlobalAlgBlk>> uGtAlg,
-                                     Handle<BXVector<GlobalExtBlk>> uGtExt) {
+                                     edm::Handle<BXVector<l1t::Muon>> muons,
+                                     edm::Handle<BXVector<l1t::EGamma>> egammas,
+                                     edm::Handle<BXVector<l1t::Tau>> taus,
+                                     edm::Handle<BXVector<l1t::Jet>> jets,
+                                     edm::Handle<BXVector<l1t::EtSum>> etsums,
+                                     edm::Handle<BXVector<GlobalAlgBlk>> uGtAlg,
+                                     edm::Handle<BXVector<GlobalExtBlk>> uGtExt) {
     const int empty = 0;
 
     // Dump Bx (4 digits)
@@ -1006,4 +1030,5 @@ namespace l1t {
 
 }  // namespace l1t
 
+#include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(l1t::GtRecordDump);

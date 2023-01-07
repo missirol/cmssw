@@ -1,11 +1,10 @@
 // L1TGlobalUtil:  Utility class for parsing the L1 Trigger Menu
 
-#ifndef L1TGlobal_L1TGlobalUtil_h
-#define L1TGlobal_L1TGlobalUtil_h
+#ifndef L1Trigger_L1TGlobal_L1TGlobalUtil_h
+#define L1Trigger_L1TGlobal_L1TGlobalUtil_h
 
 // system include files
 #include <memory>
-
 #include <vector>
 
 #include "CondFormats/DataRecord/interface/L1TUtmTriggerMenuRcd.h"
@@ -27,12 +26,7 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 
 #include "L1Trigger/L1TGlobal/interface/L1TGlobalUtilHelper.h"
-
 #include "L1Trigger/L1TGlobal/interface/PrescalesVetosFractHelper.h"
-
-// forward declarations
-
-// class declaration
 
 namespace l1t {
 
@@ -43,56 +37,26 @@ namespace l1t {
 
   class L1TGlobalUtil {
   public:
-    // Using this constructor will require InputTags to be specified in the configuration
-    L1TGlobalUtil(edm::ParameterSet const& pset,
-                  edm::ConsumesCollector&& iC,
-                  UseEventSetupIn use = UseEventSetupIn::Run);
-
-    L1TGlobalUtil(edm::ParameterSet const& pset,
-                  edm::ConsumesCollector& iC,
-                  UseEventSetupIn use = UseEventSetupIn::Run);
-
-    // Using this constructor will cause it to look for valid InputTags in
-    // the following ways in the specified order until they are found.
-    //   1. The configuration
-    //   2. Search all products from the preferred input tags for the required type
-    //   3. Search all products from any other process for the required type
-    template <typename T>
-    L1TGlobalUtil(edm::ParameterSet const& pset,
-                  edm::ConsumesCollector&& iC,
-                  T& module,
-                  UseEventSetupIn use = UseEventSetupIn::Run);
-
-    template <typename T>
-    L1TGlobalUtil(edm::ParameterSet const& pset,
-                  edm::ConsumesCollector& iC,
-                  T& module,
-                  UseEventSetupIn use = UseEventSetupIn::Run);
-
-    // Using this constructor will cause it to look for valid InputTags in
-    // the following ways in the specified order until they are found.
-    //   1. The constructor arguments
-    //   2. The configuration
-    //   3. Search all products from the preferred input tags for the required type
-    //   4. Search all products from any other process for the required type
-    template <typename T>
-    L1TGlobalUtil(edm::ParameterSet const& pset,
-                  edm::ConsumesCollector&& iC,
-                  T& module,
-                  edm::InputTag const& l1tAlgBlkInputTag,
+    L1TGlobalUtil(edm::InputTag const& l1tAlgBlkInputTag,
                   edm::InputTag const& l1tExtBlkInputTag,
+                  bool const readPrescalesFromFile,
+                  edm::ConsumesCollector&& iC,
+                  UseEventSetupIn use = UseEventSetupIn::Run);
+    L1TGlobalUtil(edm::InputTag const& l1tAlgBlkInputTag,
+                  edm::InputTag const& l1tExtBlkInputTag,
+                  bool const readPrescalesFromFile,
+                  edm::ConsumesCollector& iC,
                   UseEventSetupIn use = UseEventSetupIn::Run);
 
-    template <typename T>
+    L1TGlobalUtil(edm::ParameterSet const& pset,
+                  edm::ConsumesCollector&& iC,
+                  UseEventSetupIn use = UseEventSetupIn::Run);
     L1TGlobalUtil(edm::ParameterSet const& pset,
                   edm::ConsumesCollector& iC,
-                  T& module,
-                  edm::InputTag const& l1tAlgBlkInputTag,
-                  edm::InputTag const& l1tExtBlkInputTag,
                   UseEventSetupIn use = UseEventSetupIn::Run);
 
     /// destructor
-    virtual ~L1TGlobalUtil();
+    virtual ~L1TGlobalUtil() = default;
 
     /// check that the L1TGlobalUtil has been properly initialised
     bool valid() const;
@@ -175,6 +139,9 @@ namespace l1t {
     inline unsigned int prescaleColumn() const { return m_PreScaleColumn; }
     inline unsigned int numberOfPreScaleColumns() const { return m_numberOfPreScaleColumns; }
 
+    // accessor to helper
+    L1TGlobalUtilHelper const& helper() const { return *m_l1tGlobalUtilHelper; }
+
   private:
     L1TGlobalUtil();
 
@@ -244,45 +211,6 @@ namespace l1t {
         m_L1TGlobalPrescalesVetosFractEventToken;
   };
 
-  template <typename T>
-  L1TGlobalUtil::L1TGlobalUtil(edm::ParameterSet const& pset,
-                               edm::ConsumesCollector&& iC,
-                               T& module,
-                               UseEventSetupIn useEventSetupIn)
-      : L1TGlobalUtil(pset, iC, module, useEventSetupIn) {}
-
-  template <typename T>
-  L1TGlobalUtil::L1TGlobalUtil(edm::ParameterSet const& pset,
-                               edm::ConsumesCollector& iC,
-                               T& module,
-                               UseEventSetupIn useEventSetupIn)
-      : L1TGlobalUtil() {
-    m_l1tGlobalUtilHelper = std::make_unique<L1TGlobalUtilHelper>(pset, iC, module);
-    m_readPrescalesFromFile = m_l1tGlobalUtilHelper->readPrescalesFromFile();
-    eventSetupConsumes(iC, useEventSetupIn);
-  }
-
-  template <typename T>
-  L1TGlobalUtil::L1TGlobalUtil(edm::ParameterSet const& pset,
-                               edm::ConsumesCollector&& iC,
-                               T& module,
-                               edm::InputTag const& l1tAlgBlkInputTag,
-                               edm::InputTag const& l1tExtBlkInputTag,
-                               UseEventSetupIn useEventSetupIn)
-      : L1TGlobalUtil(pset, iC, module, l1tAlgBlkInputTag, l1tExtBlkInputTag, useEventSetupIn) {}
-
-  template <typename T>
-  L1TGlobalUtil::L1TGlobalUtil(edm::ParameterSet const& pset,
-                               edm::ConsumesCollector& iC,
-                               T& module,
-                               edm::InputTag const& l1tAlgBlkInputTag,
-                               edm::InputTag const& l1tExtBlkInputTag,
-                               UseEventSetupIn useEventSetupIn)
-      : L1TGlobalUtil() {
-    m_l1tGlobalUtilHelper =
-        std::make_unique<L1TGlobalUtilHelper>(pset, iC, module, l1tAlgBlkInputTag, l1tExtBlkInputTag);
-    m_readPrescalesFromFile = m_l1tGlobalUtilHelper->readPrescalesFromFile();
-    eventSetupConsumes(iC, useEventSetupIn);
-  }
 }  // namespace l1t
-#endif
+
+#endif  // L1Trigger_L1TGlobal_L1TGlobalUtil_h

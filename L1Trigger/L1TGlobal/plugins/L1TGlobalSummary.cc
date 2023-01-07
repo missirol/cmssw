@@ -30,24 +30,20 @@ using namespace l1t;
 class L1TGlobalSummary : public edm::one::EDAnalyzer<edm::one::WatchRuns> {
 public:
   explicit L1TGlobalSummary(const edm::ParameterSet&);
-  ~L1TGlobalSummary() override{};
+  ~L1TGlobalSummary() override = default;
   void analyze(const edm::Event&, const edm::EventSetup&) override;
   void beginRun(Run const&, EventSetup const&) override;
   void endRun(Run const&, EventSetup const&) override;
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  InputTag algInputTag_;
-  InputTag extInputTag_;
-  EDGetToken algToken_;
-  EDGetToken extToken_;
   bool dumpRecord_;
   bool dumpTriggerResults_;
   bool dumpTriggerSummary_;
   bool readPrescalesFromFile_;
   int minBx_;
   int maxBx_;
-  L1TGlobalUtil* gtUtil_;
+  std::unique_ptr<L1TGlobalUtil> gtUtil_;
 
   std::vector<int> decisionCount_;
   std::vector<int> intermCount_;
@@ -56,21 +52,24 @@ private:
 };
 
 L1TGlobalSummary::L1TGlobalSummary(const edm::ParameterSet& iConfig) {
-  algInputTag_ = iConfig.getParameter<InputTag>("AlgInputTag");
-  extInputTag_ = iConfig.getParameter<InputTag>("ExtInputTag");
-  algToken_ = consumes<BXVector<GlobalAlgBlk>>(algInputTag_);
-  extToken_ = consumes<BXVector<GlobalExtBlk>>(extInputTag_);
   dumpRecord_ = iConfig.getParameter<bool>("DumpRecord");
   dumpTriggerResults_ = iConfig.getParameter<bool>("DumpTrigResults");
   dumpTriggerSummary_ = iConfig.getParameter<bool>("DumpTrigSummary");
   readPrescalesFromFile_ = iConfig.getParameter<bool>("ReadPrescalesFromFile");
   minBx_ = iConfig.getParameter<int>("MinBx");
   maxBx_ = iConfig.getParameter<int>("MaxBx");
+
   l1t::UseEventSetupIn useEventSetupIn = l1t::UseEventSetupIn::Run;
   if (dumpTriggerResults_ || dumpTriggerSummary_) {
     useEventSetupIn = l1t::UseEventSetupIn::RunAndEvent;
   }
-  gtUtil_ = new L1TGlobalUtil(iConfig, consumesCollector(), *this, algInputTag_, extInputTag_, useEventSetupIn);
+
+  gtUtil_ = std::make_unique<L1TGlobalUtil>(iConfig.getParameter<InputTag>("AlgInputTag"),
+                                            iConfig.getParameter<InputTag>("ExtInputTag"),
+                                            readPrescalesFromFile_,
+                                            consumesCollector(),
+                                            useEventSetupIn);
+
   finalOrCount = 0;
 
   if (readPrescalesFromFile_) {
@@ -82,11 +81,11 @@ L1TGlobalSummary::L1TGlobalSummary(const edm::ParameterSet& iConfig) {
 
 void L1TGlobalSummary::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  // These parameters are part of the L1T/HLT interface, avoid changing if possible::
+  // These parameters are part of the L1T/HLT interface, avoid changing if possible
   desc.add<edm::InputTag>("AlgInputTag", edm::InputTag(""))
-      ->setComment("InputTag for uGT Algorithm Block (required parameter:  default value is invalid)");
+      ->setComment("InputTag for uGT Algorithm Block (required parameter: default value is invalid)");
   desc.add<edm::InputTag>("ExtInputTag", edm::InputTag(""))
-      ->setComment("InputTag for uGT External Block (required parameter:  default value is invalid)");
+      ->setComment("InputTag for uGT External Block (required parameter: default value is invalid)");
   // These parameters have well defined  default values and are not currently
   // part of the L1T/HLT interface.  They can be cleaned up or updated at will:
   desc.add<int>("MinBx", 0);
@@ -162,17 +161,14 @@ void L1TGlobalSummary::endRun(Run const&, EventSetup const&) {
 
 // loop over events
 void L1TGlobalSummary::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup) {
-  Handle<BXVector<GlobalAlgBlk>> alg;
-  iEvent.getByToken(algToken_, alg);
-
-  Handle<BXVector<GlobalExtBlk>> ext;
-  iEvent.getByToken(extToken_, ext);
+  auto const alg = iEvent.getHandle(gtUtil_->helper().l1tAlgBlkToken());
+  auto const ext = iEvent.getHandle(gtUtil_->helper().l1tExtBlkToken());
 
   LogDebug("l1t|Global") << "retrieved L1 GT data blocks" << endl;
 
   if (dumpTriggerResults_ || dumpTriggerSummary_) {
     //Fill the L1 result maps
-    gtUtil_->retrieveL1(iEvent, evSetup, algToken_);
+    gtUtil_->retrieveL1(iEvent, evSetup);
 
     LogDebug("l1t|Global") << "retrieved L1 data from GT Util" << endl;
 

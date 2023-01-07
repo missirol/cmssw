@@ -10,20 +10,25 @@ namespace edm {
   class ConsumesCollector;
   class ParameterSet;
   class ParameterSetDescription;
-}
+}  // namespace edm
 
 namespace l1t {
 
   class L1TGlobalUtilHelper {
   public:
-    // Using this constructor will require InputTags to be specified in the configuration
+    L1TGlobalUtilHelper(edm::InputTag const& l1tAlgBlkInputTag,
+                        edm::InputTag const& l1tExtBlkInputTag,
+                        bool const readPrescalesFromFile,
+                        edm::ConsumesCollector& iC);
+
+    // Using this constructor requires parameters to be defined in the ParameterSet
     L1TGlobalUtilHelper(edm::ParameterSet const& pset, edm::ConsumesCollector& iC);
 
     // A module defining its fillDescriptions function might want to use this
     static void fillDescription(edm::ParameterSetDescription& desc,
                                 edm::InputTag const& iAlg,
                                 edm::InputTag const& iExt,
-                                bool readPrescalesFromFile);
+                                bool const readPrescalesFromFile);
 
     edm::InputTag const& l1tAlgBlkInputTag() const { return m_l1tAlgBlkInputTag; }
     edm::InputTag const& l1tExtBlkInputTag() const { return m_l1tExtBlkInputTag; }
@@ -36,11 +41,10 @@ namespace l1t {
   private:
     edm::InputTag const m_l1tAlgBlkInputTag;
     edm::InputTag const m_l1tExtBlkInputTag;
+    bool const m_readPrescalesFromFile;
 
     edm::EDGetTokenT<GlobalAlgBlkBxCollection> const m_l1tAlgBlkToken;
     edm::EDGetTokenT<GlobalExtBlkBxCollection> const m_l1tExtBlkToken;
-
-    bool const m_readPrescalesFromFile;
   };
 
 }  // namespace l1t

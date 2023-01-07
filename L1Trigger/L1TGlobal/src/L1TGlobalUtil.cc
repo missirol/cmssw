@@ -35,6 +35,25 @@ l1t::L1TGlobalUtil::L1TGlobalUtil() : m_l1GtMenu(nullptr) {
   m_triggerMaskAlgoTrig = nullptr;
 }
 
+l1t::L1TGlobalUtil::L1TGlobalUtil(edm::InputTag const& l1tAlgBlkInputTag,
+                                  edm::InputTag const& l1tExtBlkInputTag,
+                                  bool const readPrescalesFromFile,
+                                  edm::ConsumesCollector&& iC,
+                                  UseEventSetupIn useEventSetupIn)
+    : L1TGlobalUtil(l1tAlgBlkInputTag, l1tExtBlkInputTag, readPrescalesFromFile, iC, useEventSetupIn) {}
+
+l1t::L1TGlobalUtil::L1TGlobalUtil(edm::InputTag const& l1tAlgBlkInputTag,
+                                  edm::InputTag const& l1tExtBlkInputTag,
+                                  bool const readPrescalesFromFile,
+                                  edm::ConsumesCollector& iC,
+                                  UseEventSetupIn useEventSetupIn)
+    : L1TGlobalUtil() {
+  m_l1tGlobalUtilHelper =
+      std::make_unique<L1TGlobalUtilHelper>(l1tAlgBlkInputTag, l1tExtBlkInputTag, readPrescalesFromFile, iC);
+  m_readPrescalesFromFile = m_l1tGlobalUtilHelper->readPrescalesFromFile();
+  eventSetupConsumes(iC, useEventSetupIn);
+}
+
 l1t::L1TGlobalUtil::L1TGlobalUtil(edm::ParameterSet const& pset,
                                   edm::ConsumesCollector&& iC,
                                   UseEventSetupIn useEventSetupIn)
@@ -47,11 +66,6 @@ l1t::L1TGlobalUtil::L1TGlobalUtil(edm::ParameterSet const& pset,
   m_l1tGlobalUtilHelper = std::make_unique<L1TGlobalUtilHelper>(pset, iC);
   m_readPrescalesFromFile = m_l1tGlobalUtilHelper->readPrescalesFromFile();
   eventSetupConsumes(iC, useEventSetupIn);
-}
-
-// destructor
-l1t::L1TGlobalUtil::~L1TGlobalUtil() {
-  // empty
 }
 
 /// check that the L1TGlobalUtil has been properly initialised
