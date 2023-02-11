@@ -43,7 +43,6 @@ HLTMuonPlotter::HLTMuonPlotter(const ParameterSet & pset,
 			       
   l1Matcher_(pset)
 {
-
   hltPath_ = hltPath;
   moduleLabels_ = moduleLabels;
   stepLabels_ = stepLabels;
@@ -191,11 +190,24 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
     l1t::MuonVectorRef candsL1;
     vector< vector< RecoChargedCandidateRef      > > refsHlt(nStepsHlt);
     vector< vector< const RecoChargedCandidate * > > candsHlt(nStepsHlt);
-    
+
+      if(hltPath_ == "HLT_IsoTkMu22") {
+	for(auto const& foo : stepLabels_)
+          std::cout << __LINE__ << "   " << foo << std::endl;
+      }
+
     for (size_t i = 0; i < nFilters; i++) {
       const int hltStep = i - 1;
       InputTag tag = InputTag(moduleLabels_[i], "", hltProcessName_);
       size_t iFilter = rawTriggerEvent->filterIndex(tag);
+
+      if(source == "gen") {
+        std::cout << __LINE__ << " XXX " << hltPath_ << " moduleLabels_[" << i << "]: " << moduleLabels_[i] << " (" << iFilter << " | " << (iFilter < rawTriggerEvent->size()) << ")" << std::endl;
+        std::cout << __LINE__ << " YYY " << hltPath_;
+        for(auto const& bar : stepLabels_) std::cout << " " << bar;
+	std::cout << std::endl;
+      }
+
       if (iFilter < rawTriggerEvent->size()) {
         if (i == 0)
           rawTriggerEvent->getObjects(iFilter, TriggerL1Mu, candsL1);
@@ -214,17 +226,47 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
             << "Ref refsHlt[i][j]: product not available "
             << i << " " << j;
         }
-    
+
+    if(hltPath_ == "HLT_IsoTkMu22") {
+      int iii = -1;
+      for(auto const ii : candsHlt){
+        ++iii;
+        int jjj = -1;
+        for(auto const jj : ii){
+          ++jjj;
+          std::cout << __LINE__ << "   candsHlt[" << iii << "][" << jjj << "]: pt=" << jj->pt() << " eta=" << jj->eta() << " phi=" << jj->phi() << std::endl;
+        }
+      }
+    }
+
     // Add trigger objects to the MatchStructs
     findMatches(matches, candsL1, candsHlt);
-    
+
+    if(hltPath_ == "HLT_IsoTkMu22") {
+      for(auto const& mm : matches){
+        if (!mm.candBase) continue;
+        std::cout << __LINE__ << " CandBase: pt=" << mm.candBase->pt() << " eta=" << mm.candBase->eta() << " phi=" << mm.candBase->phi() << std::endl;
+        if (mm.candL1) {
+          std::cout << __LINE__ << "   CandL1 : pt=" << mm.candL1->pt() << " eta=" << mm.candL1->eta() << " phi=" << mm.candL1->phi() << std::endl;
+        }
+        int ihlt = -1;
+        for (auto const* chlt : mm.candHlt){
+          ++ihlt;
+          if(chlt)
+            std::cout << __LINE__ << "   CandHLT[" << ihlt << "]: pt=" << chlt->pt() << " eta=" << chlt->eta() << " phi=" << chlt->phi() << std::endl;
+          else
+            std::cout << __LINE__ << "   CandHLT[" << ihlt << "]: NULL" << std::endl;
+        }
+      }
+    }
+
     vector<size_t> matchesInEtaRange;
     vector<bool> hasMatch(matches.size(), true);
     
     for (size_t step = 0; step < nSteps; step++) {
       
       size_t hltStep = (step >= 2) ? step - 2 : 0;
-      if (nSteps == 6) hltStep=hltStep-1; // case of the tracker muon (it has no L2)
+//      if (nSteps == 6 and hltStep > 0) hltStep=hltStep-1; // case of the tracker muon (it has no L2)
       size_t level = 0;
       if ((stepLabels_[step].find("L3TkIso") != string::npos)||(stepLabels_[step].find("TkTkIso") != string::npos)) level = 6;
       else if ((stepLabels_[step].find("L3HcalIso") != string::npos)||(stepLabels_[step].find("TkEcalIso") != string::npos)) level = 5;
@@ -232,7 +274,7 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
       else if ((stepLabels_[step].find("L3") != string::npos)||(stepLabels_[step].find("Tk") != string::npos)) level = 3;
       else if (stepLabels_[step].find("L2") != string::npos) level = 2;
       else if (stepLabels_[step].find("L1") != string::npos) level = 1;
-      
+
       for (size_t j = 0; j < matches.size(); j++) {
         if (level == 0) {
           if (fabs(matches[j].candBase->eta()) < cutMaxEta_)
@@ -243,6 +285,7 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
             hasMatch[j] = false;
         }
         else if (level >= 2) {
+
           if (matches[j].candHlt[hltStep] == 0)
             hasMatch[j] = false;
           else if (!hasMatch[j]) {
@@ -251,13 +294,30 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
                                    << " without previous match!";
             break;
           }
+
+          if(hltPath_ == "HLT_IsoTkMu22")
+            std::cout << __LINE__ << "    [" << level << "] matches[" << j << "].candHlt[" << hltStep << "] = " << matches[j].candHlt[hltStep]
+                    << " -> hasMatch[" << j << "] = " << hasMatch[j] << std::endl;
         }
       }
       
+      if(hltPath_ == "HLT_IsoTkMu22") {
+        std::cout << __LINE__ << " [" << level << "] matchesInEtaRange:";
+        for(auto const& mm : matchesInEtaRange) std::cout << " " << mm;
+        std::cout << std::endl;
+
+        std::cout << __LINE__ << " [" << level << "] hasMatch:";
+        for(auto const& mm : hasMatch) std::cout << " " << mm;
+        std::cout << std::endl;
+      }
+
       if (std::count(hasMatch.begin(), hasMatch.end(), true) <
           nObjectsToPassPath) 
         break;
-      
+
+      if(hltPath_ == "HLT_IsoTkMu22")
+        std::cout << __LINE__ << " HAS MATCH" << std::endl;
+
       string pre  = source + "Pass";
       string post = "_" + stepLabels_[step];
       
@@ -266,8 +326,10 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
         float eta = matches[j].candBase->eta();
         float phi = matches[j].candBase->phi();
         if (hasMatch[j]) { 
-          if (matchesInEtaRange.size() >= 1 && j == matchesInEtaRange[0])
+          if (matchesInEtaRange.size() >= 1 && j == matchesInEtaRange[0]){
             elements_[pre + "MaxPt1" + post]->Fill(pt);
+            if(hltPath_ == "HLT_IsoTkMu22") std::cout << __LINE__ << " FILL(" << pre + "MaxPt1" + post << ") pt = " << pt << std::endl;
+          }
           if (matchesInEtaRange.size() >= 2 && j == matchesInEtaRange[1])
             elements_[pre + "MaxPt2" + post]->Fill(pt);
           if (pt > cutMinPt_) {
