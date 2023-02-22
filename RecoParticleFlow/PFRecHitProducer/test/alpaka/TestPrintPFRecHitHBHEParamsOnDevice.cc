@@ -1,3 +1,4 @@
+#include "DataFormats/PortableTestObjects/interface/alpaka/TestDeviceCollection.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -15,13 +16,19 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
   class TestPrintPFRecHitHBHEParamsOnDevice : public stream::EDProducer<> {
   public:
-    TestPrintPFRecHitHBHEParamsOnDevice(edm::ParameterSet const& config) {
-      esToken_ = esConsumes(config.getParameter<edm::ESInputTag>("pfRecHitParams"));
+    TestPrintPFRecHitHBHEParamsOnDevice(edm::ParameterSet const& config) :
+      esToken_{esConsumes(config.getParameter<edm::ESInputTag>("pfRecHitParams"))} {
+      devicePutToken_ = produces("");
     }
 
     void produce(device::Event& iEvent, device::EventSetup const& iSetup) override {
       auto const& esData = iSetup.getData(esToken_);
+
+      auto deviceProduct = std::make_unique<portabletest::TestDeviceCollection>(256, iEvent.queue());
+
       algo_.printPFRecHitHBHEParams(iEvent.queue(), esData);
+
+      iEvent.put(devicePutToken_, std::move(deviceProduct));
     }
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -31,7 +38,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
 
   private:
-    device::ESGetToken<PFRecHitHBHEParamsAlpakaESDataDevice, JobConfigurationAlpakaRecord> esToken_;
+    device::ESGetToken<PFRecHitHBHEParamsAlpakaESDataDevice, JobConfigurationAlpakaRecord> const esToken_;
+    device::EDPutToken<portabletest::TestDeviceCollection> devicePutToken_;
     TestAlgo algo_;
   };
 

@@ -2,6 +2,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESProducer.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/ModuleFactory.h"
 #include "HeterogeneousCore/AlpakaCore/interface/JobConfigurationAlpakaRecord.h"
@@ -11,7 +12,7 @@
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
-  class PFRecHitHBHEParamsESProducer : public ESProducer, public edm::EventSetupRecordIntervalFinder {
+  class PFRecHitHBHEParamsESProducer : public ESProducer {
   public:
     PFRecHitHBHEParamsESProducer(edm::ParameterSet const& iConfig) :
         energyThresholdsHB_(iConfig.getParameter<std::vector<double>>("energyThresholdsHB")),
@@ -26,7 +27,6 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       }
 
       setWhatProduced(this);
-      findingRecord<JobConfigurationAlpakaRecord>();
     }
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -46,11 +46,6 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         product->view().energyThresholds()[idx+kMaxDepthHB] = energyThresholdsHE_[idx];
       }
       return product;
-    }
-
-  protected:
-    void setIntervalFor(edm::eventsetup::EventSetupRecordKey const&, edm::IOVSyncValue const&, edm::ValidityInterval& oInterval) override {
-      oInterval = edm::ValidityInterval(edm::IOVSyncValue::beginOfTime(), edm::IOVSyncValue::endOfTime());
     }
 
   private:

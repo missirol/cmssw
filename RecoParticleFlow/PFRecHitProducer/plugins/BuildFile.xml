@@ -1,8 +1,9 @@
 <!-- alpaka-based portable plugins -->
-<library file="alpaka/*.cc" name="RecoParticleFlowRecoPFRecHitPluginsPortable">
+<library file="alpaka/*.cc" name="RecoParticleFlowPFRecHitProducerPluginsPortable">
   <use name="alpaka"/>
   <use name="FWCore/Framework"/>
   <use name="FWCore/ParameterSet"/>
+  <use name="FWCore/Utilities"/>
   <use name="HeterogeneousCore/AlpakaCore"/>
   <use name="HeterogeneousCore/AlpakaInterface"/>
   <use name="RecoParticleFlow/PFRecHitProducer"/>
