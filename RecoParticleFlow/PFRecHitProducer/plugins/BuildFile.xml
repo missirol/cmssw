@@ -2,6 +2,7 @@
 <library file="alpaka/*.cc" name="RecoParticleFlowPFRecHitProducerPluginsPortable">
   <use name="alpaka"/>
   <use name="FWCore/Framework"/>
+  <use name="FWCore/MessageLogger"/>
   <use name="FWCore/ParameterSet"/>
   <use name="FWCore/Utilities"/>
   <use name="Geometry/CaloGeometry"/>

@@ -8,8 +8,6 @@
 namespace reco {
 
   GENERATE_SOA_LAYOUT(PFRecHitHBHETopologyAlpakaESDataSoALayout,
-                      SOA_COLUMN(uint32_t, denseId),
-                      SOA_COLUMN(uint32_t, detId),
                       SOA_COLUMN(float, positionX),
                       SOA_COLUMN(float, positionY),
                       SOA_COLUMN(float, positionZ),
