@@ -17,6 +17,9 @@ parser.add_argument('-s', '--useSequence', action='store_true', default=False,
 parser.add_argument('-an', '--useAnalyzer', action='store_true', default=False,
                     help='Use EDAnalyzer to consume outputs of Alpaka EDProducer (default: False)')
 
+parser.add_argument('-r', '--run', type=int, default=361054,
+                    help='Run number (default: 361054)')
+
 parser.add_argument('-d', '--dumpPython', type=str, default=None,
                     help='Path to file containing output of process.dumpPython() (disabled by default)')
 
@@ -24,7 +27,8 @@ argv = sys.argv[:]
 if '--' in argv: argv.remove('--')
 args, unknown = parser.parse_known_args(argv)
 
-process = cms.Process('TEST')
+from Configuration.Eras.Era_Run3_cff import Run3
+process = cms.Process('TEST', Run3)
 
 process.options.accelerators = args.accelerators.split(',')
 print('accelerators:', process.options.accelerators.value())
@@ -38,7 +42,15 @@ print('esProductLabel:', '"'+args.esProductLabel+'"')
 print('useSequence:', args.useSequence)
 print('useAnalyzer:', args.useAnalyzer)
 
-process.source = cms.Source('EmptySource')
+process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run3_data', '')
+
+process.source = cms.Source('EmptySource',
+  firstRun = cms.untracked.uint32(args.run)
+)
+
 process.maxEvents.input = 10
 
 process.load('Configuration.StandardSequences.Accelerators_cff')
@@ -50,29 +62,41 @@ process.jobConfAlpakaRcdESSource = cms.ESSource('EmptyESSource',
   firstValid = cms.vuint32(1)
 )
 
+process.pfRecHitHBHETopologyAlpakaESRcdESSource = cms.ESSource('EmptyESSource',
+  recordName = cms.string('PFRecHitHBHETopologyAlpakaESRcd'),
+  iovIsRunNotTime = cms.bool(True),
+  firstValid = cms.vuint32(1)
+)
+
 from RecoParticleFlow.PFRecHitProducer.pfRecHitHBHEParamsESProducer_cfi import pfRecHitHBHEParamsESProducer as _pfRecHitHBHEParamsESProducer
 process.pfRecHitHBHEParamsESProducer = _pfRecHitHBHEParamsESProducer.clone(
   appendToDataLabel = args.esProductLabel
 )
 
-from RecoParticleFlow.PFRecHitProducer.testPrintPFRecHitHBHEParamsOnDevice_cfi import testPrintPFRecHitHBHEParamsOnDevice as _testPrintPFRecHitHBHEParamsOnDevice
-process.testPrintPFRecHitHBHEParamsOnDevice = _testPrintPFRecHitHBHEParamsOnDevice.clone(
-  pfRecHitParams = 'pfRecHitHBHEParamsESProducer:'+args.esProductLabel
+from RecoParticleFlow.PFRecHitProducer.pfRecHitHBHETopologyESProducer_cfi import pfRecHitHBHETopologyESProducer as _pfRecHitHBHETopologyESProducer
+process.pfRecHitHBHETopologyESProducer = _pfRecHitHBHETopologyESProducer.clone(
+  appendToDataLabel = args.esProductLabel
+)
+
+from RecoParticleFlow.PFRecHitProducer.testPFRecHitHBHETestProducer_cfi import testPFRecHitHBHETestProducer as _testPFRecHitHBHETestProducer
+process.testPFRecHitHBHETestProducer = _testPFRecHitHBHETestProducer.clone(
+  pfRecHitParams = 'pfRecHitHBHEParamsESProducer:'+args.esProductLabel,
+  pfRecHitTopology = 'pfRecHitHBHETopologyESProducer:'+args.esProductLabel
 )
 
 if args.useAnalyzer:
   from RecoParticleFlow.PFRecHitProducer.testEmptyAnalyzer_cfi import testEmptyAnalyzer as _testEmptyAnalyzer
   process.testEmptyAnalyzer = _testEmptyAnalyzer.clone(
-    source = 'testPrintPFRecHitHBHEParamsOnDevice'
+    source = 'testPFRecHitHBHETestProducer'
   )
 
 if args.useSequence:
-  process.testSequence = cms.Sequence( process.testPrintPFRecHitHBHEParamsOnDevice )
+  process.testSequence = cms.Sequence( process.testPFRecHitHBHETestProducer )
   if args.useAnalyzer:
     process.testSequence += process.testEmptyAnalyzer
   process.testPath = cms.Path( process.testSequence )
 else:
-  process.testTask = cms.Task( process.pfRecHitHBHEParamsESProducer, process.testPrintPFRecHitHBHEParamsOnDevice )
+  process.testTask = cms.Task( process.pfRecHitHBHEParamsESProducer, process.testPFRecHitHBHETestProducer )
   process.testSequence = cms.Sequence()
   if args.useAnalyzer:
     process.testSequence += process.testEmptyAnalyzer
@@ -82,7 +106,7 @@ process.output = cms.OutputModule('PoolOutputModule',
   fileName = cms.untracked.string('testAlpaka.root'),
   outputCommands = cms.untracked.vstring(
     'drop *',
-    'keep *_testPrintPFRecHitHBHEParamsOnDevice*_*_*',
+    'keep *_testPFRecHitHBHETestProducer*_*_*',
   )
 )
 process.testEndPath = cms.EndPath( process.output )

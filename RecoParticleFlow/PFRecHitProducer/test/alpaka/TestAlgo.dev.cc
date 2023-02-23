@@ -15,10 +15,12 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
   using namespace cms::alpakatools;
 
-  class PrintPFRecHitHBHEParamsKernel {
+  class PrintPFRecHitHBHEESDataKernel {
   public:
     template <typename TAcc, typename = std::enable_if_t<alpaka::isAccelerator<TAcc>>>
-    ALPAKA_FN_ACC void operator()(TAcc const& acc, PFRecHitHBHEParamsAlpakaESDataDevice::ConstView params) const {
+    ALPAKA_FN_ACC void operator()(TAcc const& acc,
+      PFRecHitHBHEParamsAlpakaESDataDevice::ConstView params,
+      PFRecHitHBHETopologyAlpakaESDataDevice::ConstView topo) const {
       // global index of the thread within the grid
       const int32_t thread = alpaka::getIdx<alpaka::Grid, alpaka::Threads>(acc)[0u];
 
@@ -32,9 +34,10 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
   };
 
-  void TestAlgo::printPFRecHitHBHEParams(Queue& queue, PFRecHitHBHEParamsAlpakaESDataDevice const& esData) const {
+  void TestAlgo::printPFRecHitHBHEESData(Queue& queue,
+    PFRecHitHBHEParamsAlpakaESDataDevice const& esParams, PFRecHitHBHETopologyAlpakaESDataDevice const& esTopo) const {
     auto workDiv = make_workdiv<Acc1D>(1,1);
-    alpaka::exec<Acc1D>(queue, workDiv, PrintPFRecHitHBHEParamsKernel{}, esData.const_view());
+    alpaka::exec<Acc1D>(queue, workDiv, PrintPFRecHitHBHEESDataKernel{}, esParams.const_view(), esTopo.const_view());
   }
 
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE
