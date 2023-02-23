@@ -1,5 +1,5 @@
-#ifndef HeterogeneousCore_AlpakaTest_interface_AlpakaESTestData_h
-#define HeterogeneousCore_AlpakaTest_interface_AlpakaESTestData_h
+#ifndef RecoParticleFlow_PFRecHitProducer_interface_AlpakaESTestData_h
+#define RecoParticleFlow_PFRecHitProducer_interface_AlpakaESTestData_h
 
 #include "DataFormats/Portable/interface/PortableHostCollection.h"
 #include "HeterogeneousCore/AlpakaInterface/interface/CopyToDevice.h"
