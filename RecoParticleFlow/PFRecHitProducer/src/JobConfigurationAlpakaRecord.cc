@@ -1,4 +1,4 @@
 #include "FWCore/Framework/interface/eventsetuprecord_registration_macro.h"
-#include "HeterogeneousCore/AlpakaCore/interface/JobConfigurationAlpakaRecord.h"
+#include "RecoParticleFlow/PFRecHitProducer/interface/JobConfigurationAlpakaRecord.h"
 
 EVENTSETUP_RECORD_REG(JobConfigurationAlpakaRecord);
