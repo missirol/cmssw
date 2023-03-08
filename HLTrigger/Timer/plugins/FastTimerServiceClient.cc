@@ -1,6 +1,9 @@
 // C++ headers
+#include <array>
 #include <string>
 #include <cstring>
+#include <limits>
+#include <vector>
 
 // boost headers
 #include <boost/regex.hpp>
@@ -10,26 +13,24 @@
 #include <TH1F.h>
 
 // CMSSW headers
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/Run.h"
-#include "FWCore/Framework/interface/LuminosityBlock.h"
+#include "DQMServices/Core/interface/DQMEDHarvester.h"
+#include "DQMServices/Core/interface/DQMStore.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include "FWCore/ParameterSet/interface/Registry.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "DataFormats/Provenance/interface/ProcessHistory.h"
-#include "DQMServices/Core/interface/DQMStore.h"
-#include "DQMServices/Core/interface/DQMEDHarvester.h"
+#include "FWCore/Utilities/interface/isFinite.h"
 
-struct MEPSet {
-  std::string folder;
-  std::string name;
-  int nbins;
-  double xmin;
-  double xmax;
-};
+namespace {
+
+  struct MEPSet {
+    std::string folder;
+    std::string name;
+    int nbins;
+    double xmin;
+    double xmax;
+  };
+
+}  // namespace
 
 class FastTimerServiceClient : public DQMEDHarvester {
 public:
@@ -57,7 +58,8 @@ private:
                        DQMStore::IGetter& getter,
                        std::string const& current_path,
                        std::string const& suffix,
-                       MEPSet const& pset);
+                       MEPSet const& pset,
+                       std::vector<double> const& maxRanges);
 
   static MEPSet getHistoPSet(const edm::ParameterSet& pset);
 
@@ -72,6 +74,9 @@ private:
   MEPSet const puMEPSet_;
 
   bool const fillEveryLumiSection_;
+
+  std::vector<double> const lumiXMaxValues_;
+  std::vector<double> const puXMaxValues_;
 };
 
 FastTimerServiceClient::FastTimerServiceClient(edm::ParameterSet const& config)
@@ -84,7 +89,9 @@ FastTimerServiceClient::FastTimerServiceClient(edm::ParameterSet const& config)
       pixelLumiMEPSet_(doPlotsVsPixelLumi_ ? getHistoPSet(config.getParameter<edm::ParameterSet>("pixelLumiME"))
                                            : MEPSet{}),
       puMEPSet_(doPlotsVsPU_ ? getHistoPSet(config.getParameter<edm::ParameterSet>("puME")) : MEPSet{}),
-      fillEveryLumiSection_(config.getParameter<bool>("fillEveryLumiSection")) {}
+      fillEveryLumiSection_(config.getParameter<bool>("fillEveryLumiSection")),
+      lumiXMaxValues_(config.getParameter<std::vector<double>>("lumiXMaxValues")),
+      puXMaxValues_(config.getParameter<std::vector<double>>("puXMaxValues")) {}
 
 void FastTimerServiceClient::dqmEndJob(DQMStore::IBooker& booker, DQMStore::IGetter& getter) {
   fillSummaryPlots(booker, getter);
@@ -92,8 +99,8 @@ void FastTimerServiceClient::dqmEndJob(DQMStore::IBooker& booker, DQMStore::IGet
 
 void FastTimerServiceClient::dqmEndLuminosityBlock(DQMStore::IBooker& booker,
                                                    DQMStore::IGetter& getter,
-                                                   edm::LuminosityBlock const& lumi,
-                                                   edm::EventSetup const& setup) {
+                                                   edm::LuminosityBlock const&,
+                                                   edm::EventSetup const&) {
   if (fillEveryLumiSection_)
     fillSummaryPlots(booker, getter);
 }
@@ -133,15 +140,13 @@ void FastTimerServiceClient::fillProcessSummaryPlots(DQMStore::IBooker& booker,
     return;
 
   if (doPlotsVsOnlineLumi_)
-    fillPlotsVsLumi(booker, getter, current_path, "vs_lumi", onlineLumiMEPSet_);
+    fillPlotsVsLumi(booker, getter, current_path, "vs_lumi", onlineLumiMEPSet_, lumiXMaxValues_);
   if (doPlotsVsPixelLumi_)
-    fillPlotsVsLumi(booker, getter, current_path, "vs_pixelLumi", pixelLumiMEPSet_);
+    fillPlotsVsLumi(booker, getter, current_path, "vs_pixelLumi", pixelLumiMEPSet_, lumiXMaxValues_);
   if (doPlotsVsPU_)
-    fillPlotsVsLumi(booker, getter, current_path, "vs_pileup", puMEPSet_);
+    fillPlotsVsLumi(booker, getter, current_path, "vs_pileup", puMEPSet_, puXMaxValues_);
 
-  //  getter.setCurrentFolder(current_path);
-
-  double events = me->getTH1F()->GetEntries();
+  double const events = me->getTH1F()->GetEntries();
 
   // look for per-process directories
   static const boost::regex process_name(".*/process .*");
@@ -353,11 +358,11 @@ void FastTimerServiceClient::fillPathSummaryPlots(DQMStore::IBooker& booker,
 
     // vs lumi
     if (doPlotsVsOnlineLumi_)
-      fillPlotsVsLumi(booker, getter, subsubdir, "vs_lumi", onlineLumiMEPSet_);
+      fillPlotsVsLumi(booker, getter, subsubdir, "vs_lumi", onlineLumiMEPSet_, lumiXMaxValues_);
     if (doPlotsVsPixelLumi_)
-      fillPlotsVsLumi(booker, getter, subsubdir, "vs_pixelLumi", pixelLumiMEPSet_);
+      fillPlotsVsLumi(booker, getter, subsubdir, "vs_pixelLumi", pixelLumiMEPSet_, lumiXMaxValues_);
     if (doPlotsVsPU_)
-      fillPlotsVsLumi(booker, getter, subsubdir, "vs_pileup", puMEPSet_);
+      fillPlotsVsLumi(booker, getter, subsubdir, "vs_pileup", puMEPSet_, puXMaxValues_);
   }
 }
 
@@ -366,13 +371,15 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
                                              DQMStore::IGetter& getter,
                                              std::string const& current_path,
                                              std::string const& suffix,
-                                             MEPSet const& pset) {
+                                             MEPSet const& pset,
+                                             std::vector<double> const& maxRanges) {
   std::vector<std::string> menames;
 
   static const boost::regex byls(".*byls");
   // get all MEs in the current_path
   getter.setCurrentFolder(current_path);
   std::vector<std::string> allmenames = getter.getMEs();
+  menames.reserve(allmenames.size());
   for (auto const& m : allmenames) {
     // get only MEs vs LS
     if (boost::regex_match(m, byls))
@@ -383,45 +390,82 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
     return;
 
   // get info for getting the lumi VS LS histogram
-  std::string folder = pset.folder;
-  std::string name = pset.name;
-  int nbins = pset.nbins;
-  double xmin = pset.xmin;
-  double xmax = pset.xmax;
+  std::string const folder = pset.folder;
+  std::string const name = pset.name;
+  int const nbins = pset.nbins;
 
   // get lumi/PU VS LS ME
   getter.setCurrentFolder(folder);
   MonitorElement* lumiVsLS = getter.get(folder + "/" + name);
   // if no ME available, return
   if (!lumiVsLS) {
-    edm::LogWarning("FastTimerServiceClient") << "no " << name << " ME is available in " << folder << std::endl;
+    edm::LogWarning("FastTimerServiceClient") << "no " << name << " ME is available in " << folder;
     return;
   }
 
   // get range and binning for new MEs x-axis
-  size_t size = lumiVsLS->getTProfile()->GetXaxis()->GetNbins();
-  std::string xtitle = lumiVsLS->getTProfile()->GetYaxis()->GetTitle();
+  size_t const size = lumiVsLS->getTProfile()->GetXaxis()->GetNbins();
+  std::string const xtitle = lumiVsLS->getTProfile()->GetYaxis()->GetTitle();
 
-  std::vector<double> lumi;
-  std::vector<int> LS;
+  std::vector<double> v_lumi;
+  std::vector<int> v_ls;
+  v_lumi.reserve(size);
+  v_ls.reserve(size);
   for (size_t ibin = 1; ibin <= size; ++ibin) {
     // avoid to store points w/ no info
     if (lumiVsLS->getTProfile()->GetBinContent(ibin) == 0.)
       continue;
 
-    lumi.push_back(lumiVsLS->getTProfile()->GetBinContent(ibin));
-    LS.push_back(lumiVsLS->getTProfile()->GetXaxis()->GetBinCenter(ibin));
+    v_lumi.push_back(lumiVsLS->getTProfile()->GetBinContent(ibin));
+    v_ls.push_back(lumiVsLS->getTProfile()->GetXaxis()->GetBinCenter(ibin));
+  }
+
+  // min/max of x-axis
+  double const xmin = pset.xmin;
+  double xmax = pset.xmax;
+
+  // if xmin > xmax, use maxRanges to adjust xmax
+  if (xmin > xmax) {
+    // max of 'x' values (e.g. luminosity, pileup)
+    // if v_lumi.empty, the profile is created but not filled
+    // (in this case, set lumi_max to xmin)
+    auto const lumi_max = v_lumi.empty() ? xmin : *(std::max_element(v_lumi.begin(), v_lumi.end()));
+
+    auto const maxLumiXMin = std::max(xmin, lumi_max);
+
+    for (size_t idx = 0; idx < maxRanges.size(); ++idx) {
+      if (edm::isNotFinite(maxRanges[idx]))
+        continue;
+
+      // find smallest element of maxRanges which is greater than max(xmin, lumi_max)
+      if (maxRanges[idx] > maxLumiXMin and (xmin > xmax or maxRanges[idx] < xmax)) {
+        xmax = maxRanges[idx];
+      }
+    }
+
+    // if still xmin > xmax, force xmax >= xmin (and issue warning)
+    if (xmin > xmax) {
+      xmax = maxLumiXMin * 1.1;
+      edm::LogWarning("FastTimerServiceClient")
+          << "current_path = \"" << current_path << "\", suffix = \"" << suffix << "\", pset.xmin = " << pset.xmin
+          << ", pset.max = " << pset.xmax << ", max-xvalue = " << lumi_max
+          << "\n    -> no element of maxRanges is empty, or none of its elements is greater than xmin and max-value: "
+             "setting xmin to "
+          << xmin << " and xmax to " << xmax;
+    }
   }
 
   booker.setCurrentFolder(current_path);
   getter.setCurrentFolder(current_path);
+
+  float const ymin = 0.;
+  float const ymax = std::numeric_limits<float>::max();
+
   for (auto const& m : menames) {
     std::string label = m;
     label.erase(label.find("_byls"));
 
     MonitorElement* me = getter.get(current_path + "/" + m);
-    float ymin = 0.;
-    float ymax = std::numeric_limits<float>::max();
     std::string ytitle = me->getTProfile()->GetYaxis()->GetTitle();
 
     MonitorElement* meVsLumi = getter.get(current_path + "/" + label + "_" + suffix);
@@ -435,11 +479,11 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
       meVsLumi->getTProfile()->GetXaxis()->SetTitle(xtitle.c_str());
       meVsLumi->getTProfile()->GetYaxis()->SetTitle(ytitle.c_str());
     }
-    for (size_t ils = 0; ils < LS.size(); ++ils) {
-      int ibin = me->getTProfile()->GetXaxis()->FindBin(LS[ils]);
-      double y = me->getTProfile()->GetBinContent(ibin);
+    for (size_t ils = 0; ils < v_ls.size(); ++ils) {
+      int const ibin = me->getTProfile()->GetXaxis()->FindBin(v_ls[ils]);
+      double const y = me->getTProfile()->GetBinContent(ibin);
 
-      meVsLumi->Fill(lumi[ils], y);
+      meVsLumi->Fill(v_lumi[ils], y);
     }
   }
 }
@@ -447,17 +491,17 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
 void FastTimerServiceClient::fillLumiMePSetDescription(edm::ParameterSetDescription& pset) {
   pset.add<std::string>("folder", "HLT/LumiMonitoring");
   pset.add<std::string>("name", "lumiVsLS");
-  pset.add<int>("nbins", 440);
+  pset.add<int>("nbins", 3e3);
   pset.add<double>("xmin", 0.);
-  pset.add<double>("xmax", 22000.);
+  pset.add<double>("xmax", -1.);
 }
 
 void FastTimerServiceClient::fillPUMePSetDescription(edm::ParameterSetDescription& pset) {
   pset.add<std::string>("folder", "HLT/LumiMonitoring");
   pset.add<std::string>("name", "puVsLS");
-  pset.add<int>("nbins", 260);
+  pset.add<int>("nbins", 270);
   pset.add<double>("xmin", 0.);
-  pset.add<double>("xmax", 130.);
+  pset.add<double>("xmax", -1.);
 }
 
 MEPSet FastTimerServiceClient::getHistoPSet(const edm::ParameterSet& pset) {
@@ -490,8 +534,18 @@ void FastTimerServiceClient::fillDescriptions(edm::ConfigurationDescriptions& de
   edm::ParameterSetDescription puMEPSet;
   fillPUMePSetDescription(puMEPSet);
   desc.add<edm::ParameterSetDescription>("puME", puMEPSet);
+
+  desc.add<std::vector<double>>("lumiXMaxValues", {3e4, 6e4, 9e4})
+      ->setComment(
+          "if onlineLumiME.xmax < onlineLumiME.xmin (or pixelLumiME.xmax < pixelLumiME.xmin),"
+          " xmax is set to the most appropriate of these values (units: E30 Hz cm^{-2})");
+
+  desc.add<std::vector<double>>("puXMaxValues", {130, 260})
+      ->setComment("if puME.xmax < puME.xmin, xmax is set to the most appropriate of these values");
+
   desc.add<bool>("fillEveryLumiSection", true);
-  descriptions.add("fastTimerServiceClient", desc);
+
+  descriptions.addWithDefaultLabel(desc);
 }
 
 // declare this class as a framework plugin
