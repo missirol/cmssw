@@ -7,7 +7,7 @@ options.register('nThreads', 4, options.multiplicity.singleton, options.varType.
 options.register('nStreams', 0, options.multiplicity.singleton, options.varType.int, 'number of streams')
 options.register('globalTag', 'auto:run3_hlt_relval', options.multiplicity.singleton, options.varType.string, 'name of GlobalTag')
 options.setDefault('inputFiles', [
-  '/store/data/Run2022B/HLTPhysics/RAW/v1/000/355/456/00000/69b26b27-4bd1-4524-bc18-45f7b9b5e076.root',
+  '/store/group/dpg_trigger/comm_trigger/TriggerStudiesGroup/STORM/FEVTHLTALL/HLTMonitor_Tier0_REPLAY_2022_Express-v710_run356005/0f207c66-8cda-4c3d-b4c8-3b063efc72e8.root',
 ])
 options.setDefault('maxEvents', 200)
 options.setType('outputFile', options.varType.string)
@@ -28,6 +28,7 @@ process.source = cms.Source('PoolSource',
     'drop *',
     'keep FEDRawDataCollection_rawDataCollector__*',
     'keep edmTriggerResults_TriggerResults__HLT',
+    'keep *_hltSiPixelClusters__*',
   )
 )
 
@@ -64,6 +65,11 @@ process.MessageLogger.ThroughputService = dict()
 from Configuration.AlCa.GlobalTag import GlobalTag as customiseGlobalTag
 process.GlobalTag = customiseGlobalTag(globaltag = options.globalTag)
 
+# EventSetup modules
+process.trackerTopology = cms.ESProducer('TrackerTopologyEP',
+  appendToDataLabel = cms.string('')
+)
+
 # EventData modules
 from EventFilter.L1TRawToDigi.gtStage2Digis_cfi import gtStage2Digis as _gtStage2Digis
 process.gtStage2Digis = _gtStage2Digis.clone()
@@ -92,7 +98,9 @@ process.triggerBxVsOrbitMonitor = _triggerBxVsOrbitMonitor.clone(
 from DQM.HLTEvF.lumiMonitor_cfi import lumiMonitor as _lumiMonitor
 process.lumiMonitor = _lumiMonitor.clone(
   scalers = 'scalersRawToDigi',
-  onlineMetaDataDigis = 'onlineMetaDataDigis'
+  onlineMetaDataDigis = 'onlineMetaDataDigis',
+  doPixelLumi = True,
+  pixelClusters = 'hltSiPixelClusters'
 )
 
 from DQM.HLTEvF.psMonitoring_cfi import psMonitoring as _psColumnMonitor

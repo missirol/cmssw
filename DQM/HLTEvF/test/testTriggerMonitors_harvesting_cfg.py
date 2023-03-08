@@ -34,14 +34,7 @@ process.fastTimerServiceClient = _fastTimerServiceClient.clone(
   dqmPath = 'HLT/TimerService',
   # timing VS lumi
   doPlotsVsOnlineLumi = True,
-  doPlotsVsPixelLumi = False,
-  onlineLumiME = dict(
-    folder = 'HLT/LumiMonitoring',
-    name   = 'lumiVsLS',
-    nbins  = 5000,
-    xmin   = 0,
-    xmax   = 20000
-  )
+  doPlotsVsPixelLumi = True,
 )
 
 # ThroughputService client

@@ -44,13 +44,6 @@ process.fastTimerServiceClient.dqmPath = "HLT/TimerService"
 # timing VS lumi
 process.fastTimerServiceClient.doPlotsVsOnlineLumi = True
 process.fastTimerServiceClient.doPlotsVsPixelLumi = False
-process.fastTimerServiceClient.onlineLumiME = dict(
-    folder = 'HLT/LumiMonitoring',
-    name   = 'lumiVsLS',
-    nbins  = 5000,
-    xmin   = 0,
-    xmax   = 20000
-)
 
 # ThroughputService client
 process.load("HLTrigger.Timer.throughputServiceClient_cfi")
