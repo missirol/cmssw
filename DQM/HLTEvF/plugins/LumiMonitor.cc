@@ -1,6 +1,8 @@
 #include <string>
 #include <limits>
 
+#include "CondFormats/DataRecord/interface/LHCInfoRcd.h"
+#include "CondFormats/RunInfo/interface/LHCInfo.h"
 #include "DQM/TrackingMonitor/interface/GetLumi.h"
 #include "DQMServices/Core/interface/DQMGlobalEDAnalyzer.h"
 #include "DataFormats/OnlineMetaData/interface/OnlineLuminosityRecord.h"
@@ -67,6 +69,7 @@ private:
 
   bool const doPixelLumi_;
   edm::EDGetTokenT<edmNew::DetSetVector<SiPixelCluster>> const pixelClustersToken_;
+  edm::ESGetToken<LHCInfo, LHCInfoRcd> const lhcInfoToken_;
   bool const useBPixLayer1_;
   edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> const trkTopoToken_;
   int const minNumberOfPixelsPerCluster_;
@@ -90,14 +93,15 @@ LumiMonitor::LumiMonitor(const edm::ParameterSet& config)
       pixelClustersToken_(doPixelLumi_ ? consumes<edmNew::DetSetVector<SiPixelCluster>>(
                                              config.getParameter<edm::InputTag>("pixelClusters"))
                                        : edm::EDGetTokenT<edmNew::DetSetVector<SiPixelCluster>>()),
+      lhcInfoToken_(doPixelLumi_ ? esConsumes<LHCInfo, LHCInfoRcd>() : edm::ESGetToken<LHCInfo, LHCInfoRcd>()),
       useBPixLayer1_(doPixelLumi_ ? config.getParameter<bool>("useBPixLayer1") : false),
       trkTopoToken_(doPixelLumi_ and (not useBPixLayer1_) ? esConsumes<TrackerTopology, TrackerTopologyRcd>()
                                                           : edm::ESGetToken<TrackerTopology, TrackerTopologyRcd>()),
       minNumberOfPixelsPerCluster_(doPixelLumi_ ? config.getParameter<int>("minNumberOfPixelsPerCluster") : -1),
       minPixelClusterCharge_(doPixelLumi_ ? config.getParameter<double>("minPixelClusterCharge") : -1.),
       lumi_factor_per_bx_(useBPixLayer1_
-                              ? GetLumi::FREQ_ORBIT * GetLumi::SECONDS_PER_LS / GetLumi::XSEC_PIXEL_CLUSTER
-                              : GetLumi::FREQ_ORBIT * GetLumi::SECONDS_PER_LS / GetLumi::rXSEC_PIXEL_CLUSTER) {}
+                              ? GetLumi::FREQ_ORBIT / GetLumi::CM2_TO_NANOBARN / GetLumi::XSEC_PIXEL_CLUSTER
+                              : GetLumi::FREQ_ORBIT / GetLumi::CM2_TO_NANOBARN / GetLumi::rXSEC_PIXEL_CLUSTER) {}
 
 MEbinning LumiMonitor::getHistoPSet(const edm::ParameterSet& pset) {
   return MEbinning{
@@ -234,7 +238,10 @@ void LumiMonitor::dqmAnalyze(edm::Event const& event,
           }
         }
       }
-      pixel_lumi = lumi_factor_per_bx_ * pixel_clusters / GetLumi::CM2_TO_NANOBARN;  // ?!?!
+
+      auto const& lhcInfo = setup.getData(lhcInfoToken_);
+edm::LogPrint("") << "AA " << lhcInfo.collidingBunches();
+      pixel_lumi = lumi_factor_per_bx_ * lhcInfo.collidingBunches() * pixel_clusters;
     } else {
       pixel_lumi = -1.;
     }
