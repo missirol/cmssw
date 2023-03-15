@@ -1,0 +1,554 @@
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 707286
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 0
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 95785
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 1
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = 0.7392578125
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 130
+      phi = -0.5673828125
+      pt = 0.66796875
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 8221
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 1
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = -1.1279296875
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 22
+      phi = -2.95703125
+      pt = 4.3125
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 414534
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 2
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = 1.609375
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 130
+      phi = 0.130859375
+      pt = 0.96337890625
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 180643
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 1
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = 0.2230224609375
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 22
+      phi = 0.98779296875
+      pt = 0.70458984375
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 28893
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 5
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = -1.8798828125
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 130
+      phi = -3.0546875
+      pt = 0.748046875
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 270
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 1
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = 0.2230224609375
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 22
+      phi = 0.98779296875
+      pt = 0.62255859375
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 77216
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 3
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = 1.6962890625
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 130
+      phi = 0.654296875
+      pt = 0.888671875
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 1
+Event           = 245323
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 1
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = -0.217529296875
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 130
+      phi = 2.138671875
+      pt = 2.23046875
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+--------------------------------------------------
+Run             = 352565
+LuminosityBlock = 2
+Event           = 1004170
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker" (type: "vector<Run3ScoutingMuon>"), size = 1
+
+    Object #0
+      charge = -1
+      ecalIso = 0.0
+      eta = 0.00716420216485858
+      hcalIso = -0.013751591555774212
+      isGlobalMuon = True
+      isTrackerMuon = True
+      m = -5.960464477539063e-08
+      nPixelLayersWithMeasurement = 0
+      nRecoMuonChambers = 10
+      nRecoMuonChambersCSCorDT = 4
+      nRecoMuonExpectedMatchedStations = 4
+      nRecoMuonMatchedRPCLayers = 0
+      nRecoMuonMatchedStations = 4
+      nRecoMuonMatches = 4
+      nStandAloneMuonMatchedStations = 4
+      nTrackerLayersWithMeasurement = 5
+      nValidPixelHits = 0
+      nValidRecoMuonHits = 14
+      nValidStandAloneMuonHits = 14
+      nValidStripHits = 5
+      normalizedChi2 = 1.1953085660934448
+      phi = -2.0909600257873535
+      pt = 31.027360916137695
+      recoMuonRPClayerMask = 0
+      recoMuonStationMask = 15
+      trackIso = 0.0
+      trk_chi2 = 1.7256863117218018
+      trk_dsz = 59.32236862182617
+      trk_dszError = 5.878538131713867
+      trk_dxy = 26.82073211669922
+      trk_dxyError = 0.02401992492377758
+      trk_dxy_dsz_cov = 0.09342718869447708
+      trk_dz = 59.323890686035156
+      trk_dzError = 5.878688812255859
+      trk_eta = 0.00716420216485858
+      trk_hitPattern = <cppyy.gbl.Run3ScoutingHitPatternPOD object at 0x8f0fce0>
+      trk_lambda = 0.007164141163229942
+      trk_lambdaError = 0.089125856757164
+      trk_lambda_dsz_cov = -0.5239223837852478
+      trk_lambda_dxy_cov = -0.001420054817572236
+      trk_lambda_phi_cov = 3.963309427490458e-05
+      trk_ndof = 5.0
+      trk_phi = -2.0909600257873535
+      trk_phiError = 0.0007490339339710772
+      trk_phi_dsz_cov = -0.0026060868985950947
+      trk_phi_dxy_cov = -1.7779157133190893e-05
+      trk_pt = 31.027360916137695
+      trk_qoverp = -0.03222879022359848
+      trk_qoverpError = 0.0010235520312562585
+      trk_qoverp_dsz_cov = -0.0033614295534789562
+      trk_qoverp_dxy_cov = -2.2979200366535224e-05
+      trk_qoverp_lambda_cov = 5.1121172873536125e-05
+      trk_qoverp_phi_cov = 7.466419447155204e-07
+      trk_vx = 23.248315811157227
+      trk_vy = -13.374229431152344
+      trk_vz = 59.32425308227539
+      type = 14
+      vtxIndx = {}
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingPFJet>"), size = 0
+
+  Collection Label: "hltScoutingPFPacker" (type: "vector<Run3ScoutingParticle>"), size = 1
+
+    Object #0
+      dxy = 0.0
+      dxysig = 0.0
+      dz = 0.0
+      dzsig = 0.0
+      eta = -1.1279296875
+      lostInnerHits = 0
+      normchi2 = 999.0
+      pdgId = 22
+      phi = -2.95703125
+      pt = 3.439453125
+      quality = 0
+      relative_trk_vars = False
+      trk_eta = 0.0
+      trk_phi = 0.0
+      trk_pt = 0.0
+      vertex = -1
+
+  Collection Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingPhoton>"), size = 0
+
+  Collection Label: "hltScoutingTrackPacker" (type: "vector<Run3ScoutingTrack>"), size = 0
+
+  Collection Label: "hltScoutingMuonPacker:displacedVtx" (type: "vector<Run3ScoutingVertex>"), size = 0
+
+  Collection Label: "hltScoutingPrimaryVertexPacker:primaryVtx" (type: "vector<Run3ScoutingVertex>"), size = 1
+
+    Object #0
+      chi2 = 0.0
+      isValidVtx = True
+      ndof = 0
+      tracksSize = 0
+      x = 0.1749267578125
+      xError = 0.01557159423828125
+      y = -0.1812744140625
+      yError = 0.014068603515625
+      z = -0.0101776123046875
+      zError = 5.1328125
+--------------------------------------------------
+==============================
+Events processed = 10
