@@ -7,6 +7,35 @@ import ROOT
 
 from DataFormats.FWLite import Runs, Events, Handle
 
+def getScoutingProductsList(key):
+    '''Returns list of tuples (type, label) for EDM Scouting collections
+       - 'key' must be "Scouting" (data formats before Run 3), or "Run3Scouting"
+    '''
+    if key == 'Scouting':
+        return [
+            ('vector<ScoutingCaloJet>', 'hltScoutingCaloPacker'),
+            ('vector<ScoutingElectron>', 'hltScoutingEgammaPacker'),
+            ('vector<ScoutingMuon>', 'hltScoutingMuonPackerCalo'),
+            ('vector<ScoutingPFJet>', 'hltScoutingPFPacker'),
+            ('vector<ScoutingParticle>', 'hltScoutingPFPacker'),
+            ('vector<ScoutingPhoton>', 'hltScoutingEgammaPacker'),
+            ('vector<ScoutingTrack>', 'hltScoutingTrackPacker'),
+            ('vector<ScoutingVertex>', 'hltScoutingPrimaryVertexPacker:primaryVtx'),
+        ]
+    elif key == 'Run3Scouting':
+        return [
+            ('vector<Run3ScoutingElectron>', 'hltScoutingEgammaPacker'),
+            ('vector<Run3ScoutingMuon>', 'hltScoutingMuonPacker'),
+            ('vector<Run3ScoutingPFJet>', 'hltScoutingPFPacker'),
+            ('vector<Run3ScoutingParticle>', 'hltScoutingPFPacker'),
+            ('vector<Run3ScoutingPhoton>', 'hltScoutingEgammaPacker'),
+            ('vector<Run3ScoutingTrack>', 'hltScoutingTrackPacker'),
+            ('vector<Run3ScoutingVertex>', 'hltScoutingMuonPacker:displacedVtx'),
+            ('vector<Run3ScoutingVertex>', 'hltScoutingPrimaryVertexPacker:primaryVtx')
+        ]
+    else:
+        raise RuntimeError(f'getScoutingProductsList -- invalid key (must be "Scouting", "Run3Scouting"): "{key}"')
+
 def printScoutingVar(name, value):
     '''Print content of data member of Scouting object
     '''
@@ -60,7 +89,7 @@ def printScoutingProduct(product_label, product_type, product, verbosity):
             varValue = getattr(obj, varName)()
             printScoutingVar(varName, varValue)
 
-def analyseEvent(event, verbosity=0):
+def analyseEvent(event, productList, verbosity = -1):
     '''Function to analyse a single EDM Event
     '''
     if verbosity != 0:
@@ -69,26 +98,11 @@ def analyseEvent(event, verbosity=0):
         print(f'LuminosityBlock = {event.eventAuxiliary().luminosityBlock()}')
         print(f'Event           = {event.eventAuxiliary().event()}')
 
-    productList = [
-        # type, label
-        ("double", "hltScoutingPFPacker:pfMetPhi"),
-        ("double", "hltScoutingPFPacker:pfMetPt"),
-        ("double", "hltScoutingPFPacker:rho"),
-
-        ("vector<Run3ScoutingElectron>", "hltScoutingEgammaPacker"),
-        ("vector<Run3ScoutingMuon>", "hltScoutingMuonPacker"),
-        ("vector<Run3ScoutingPFJet>", "hltScoutingPFPacker"),
-        ("vector<Run3ScoutingParticle>", "hltScoutingPFPacker"),
-        ("vector<Run3ScoutingPhoton>", "hltScoutingEgammaPacker"),
-        ("vector<Run3ScoutingTrack>", "hltScoutingTrackPacker"),
-        ("vector<Run3ScoutingVertex>", "hltScoutingMuonPacker:displacedVtx"),
-        ("vector<Run3ScoutingVertex>", "hltScoutingPrimaryVertexPacker:primaryVtx"),
-    ]
-
     for productType, productLabel in productList:
         productHandle = Handle(productType)
         event.getByLabel(productLabel, productHandle)
-        printScoutingProduct(productLabel, productType, productHandle.product(), verbosity)
+        if productHandle.isValid():
+            printScoutingProduct(productLabel, productType, productHandle.product(), verbosity)
 
     if verbosity != 0:
         print('-'*50)
@@ -110,19 +124,25 @@ def getInputFiles(inputList):
 ###
 if __name__ == '__main__':
     ## args
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description = 'FWLite script to print to stdout content of Scouting collections in EDM files.',
+        formatter_class = argparse.ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument('-i', '--inputs', dest='inputs', required=True, nargs='+', default=None,
-                        help='list of EDM files in ROOT format')
+                        help='List of EDM files in ROOT format')
 
     parser.add_argument('-s', '--skipEvents', dest='skipEvents', action='store', type=int, default=0,
-                        help='index of first event to be processed (inclusive)')
+                        help='Index of first event to be processed (inclusive)')
 
     parser.add_argument('-n', '--maxEvents', dest='maxEvents', action='store', type=int, default=-1,
-                        help='maximum number of events to be processed (inclusive)')
+                        help='Maximum number of events to be processed (inclusive)')
+
+    parser.add_argument('-k', '--key', dest='key', action='store', type=str, choices=['Scouting', 'Run3Scouting'], default='Scouting',
+                        help='Keyword to select Scouting DataFormats (must be "Scouting", or "Run3Scouting")')
 
     parser.add_argument('-v', '--verbosity', dest='verbosity', action='store', type=int, default=-1,
-                        help='level of verbosity')
+                        help='Level of verbosity')
 
     opts, opts_unknown = parser.parse_known_args()
 
@@ -138,25 +158,25 @@ if __name__ == '__main__':
         raise RuntimeError(f'{log_prx} empty list of input files [-i]')
 
     ## Event Loop
-    nEvtProcessed = 0
+    nEvtRead, nEvtProcessed = 0, 0
+    skipEvents = max(0, opts.skipEvents)
+
+    scoutingProductsList = getScoutingProductsList(opts.key)
 
     for input_file in inputFiles:
         try:
             events = Events(input_file)
+            for event in events:
+                nEvtRead += 1
+                if (nEvtRead <= skipEvents) or ((opts.maxEvents >= 0) and (nEvtProcessed >= opts.maxEvents)):
+                    continue
+
+                analyseEvent(event = event, productList = scoutingProductsList, verbosity = opts.verbosity)
+                nEvtProcessed += 1
+
         except:
-            print(f'{log_prx} target TFile does not contain a TTree named "Events" (file will be ignored) [-t]: {input_file}')
+            print(f'{log_prx} failed to analyse TFile (file will be ignored): {input_file}')
             continue
-
-        skipEvents = 0 if opts.skipEvents < 0 else opts.skipEvents
-
-        eventIndex = -1
-        for event in events:
-            eventIndex += 1
-            if (eventIndex < skipEvents) or ((opts.maxEvents >= 0) and (nEvtProcessed >= opts.maxEvents)):
-                continue
-
-            analyseEvent(event = event, verbosity = opts.verbosity)
-            nEvtProcessed += 1
 
     if opts.verbosity != 0:
         print(f'Events processed = {nEvtProcessed}')

@@ -3,15 +3,6 @@ Run             = 1
 LuminosityBlock = 83
 Event           = 29083
 
-  Product Label: "hltScoutingPFPacker:pfMetPhi" (type: "double")
-      value = -1.9017640153896107
-
-  Product Label: "hltScoutingPFPacker:pfMetPt" (type: "double")
-      value = 247.3990503569245
-
-  Product Label: "hltScoutingPFPacker:rho" (type: "double")
-      value = 7.3519537820403125
-
   Product Label: "hltScoutingEgammaPacker" (type: "vector<Run3ScoutingElectron>"), size = 1
 
     Object #0

@@ -19,8 +19,11 @@ parser.add_argument('-s', '--nStreams', type = int, help = 'Number of EDM stream
 parser.add_argument('-i', '--inputFiles', nargs = '+', help = 'List of EDM input files',
                     default = ['/store/mc/Run3Summer22DR/GluGlutoHHto2B2Tau_kl-5p00_kt-1p00_c2-0p00_TuneCP5_13p6TeV_powheg-pythia8/GEN-SIM-RAW/124X_mcRun3_2022_realistic_v12-v2/2550000/bbfb86f3-4073-47e3-967b-059aa6b904ad.root'])
 
-parser.add_argument('-n', '--maxEvents', type = int, help = 'Number of input events',
+parser.add_argument('-n', '--maxEvents', type = int, help = 'Max number of input events to be processed',
                     default = 10)
+
+parser.add_argument('--skipEvents', type = int, help = 'Number of input events to skipped',
+                    default = 0)
 
 parser.add_argument('-o', '--outputFile', type = str, help = 'Path to output EDM file in ROOT format',
                     default = 'testDataFormatsScoutingRun3_output.root')
@@ -45,7 +48,8 @@ process.maxEvents.input = args.maxEvents
 
 # Source (EDM input)
 process.source = cms.Source('PoolSource',
-    fileNames = cms.untracked.vstring(args.inputFiles)
+    fileNames = cms.untracked.vstring(args.inputFiles),
+    skipEvents = cms.untracked.uint32(args.skipEvents)
 )
 
 # MessageLogger (Service)
@@ -57,7 +61,7 @@ process.testOutput = cms.OutputModule('PoolOutputModule',
     fileName = cms.untracked.string( args.outputFile ),
     outputCommands = cms.untracked.vstring(
         'drop *',
-        'keep *_hltScouting*_*_*',
+        'keep *Scouting*_*_*_*',
     )
 )
 
