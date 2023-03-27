@@ -47,8 +47,8 @@ DAClusterizerInZ_vect::DAClusterizerInZ_vect(const edm::ParameterSet& conf) {
   block_size_ = conf.getParameter<unsigned int>("block_size");
   overlap_frac_ = conf.getParameter<double>("overlap_frac");
 
-#ifdef DEBUG
-  std::cout << "DAClusterizerinZ_vect: mintrkweight = " << mintrkweight << std::endl;
+  //#ifdef DEBUG
+  std::cout << "DAClusterizerinZ_vect: mintrkweight = " << mintrkweight_ << std::endl;
   std::cout << "DAClusterizerinZ_vect: uniquetrkweight = " << uniquetrkweight_ << std::endl;
   std::cout << "DAClusterizerInZ_vect: uniquetrkminp = " << uniquetrkminp_ << std::endl;
   std::cout << "DAClusterizerinZ_vect: zmerge = " << zmerge_ << std::endl;
@@ -63,8 +63,12 @@ DAClusterizerInZ_vect::DAClusterizerInZ_vect(const edm::ParameterSet& conf) {
   std::cout << "DAClusterizerinZ_vect: convergence mode = " << convergence_mode_ << std::endl;
   std::cout << "DAClusterizerinZ_vect: delta_highT = " << delta_highT_ << std::endl;
   std::cout << "DAClusterizerinZ_vect: delta_lowT = " << delta_lowT_ << std::endl;
-  std::cout << "DAClusterizerinZ_vect: DEBUGLEVEL " << DEBUGLEVEL << std::endl;
-#endif
+
+  std::cout << "DAClusterizerinZ_vect: run in blocks = " << runInBlocks_ << std::endl;
+  std::cout << "DAClusterizerinZ_vect: block_size = " << block_size_ << std::endl;
+  std::cout << "DAClusterizerinZ_vect: overlap_fraction = " << overlap_frac_ << std::endl;
+  //  std::cout << "DAClusterizerinZ_vect: DEBUGLEVEL " << DEBUGLEVEL << std::endl;
+  //#endif
 
   if (convergence_mode_ > 1) {
     edm::LogWarning("DAClusterizerinZ_vect")
@@ -763,11 +767,11 @@ bool DAClusterizerInZ_vect::split(const double beta, track_t& tks, vertex_t& y, 
   return split;
 }
 
-vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::TransientTrack>& tracks) const {
+vector<TransientVertex> DAClusterizerInZ_vect::vertices_no_blocks(const vector<reco::TransientTrack>& tracks) const {
   track_t&& tks = fill(tracks);
   tks.extractRaw();
 
-  unsigned int nt = tks.getSize();
+  //unsigned int nt = tks.getSize(); FIXME unused variable
   double rho0 = 0.0;  // start with no outlier rejection
 
   vector<TransientVertex> clusters;
@@ -807,7 +811,7 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::Trans
   verify(y, tks);
 
   if (DEBUGLEVEL > 0) {
-    std::cout << "DAClusterizerInZ_vect::vertices :"
+    std::cout << "DAClusterizerInZ_vect::vertices_no_blocks :"
               << "last round of splitting" << std::endl;
   }
 #endif
@@ -835,7 +839,7 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::Trans
 #ifdef DEBUG
   verify(y, tks);
   if (DEBUGLEVEL > 0) {
-    std::cout << "DAClusterizerInZ_vect::vertices :"
+    std::cout << "DAClusterizerInZ_vect::vertices_no_blocks :"
               << "turning on outlier rejection at T=" << 1 / beta << std::endl;
   }
 #endif
@@ -853,7 +857,7 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::Trans
 #ifdef DEBUG
   verify(y, tks);
   if (DEBUGLEVEL > 0) {
-    std::cout << "DAClusterizerInZ_vect::vertices :"
+    std::cout << "DAClusterizerInZ_vect::vertices_no_blocks :"
               << "merging with outlier rejection at T=" << 1 / beta << std::endl;
   }
   if (DEBUGLEVEL > 2)
@@ -869,7 +873,7 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::Trans
 #ifdef DEBUG
   verify(y, tks);
   if (DEBUGLEVEL > 0) {
-    std::cout << "DAClusterizerInZ_vect::vertices :"
+    std::cout << "DAClusterizerInZ_vect::vertices_no_blocks :"
               << "after merging with outlier rejection at T=" << 1 / beta << std::endl;
   }
   if (DEBUGLEVEL > 2)
@@ -898,7 +902,7 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::Trans
 #ifdef DEBUG
   verify(y, tks);
   if (DEBUGLEVEL > 0) {
-    std::cout << "DAClusterizerInZ_vect::vertices :"
+    std::cout << "DAClusterizerInZ_vect::vertices_no_blocks :"
               << "last cooling T=" << 1 / beta << std::endl;
   }
 #endif
@@ -912,69 +916,19 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::Trans
 #ifdef DEBUG
   verify(y, tks);
   if (DEBUGLEVEL > 0) {
-    std::cout << "DAClusterizerInZ_vect::vertices :"
+    std::cout << "DAClusterizerInZ_vect::vertices_no_blocks :"
               << "stop cooling at T=" << 1 / beta << std::endl;
   }
   if (DEBUGLEVEL > 2)
     dump(beta, y, tks, 2, rho0);
 #endif
 
-  // select significant tracks and use a TransientVertex as a container
-
-  set_vtx_range(beta, tks, y);
-  const unsigned int nv = y.getSize();
-  for (unsigned int k = 0; k < nv; k++) {
-    if (edm::isNotFinite(y.rho[k]) || edm::isNotFinite(y.zvtx[k])) {
-      y.rho[k] = 0;
-      y.zvtx[k] = 0;
-    }
-  }
-
-  const auto z_sum_init = rho0 * local_exp(-beta * dzCutOff_ * dzCutOff_);
-  std::vector<std::vector<unsigned int>> vtx_track_indices(nv);
-  for (unsigned int i = 0; i < nt; i++) {
-    const auto kmin = tks.kmin[i];
-    const auto kmax = tks.kmax[i];
-    for (auto k = kmin; k < kmax; k++) {
-      y.exp_arg[k] = -beta * Eik(tks.zpca[i], y.zvtx[k], tks.dz2[i]);
-    }
-
-    local_exp_list_range(y.exp_arg, y.exp, kmin, kmax);
-
-    tks.sum_Z[i] = z_sum_init;
-    for (auto k = kmin; k < kmax; k++) {
-      tks.sum_Z[i] += y.rho[k] * y.exp[k];
-    }
-    const double invZ = tks.sum_Z[i] > 1e-100 ? 1. / tks.sum_Z[i] : 0.0;
-
-    for (auto k = kmin; k < kmax; k++) {
-      double p = y.rho[k] * y.exp[k] * invZ;
-      if (p > mintrkweight_) {
-        // assign  track i -> vertex k (hard, mintrkweight should be >= 0.5 here
-        vtx_track_indices[k].push_back(i);
-        break;
-      }
-    }
-
-  }  // track loop
-
-  GlobalError dummyError(0.01, 0, 0.01, 0., 0., 0.01);
-  for (unsigned int k = 0; k < nv; k++) {
-    if (!vtx_track_indices[k].empty()) {
-      GlobalPoint pos(0, 0, y.zvtx[k]);
-      vector<reco::TransientTrack> vertexTracks;
-      for (auto i : vtx_track_indices[k]) {
-        vertexTracks.push_back(*(tks.tt[i]));
-      }
-      TransientVertex v(pos, dummyError, vertexTracks, 0);
-      clusters.push_back(v);
-    }
-  }
-
-  return clusters;
+  // assign tracks and vill into transient vertices
+  return fill_vertices(beta, rho0, tks, y);
 }
 
 vector<TransientVertex> DAClusterizerInZ_vect::vertices_in_blocks(const vector<reco::TransientTrack>& tracks) const {
+  std::cout << "I'm totally blocked" << std::endl;
   vector<reco::TransientTrack> sorted_tracks;
   vector<pair<float, float>> vertices_tot;  // z, rho for each vertex
   for (unsigned int i = 0; i < tracks.size(); i++) {
@@ -1252,19 +1206,112 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices_in_blocks(const vector<r
 #endif
 
   vector<TransientVertex> clusters;
+  if (nv == 0) {
+    return clusters;
+  }
 
   GlobalError dummyError(0.01, 0, 0.01, 0., 0., 0.01);
+  vector<reco::TransientTrack> vertexTracks;  // moved here from inside the following loop
+
   for (unsigned int k = 0; k < nv; k++) {
     if (!vtx_track_indices[k].empty()) {
-      GlobalPoint pos(0, 0, vertices_tot[k].first);
-      vector<reco::TransientTrack> vertexTracks;
+      // GlobalPoint pos(0, 0, vertices_tot[k].first); //moved
+      //vector<reco::TransientTrack> vertexTracks; // moved outside of the loop
       for (auto i : vtx_track_indices[k]) {
         vertexTracks.push_back(*(tracks_tot.tt[i]));
 #ifdef DEBUG
-        std::cout << y.zvtx[k] << "," << (*tks.tt[i]).stateAtBeamLine().trackStateAtPCA().position().z() << std::endl;
+        std::cout << y.zvtx[k] << "," << (*tks.tt[i]).stateAtBeamLine().trackStateAtPCA().position().z()
+                  << std::endl;  // do you mean vertices_tot[k].first instead of y.zvtx[k] ?
 #endif
       }
+    }
+
+    // implement what clusterize() did before : merge left-to-right if distance <2*vertexSize_
+    if ((k + 1 == nv) || (abs(vertices_tot[k + 1].first - vertices_tot[k].first) > (2 * vertexSize_))) {
+      GlobalPoint pos(0, 0, vertices_tot[k].first);  // only usable with subsequent fit
       TransientVertex v(pos, dummyError, vertexTracks, 0);
+      clusters.push_back(v);
+      vertexTracks.clear();
+    }
+  }
+
+  return clusters;
+}  // end of vertices_in_blocks
+
+vector<TransientVertex> DAClusterizerInZ_vect::fill_vertices(double beta, double rho0, track_t& tks, vertex_t& y) const {
+  // select significant tracks and use a TransientVertex as a container
+
+  set_vtx_range(beta, tks, y);
+  const unsigned int nv = y.getSize();
+  for (unsigned int k = 0; k < nv; k++) {
+    if (edm::isNotFinite(y.rho[k]) || edm::isNotFinite(y.zvtx[k])) {
+      y.rho[k] = 0;
+      y.zvtx[k] = 0;
+    }
+  }
+
+  // ensure consistent assignment probabillities and make a hard assignment
+  const unsigned int nt = tks.getSize();
+  const auto z_sum_init = rho0 * local_exp(-beta * dzCutOff_ * dzCutOff_);
+  std::vector<std::vector<unsigned int>> vtx_track_indices(nv);
+  std::vector<std::vector<float>> vtx_track_weights(nv);
+  for (unsigned int i = 0; i < nt; i++) {
+    const auto kmin = tks.kmin[i];
+    const auto kmax = tks.kmax[i];
+    for (auto k = kmin; k < kmax; k++) {
+      y.exp_arg[k] = -beta * Eik(tks.zpca[i], y.zvtx[k], tks.dz2[i]);
+    }
+
+    local_exp_list_range(y.exp_arg, y.exp, kmin, kmax);
+
+    tks.sum_Z[i] = z_sum_init;
+    for (auto k = kmin; k < kmax; k++) {
+      tks.sum_Z[i] += y.rho[k] * y.exp[k];
+    }
+    const double invZ = tks.sum_Z[i] > 1e-100 ? 1. / tks.sum_Z[i] : 0.0;
+
+    for (auto k = kmin; k < kmax; k++) {
+      double p = y.rho[k] * y.exp[k] * invZ;
+      if (p > mintrkweight_) {
+        // assign  track i -> vertex k (hard, mintrkweight should be >= 0.5 here
+        vtx_track_indices[k].push_back(i);
+        vtx_track_weights[k].push_back(p);
+        break;
+      }
+    }
+  }
+
+  // fill transient vertices
+  vector<TransientVertex> clusters;
+  for (unsigned int k = 0; k < nv; k++) {
+    double sump = 0;
+    double sumw = 0;
+    double sumwp = 0;
+    if (!vtx_track_indices[k].empty()) {
+      vector<reco::TransientTrack> vertexTracks;
+      TransientVertex::TransientTrackToFloatMap trkWeightMap;
+      unsigned int j = 0;
+      for (auto i : vtx_track_indices[k]) {
+        auto p = vtx_track_weights[k][j];
+        vertexTracks.push_back(*(tks.tt[i]));
+        trkWeightMap[vertexTracks[j]] = p;
+        auto w = p * tks.dz2[i];
+        sump += p;
+        sumw += w;
+        sumwp += w * p;
+        j++;
+      }
+      float zerror_squared = 1.;  //
+      if ((sumw > 0) && (sumwp > 0)) {
+        zerror_squared = sumwp / (sumw * sumw);
+      }
+      const auto& bs = vertexTracks[0].stateAtBeamLine().beamSpot();
+      GlobalPoint pos(bs.x(y.zvtx[k]), bs.y(y.zvtx[k]), y.zvtx[k]);
+      const float xerror_squared = pow(bs.BeamWidthX(), 2);
+      const float yerror_squared = pow(bs.BeamWidthY(), 2);
+      GlobalError err(xerror_squared, 0, yerror_squared, 0., 0., zerror_squared);
+      TransientVertex v(pos, err, vertexTracks, 0, 2 * sump - 3.);
+      v.weightMap(trkWeightMap);
       clusters.push_back(v);
     }
   }
@@ -1272,15 +1319,17 @@ vector<TransientVertex> DAClusterizerInZ_vect::vertices_in_blocks(const vector<r
   return clusters;
 }
 
-vector<vector<reco::TransientTrack>> DAClusterizerInZ_vect::clusterize(
+vector<TransientVertex> DAClusterizerInZ_vect::vertices(const vector<reco::TransientTrack>& tracks) const {
+  if (runInBlocks_ and (block_size_ < tracks.size()))  //doesn't bother if low number of tracks
+    return vertices_in_blocks(tracks);
+  else
+    return vertices_no_blocks(tracks);
+}
+
+vector<vector<reco::TransientTrack>> DAClusterizerInZ_vect::clusterize(  // OBSOLETE
     const vector<reco::TransientTrack>& tracks) const {
   vector<vector<reco::TransientTrack>> clusters;
-
-  vector<TransientVertex> pv;
-  if (runInBlocks_ and (block_size_ < tracks.size()))  //doesn't bother if low number of tracks
-    pv = vertices_in_blocks(tracks);
-  else
-    pv = vertices(tracks);
+  vector<TransientVertex>&& pv = vertices(tracks);
 
 #ifdef DEBUG
   if (DEBUGLEVEL > 0) {
