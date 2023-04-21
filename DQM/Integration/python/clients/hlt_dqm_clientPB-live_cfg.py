@@ -4,9 +4,7 @@ import sys
 from Configuration.Eras.Era_Run3_cff import Run3
 process = cms.Process("HARVESTING", Run3)
 
-unitTest = False
-if 'unitTest=True' in sys.argv:
-	unitTest=True
+unitTest = 'unitTest=True' in sys.argv
 
 #----------------------------
 #### Histograms Source
@@ -41,16 +39,10 @@ if process.dqmRunConfig.type.value() == "playback":
 # FastTimerService client
 process.load('HLTrigger.Timer.fastTimerServiceClient_cfi')
 process.fastTimerServiceClient.dqmPath = "HLT/TimerService"
-# timing VS lumi
+# timing VS lumi/pileup
 process.fastTimerServiceClient.doPlotsVsOnlineLumi = True
-process.fastTimerServiceClient.doPlotsVsPixelLumi = False
-process.fastTimerServiceClient.onlineLumiME = dict(
-    folder = 'HLT/LumiMonitoring',
-    name   = 'lumiVsLS',
-    nbins  = 5000,
-    xmin   = 0,
-    xmax   = 20000
-)
+#process.fastTimerServiceClient.doPlotsVsPixelLumi = True
+process.fastTimerServiceClient.doPlotsVsPU = True
 
 # ThroughputService client
 process.load("HLTrigger.Timer.throughputServiceClient_cfi")
