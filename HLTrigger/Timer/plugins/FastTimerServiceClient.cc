@@ -37,9 +37,9 @@ public:
   explicit FastTimerServiceClient(edm::ParameterSet const&);
   ~FastTimerServiceClient() override = default;
 
+  static void fillHistoPSetDescription(edm::ParameterSetDescription& pset, std::string const& folder, std::string const& name, int const nbins, double const xmin, double const xmax);
+
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-  static void fillLumiMePSetDescription(edm::ParameterSetDescription& pset);
-  static void fillPUMePSetDescription(edm::ParameterSetDescription& pset);
 
 private:
   void dqmEndLuminosityBlock(DQMStore::IBooker& booker,
@@ -428,32 +428,23 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
 
   // if xmin > xmax, use maxRanges to adjust xmax
   if (xmin > xmax) {
-    // max of 'x' values (e.g. luminosity, pileup)
-    // if v_lumi.empty, the profile is created but not filled
-    // (in this case, set lumi_max to xmin)
-    auto const lumi_max = v_lumi.empty() ? xmin : *(std::max_element(v_lumi.begin(), v_lumi.end()));
-
-    auto const maxLumiXMin = std::max(xmin, lumi_max);
-
     for (size_t idx = 0; idx < maxRanges.size(); ++idx) {
       if (edm::isNotFinite(maxRanges[idx]))
         continue;
-
-      // find smallest element of maxRanges which is greater than max(xmin, lumi_max)
-      if (maxRanges[idx] > maxLumiXMin and (xmin > xmax or maxRanges[idx] < xmax)) {
+      // find smallest element of maxRanges which is greater than xmin
+      if (maxRanges[idx] > xmin and (xmin > xmax or maxRanges[idx] < xmax)) {
         xmax = maxRanges[idx];
       }
     }
 
     // if still xmin > xmax, force xmax >= xmin (and issue warning)
     if (xmin > xmax) {
-      xmax = maxLumiXMin * 1.1;
+      xmax = xmin + 0.1;
       edm::LogWarning("FastTimerServiceClient")
           << "current_path = \"" << current_path << "\", suffix = \"" << suffix << "\", pset.xmin = " << pset.xmin
-          << ", pset.max = " << pset.xmax << ", max-xvalue = " << lumi_max
-          << "\n    -> no element of maxRanges is empty, or none of its elements is greater than xmin and max-value: "
-             "setting xmin to "
-          << xmin << " and xmax to " << xmax;
+          << ", pset.max = " << pset.xmax << ", max-xvalue = " << -1 /*lumi_max*/
+          << "\n    -> maxRanges (size = " << maxRanges.size() << ") is empty, or none of its elements is "
+          << "greater than xmin and max-value: setting xmin to " << xmin << " and xmax to " << xmax;
     }
   }
 
@@ -472,12 +463,14 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
 
     MonitorElement* meVsLumi = getter.get(current_path + "/" + label + "_" + suffix);
     if (meVsLumi) {
+
+edm::LogPrint("AA") << "XXX [" << current_path + "/" + label + "_" + suffix << "] " << meVsLumi->getTProfile()->GetXaxis()->GetXmin() << " " << xmin << " " << meVsLumi->getTProfile()->GetXaxis()->GetXmax() << " " << xmax;
+
       assert(meVsLumi->getTProfile()->GetXaxis()->GetXmin() == xmin);
       assert(meVsLumi->getTProfile()->GetXaxis()->GetXmax() == xmax);
       meVsLumi->Reset();  // do I have to do it ?!?!?
     } else {
       meVsLumi = booker.bookProfile(label + "_" + suffix, label + "_" + suffix, nbins, xmin, xmax, ymin, ymax);
-      //    TProfile* meVsLumi_p = meVsLumi->getTProfile();
       meVsLumi->getTProfile()->GetXaxis()->SetTitle(xtitle.c_str());
       meVsLumi->getTProfile()->GetYaxis()->SetTitle(ytitle.c_str());
     }
@@ -490,29 +483,21 @@ void FastTimerServiceClient::fillPlotsVsLumi(DQMStore::IBooker& booker,
   }
 }
 
-void FastTimerServiceClient::fillLumiMePSetDescription(edm::ParameterSetDescription& pset) {
-  pset.add<std::string>("folder", "HLT/LumiMonitoring");
-  pset.add<std::string>("name", "lumiVsLS");
-  pset.add<int>("nbins", 3e3);
-  pset.add<double>("xmin", 0.);
-  pset.add<double>("xmax", -1.);
-}
-
-void FastTimerServiceClient::fillPUMePSetDescription(edm::ParameterSetDescription& pset) {
-  pset.add<std::string>("folder", "HLT/LumiMonitoring");
-  pset.add<std::string>("name", "puVsLS");
-  pset.add<int>("nbins", 260);
-  pset.add<double>("xmin", 0.);
-  pset.add<double>("xmax", -1.);
+void FastTimerServiceClient::fillHistoPSetDescription(edm::ParameterSetDescription& pset, std::string const& folder, std::string const& name, int const nbins, double const xmin, double const xmax) {
+  pset.add<std::string>("folder", folder);
+  pset.add<std::string>("name", name);
+  pset.add<int>("nbins", nbins);
+  pset.add<double>("xmin", xmin);
+  pset.add<double>("xmax", xmax);
 }
 
 MEPSet FastTimerServiceClient::getHistoPSet(const edm::ParameterSet& pset) {
   return MEPSet{
-      pset.getParameter<std::string>("folder"),
-      pset.getParameter<std::string>("name"),
-      pset.getParameter<int>("nbins"),
-      pset.getParameter<double>("xmin"),
-      pset.getParameter<double>("xmax"),
+    pset.getParameter<std::string>("folder"),
+    pset.getParameter<std::string>("name"),
+    pset.getParameter<int>("nbins"),
+    pset.getParameter<double>("xmin"),
+    pset.getParameter<double>("xmax"),
   };
 }
 
@@ -533,21 +518,21 @@ void FastTimerServiceClient::fillDescriptions(edm::ConfigurationDescriptions& de
   desc.add<bool>("doPlotsVsPU", true)->setComment("Produce DQM profiles as function of pileup");
 
   edm::ParameterSetDescription onlineLumiMEPSet;
-  fillLumiMePSetDescription(onlineLumiMEPSet);
+  fillHistoPSetDescription(onlineLumiMEPSet, "HLT/LumiMonitoring", "lumiVsLS", 3e3, 0., -1.);
   desc.add<edm::ParameterSetDescription>("onlineLumiME", onlineLumiMEPSet)
       ->setComment(
           "Input MonitorElement and binning for values of instantaneous luminosity measured online"
           " (units: E30 Hz cm^{-2})");
 
   edm::ParameterSetDescription pixelLumiMEPSet;
-  fillLumiMePSetDescription(pixelLumiMEPSet);
+  fillHistoPSetDescription(pixelLumiMEPSet, "HLT/LumiMonitoring", "pixelLumiVsLS", 3e3, 0., -1.);
   desc.add<edm::ParameterSetDescription>("pixelLumiME", pixelLumiMEPSet)
       ->setComment(
           "Input MonitorElement and binning for values of per-bunch instantaneous luminosity estimated from"
           " number of reconstructed SiPixel clusters (units: E30 Hz cm^{-2})");
 
   edm::ParameterSetDescription puMEPSet;
-  fillPUMePSetDescription(puMEPSet);
+  fillHistoPSetDescription(puMEPSet, "HLT/LumiMonitoring", "puVsLS", 260, 0., -1.);
   desc.add<edm::ParameterSetDescription>("puME", puMEPSet)
       ->setComment("Input MonitorElement and binning for values of pileup");
 

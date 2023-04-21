@@ -238,7 +238,7 @@ void LumiMonitor::dqmAnalyze(edm::Event const& event,
     } else {
       pixel_lumi = -1.;
     }
-
+edm::LogPrint("VVV") << "PIXEL " << pixel_lumi;
     histograms.numberOfPixelClustersVsLS->Fill(ls, pixel_clusters);
     histograms.numberOfPixelClustersVsLumi->Fill(online_lumi, pixel_clusters);
     histograms.pixelLumiVsLS->Fill(ls, pixel_lumi);
@@ -279,6 +279,18 @@ void LumiMonitor::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   edm::ParameterSetDescription lsPSet;
   fillHistoLSPSetDescription(lsPSet, 2500);
   histoPSet.add<edm::ParameterSetDescription>("lsPSet", lsPSet);
+
+  edm::ParameterSetDescription puPSet;
+  fillHistoPSetDescription(puPSet, 130, 0, 130);
+  histoPSet.addOptional<edm::ParameterSetDescription>("puPSet", puPSet);
+
+  edm::ParameterSetDescription pixellumiPSet;
+  fillHistoPSetDescription(pixellumiPSet, 300, 0, 3);
+  histoPSet.addOptional<edm::ParameterSetDescription>("pixellumiPSet", pixellumiPSet);
+
+  edm::ParameterSetDescription pixelClusterPSet;
+  fillHistoPSetDescription(pixelClusterPSet, 200, -0.5, 19999.5);
+  histoPSet.addOptional("pixelClusterPSet", pixelClusterPSet);
 
   desc.add<edm::ParameterSetDescription>("histoPSet", histoPSet);
 
