@@ -11,76 +11,81 @@ import RecoTracker.MkFit.mkFitOutputConverter_cfi as mkFitOutputConverter_cfi
 import RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi as SiStripRecHitConverter_cfi
 
 def customizeHLTIter0ToMkFit(process):
-    # mkFit needs all clusters, so switch off the on-demand mode
-    process.hltSiStripRawToClustersFacility.onDemand = False
 
-    process.hltSiStripRecHits = SiStripRecHitConverter_cfi.siStripMatchedRecHits.clone(
-        ClusterProducer = "hltSiStripRawToClustersFacility",
-        StripCPE = "hltESPStripCPEfromTrackAngle:hltESPStripCPEfromTrackAngle",
-        doMatching = False,
-    )
+    try:
+        # mkFit needs all clusters, so switch off the on-demand mode
+        process.hltSiStripRawToClustersFacility.onDemand = False
 
-    # Use fourth hit if one is available
-    process.hltIter0PFLowPixelSeedsFromPixelTracks.includeFourthHit = cms.bool(True)
+        process.hltSiStripRecHits = SiStripRecHitConverter_cfi.siStripMatchedRecHits.clone(
+            ClusterProducer = "hltSiStripRawToClustersFacility",
+            StripCPE = "hltESPStripCPEfromTrackAngle:hltESPStripCPEfromTrackAngle",
+            doMatching = False,
+        )
 
-    process.hltMkFitGeometryESProducer = mkFitGeometryESProducer_cfi.mkFitGeometryESProducer.clone()
+        # Use fourth hit if one is available
+        process.hltIter0PFLowPixelSeedsFromPixelTracks.includeFourthHit = cms.bool(True)
 
-    process.hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits = mkFitSiPixelHitConverter_cfi.mkFitSiPixelHitConverter.clone(
-        hits = "hltSiPixelRecHits",
-        ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
-    )
-    process.hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits = mkFitSiStripHitConverter_cfi.mkFitSiStripHitConverter.clone(
-        rphiHits = "hltSiStripRecHits:rphiRecHit",
-        stereoHits = "hltSiStripRecHits:stereoRecHit",
-        ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
-        minGoodStripCharge = dict(refToPSet_ = 'HLTSiStripClusterChargeCutLoose'),
-    )
-    process.hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits = mkFitEventOfHitsProducer_cfi.mkFitEventOfHitsProducer.clone(
-        beamSpot  = "hltOnlineBeamSpot",
-        pixelHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits",
-        stripHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits",
-    )
-    process.hltIter0PFlowCkfTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter.clone(
-        seeds = "hltIter0PFLowPixelSeedsFromPixelTracks",
-        ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
-    )
-    process.hltIter0PFlowTrackCandidatesMkFitConfig = mkFitIterationConfigESProducer_cfi.mkFitIterationConfigESProducer.clone(
-        ComponentName = 'hltIter0PFlowTrackCandidatesMkFitConfig',
-        config = 'RecoTracker/MkFit/data/mkfit-phase1-initialStep.json',
-    )
-    process.hltIter0PFlowCkfTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
-        pixelHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits",
-        stripHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits",
-        eventOfHits = "hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits",
-        seeds = "hltIter0PFlowCkfTrackCandidatesMkFitSeeds",
-        config = ('', 'hltIter0PFlowTrackCandidatesMkFitConfig'),
-        minGoodStripCharge = dict(refToPSet_ = 'HLTSiStripClusterChargeCutLoose'),
-    )
-    process.hltIter0PFlowCkfTrackCandidates = mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
-        seeds = "hltIter0PFLowPixelSeedsFromPixelTracks",
-        mkFitEventOfHits = "hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits",
-        mkFitPixelHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits",
-        mkFitStripHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits",
-        mkFitSeeds = "hltIter0PFlowCkfTrackCandidatesMkFitSeeds",
-        tracks = "hltIter0PFlowCkfTrackCandidatesMkFit",
-        ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
-        propagatorAlong = ":PropagatorWithMaterialParabolicMf",
-        propagatorOpposite = ":PropagatorWithMaterialParabolicMfOpposite",
-    )
+        process.hltMkFitGeometryESProducer = mkFitGeometryESProducer_cfi.mkFitGeometryESProducer.clone()
 
-    process.HLTDoLocalStripSequence += process.hltSiStripRecHits
+        process.hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits = mkFitSiPixelHitConverter_cfi.mkFitSiPixelHitConverter.clone(
+            hits = "hltSiPixelRecHits",
+            ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
+        )
+        process.hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits = mkFitSiStripHitConverter_cfi.mkFitSiStripHitConverter.clone(
+            rphiHits = "hltSiStripRecHits:rphiRecHit",
+            stereoHits = "hltSiStripRecHits:stereoRecHit",
+            ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
+            minGoodStripCharge = dict(refToPSet_ = 'HLTSiStripClusterChargeCutLoose'),
+        )
+        process.hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits = mkFitEventOfHitsProducer_cfi.mkFitEventOfHitsProducer.clone(
+            beamSpot  = "hltOnlineBeamSpot",
+            pixelHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits",
+            stripHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits",
+        )
+        process.hltIter0PFlowCkfTrackCandidatesMkFitSeeds = mkFitSeedConverter_cfi.mkFitSeedConverter.clone(
+            seeds = "hltIter0PFLowPixelSeedsFromPixelTracks",
+            ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
+        )
+        process.hltIter0PFlowTrackCandidatesMkFitConfig = mkFitIterationConfigESProducer_cfi.mkFitIterationConfigESProducer.clone(
+            ComponentName = 'hltIter0PFlowTrackCandidatesMkFitConfig',
+            config = 'RecoTracker/MkFit/data/mkfit-phase1-initialStep.json',
+        )
+        process.hltIter0PFlowCkfTrackCandidatesMkFit = mkFitProducer_cfi.mkFitProducer.clone(
+            pixelHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits",
+            stripHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits",
+            eventOfHits = "hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits",
+            seeds = "hltIter0PFlowCkfTrackCandidatesMkFitSeeds",
+            config = ('', 'hltIter0PFlowTrackCandidatesMkFitConfig'),
+            minGoodStripCharge = dict(refToPSet_ = 'HLTSiStripClusterChargeCutLoose'),
+        )
+        process.hltIter0PFlowCkfTrackCandidates = mkFitOutputConverter_cfi.mkFitOutputConverter.clone(
+            seeds = "hltIter0PFLowPixelSeedsFromPixelTracks",
+            mkFitEventOfHits = "hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits",
+            mkFitPixelHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits",
+            mkFitStripHits = "hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits",
+            mkFitSeeds = "hltIter0PFlowCkfTrackCandidatesMkFitSeeds",
+            tracks = "hltIter0PFlowCkfTrackCandidatesMkFit",
+            ttrhBuilder = ":hltESPTTRHBWithTrackAngle",
+            propagatorAlong = ":PropagatorWithMaterialParabolicMf",
+            propagatorOpposite = ":PropagatorWithMaterialParabolicMfOpposite",
+        )
 
-    replaceWith = (process.hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits + 
-                   process.hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits + 
-                   process.hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits + 
-                   process.hltIter0PFlowCkfTrackCandidatesMkFitSeeds + 
-                   process.hltIter0PFlowCkfTrackCandidatesMkFit + 
-                   process.hltIter0PFlowCkfTrackCandidates)
+        process.HLTDoLocalStripSequence += process.hltSiStripRecHits
 
-    process.HLTIterativeTrackingIteration0.replace(process.hltIter0PFlowCkfTrackCandidates, replaceWith)
+        replaceWith = (process.hltIter0PFlowCkfTrackCandidatesMkFitSiPixelHits +
+                       process.hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits +
+                       process.hltIter0PFlowCkfTrackCandidatesMkFitEventOfHits +
+                       process.hltIter0PFlowCkfTrackCandidatesMkFitSeeds +
+                       process.hltIter0PFlowCkfTrackCandidatesMkFit +
+                       process.hltIter0PFlowCkfTrackCandidates)
 
-    for path in process.paths_().values():
-      if not path.contains(process.HLTIterativeTrackingIteration0) and path.contains(process.hltIter0PFlowCkfTrackCandidates):
-        path.replace(process.hltIter0PFlowCkfTrackCandidates, replaceWith)
+        process.HLTIterativeTrackingIteration0.replace(process.hltIter0PFlowCkfTrackCandidates, replaceWith)
+
+        for path in process.paths_().values():
+          if not path.contains(process.HLTIterativeTrackingIteration0) and path.contains(process.hltIter0PFlowCkfTrackCandidates):
+            path.replace(process.hltIter0PFlowCkfTrackCandidates, replaceWith)
+
+    except:
+        print('# WARNING: customizeHLTIter0ToMkFit failed - no customisation applied !')
 
     return process
