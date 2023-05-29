@@ -1,16 +1,21 @@
-#ifndef TrackFilterForPVFinding_h
-#define TrackFilterForPVFinding_h
+#ifndef RecoVertex_PrimaryVertexProducer_TrackFilterForPVFinding_h
+#define RecoVertex_PrimaryVertexProducer_TrackFilterForPVFinding_h
 
 /**\class TrackFilterForPVFinding 
  
   Description: track selection for PV finding
 
 */
+#include <vector>
+
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "RecoVertex/PrimaryVertexProducer/interface/TrackFilterForPVFindingBase.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include <vector>
+
+namespace edm {
+  class ParameterSet;
+  class ParameterSetDescription;
+}
 
 class TrackFilterForPVFinding : public TrackFilterForPVFindingBase {
 public:

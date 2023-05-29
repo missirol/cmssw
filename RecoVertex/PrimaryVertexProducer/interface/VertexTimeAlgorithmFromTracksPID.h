@@ -1,15 +1,19 @@
-
-#ifndef usercode_PrimaryVertexAnalyzer_VertexTimeAlgorithmFromTracksPID_h
-#define usercode_PrimaryVertexAnalyzer_VertexTimeAlgorithmFromTracksPID_h
+#ifndef RecoVertex_PrimaryVertexProducer_VertexTimeAlgorithmFromTracksPID_h
+#define RecoVertex_PrimaryVertexProducer_VertexTimeAlgorithmFromTracksPID_h
 
 #include "VertexTimeAlgorithmBase.h"
 
-#include "FWCore/Utilities/interface/EDGetToken.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "FWCore/Utilities/interface/EDGetToken.h"
+
+namespace edm {
+  class ConsumesCollector;
+}
 
 class VertexTimeAlgorithmFromTracksPID : public VertexTimeAlgorithmBase {
 public:
-  VertexTimeAlgorithmFromTracksPID(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
+  VertexTimeAlgorithmFromTracksPID(const edm::ParameterSet& iConfig, edm::ConsumesCollector& iCC);
+  VertexTimeAlgorithmFromTracksPID(const edm::ParameterSet& iConfig, edm::ConsumesCollector&& iCC) : VertexTimeAlgorithmFromTracksPID(iConfig, iCC) {}
   ~VertexTimeAlgorithmFromTracksPID() override = default;
 
   static void fillPSetDescription(edm::ParameterSetDescription& iDesc);

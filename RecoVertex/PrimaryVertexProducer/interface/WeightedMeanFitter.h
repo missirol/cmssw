@@ -2,10 +2,12 @@
 #define RecoVertex_PrimaryVertexProducer_WeightedMeanFitter_h
 
 #include <vector>
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include <utility>
+
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 
 namespace WeightedMeanFitter {
 
@@ -455,69 +457,72 @@ namespace WeightedMeanFitter {
 
 };  // namespace WeightedMeanFitter
 
-// adapter for the multiprimaryvertexfitter scheme
-// this code was originally introduced as part of PrimaryVertexProducerPlugin.c
-// by Adriano Dee et.al., then moved here with minor modifications
+// Adapter for the MultiPrimaryVertexFitter scheme
+//  this code was originally part of the PrimaryVertexProducer.cc plugin, see
+//  https://github.com/cms-sw/cmssw/pull/39995
+//  and is now moved here with minor modifications
 class WeightedMeanPrimaryVertexEstimator : public PrimaryVertexFitterBase {
 public:
   WeightedMeanPrimaryVertexEstimator(){};
   ~WeightedMeanPrimaryVertexEstimator() override = default;
 
-  std::vector<TransientVertex> fit(const std::vector<reco::TransientTrack>& dummy,
-                                   const std::vector<TransientVertex>& clusters,
-                                   const reco::BeamSpot& beamSpot,
-                                   const bool useBeamConstraint) override {
+  std::vector<TransientVertex> fit(std::vector<reco::TransientTrack> const&,
+                                   std::vector<TransientVertex> const& clusters,
+                                   reco::BeamSpot const& beamSpot,
+                                   bool const useBeamConstraint) override {
     std::vector<TransientVertex> pvs;
-    std::vector<TransientVertex> seed(1);
+    pvs.reserve(clusters.size());
 
-    for (auto& cluster : clusters) {
-      if (cluster.originalTracks().size() > 1) {
-        std::vector<reco::TransientTrack> tracklist = cluster.originalTracks();
-        TransientVertex::TransientTrackToFloatMap trkWeightMap;
-        std::vector<std::pair<GlobalPoint, GlobalPoint>> points;
-        if (useBeamConstraint && (tracklist.size() > 1)) {
-          for (const auto& itrack : tracklist) {
-            GlobalPoint p = itrack.stateAtBeamLine().trackStateAtPCA().position();
-            GlobalPoint err(itrack.stateAtBeamLine().transverseImpactParameter().error(),
-                            itrack.stateAtBeamLine().transverseImpactParameter().error(),
-                            itrack.track().dzError());
-            std::pair<GlobalPoint, GlobalPoint> p2(p, err);
-            points.push_back(p2);
-          }
+    for (auto const& cluster : clusters) {
+      auto const& tracklist = cluster.originalTracks();
 
-          TransientVertex v = WeightedMeanFitter::weightedMeanOutlierRejectionBeamSpot(points, tracklist, beamSpot);
-          if (!v.hasTrackWeight()) {
-            // if the fitter doesn't provide weights, fill dummy values
-            TransientVertex::TransientTrackToFloatMap trkWeightMap;
-            for (const auto& trk : v.originalTracks()) {
-              trkWeightMap[trk] = 1.;
-            }
-            v.weightMap(trkWeightMap);
-          }
-          if ((v.positionError().matrix())(2, 2) != (WeightedMeanFitter::startError * WeightedMeanFitter::startError))
-            pvs.push_back(v);
-        } else if (!(useBeamConstraint) && (tracklist.size() > 1)) {
-          for (const auto& itrack : tracklist) {
-            GlobalPoint p = itrack.impactPointState().globalPosition();
-            GlobalPoint err(itrack.track().dxyError(), itrack.track().dxyError(), itrack.track().dzError());
-            std::pair<GlobalPoint, GlobalPoint> p2(p, err);
-            points.push_back(p2);
-          }
+      if (tracklist.size() <= 1) {
+        continue;
+      }
 
-          TransientVertex v = WeightedMeanFitter::weightedMeanOutlierRejection(points, tracklist);
-          if (!v.hasTrackWeight()) {
-            // if the fitter doesn't provide weights, fill dummy values
-            TransientVertex::TransientTrackToFloatMap trkWeightMap;
-            for (const auto& trk : v.originalTracks()) {
-              trkWeightMap[trk] = 1.;
-            }
-            v.weightMap(trkWeightMap);
-          }
-          if ((v.positionError().matrix())(2, 2) != (WeightedMeanFitter::startError * WeightedMeanFitter::startError))
-            pvs.push_back(v);  //FIX with constants
+      TransientVertex vtx;
+      std::vector<std::pair<GlobalPoint, GlobalPoint>> points;
+      points.reserve(tracklist.size());
+
+      // with beamspot constraint
+      if (useBeamConstraint) {
+        for (auto const& itrack : tracklist) {
+          GlobalPoint p = itrack.stateAtBeamLine().trackStateAtPCA().position();
+          GlobalPoint err(itrack.stateAtBeamLine().transverseImpactParameter().error(),
+                          itrack.stateAtBeamLine().transverseImpactParameter().error(),
+                          itrack.track().dzError());
+          std::pair<GlobalPoint, GlobalPoint> p2(p, err);
+          points.emplace_back(p2);
         }
+
+        vtx = WeightedMeanFitter::weightedMeanOutlierRejectionBeamSpot(points, tracklist, beamSpot);
+      }
+      // without beamspot constraint
+      else {
+        for (auto const& itrack : tracklist) {
+          GlobalPoint p = itrack.impactPointState().globalPosition();
+          GlobalPoint err(itrack.track().dxyError(), itrack.track().dxyError(), itrack.track().dzError());
+          std::pair<GlobalPoint, GlobalPoint> p2(p, err);
+          points.emplace_back(p2);
+        }
+
+        vtx = WeightedMeanFitter::weightedMeanOutlierRejection(points, tracklist);
+      }
+
+      if (not vtx.hasTrackWeight()) {
+        // if the fitter doesn't provide weights, fill dummy values
+        TransientVertex::TransientTrackToFloatMap trkWeightMap;
+        for (auto const& trk : vtx.originalTracks()) {
+          trkWeightMap[trk] = 1.;
+        }
+        vtx.weightMap(trkWeightMap);
+      }
+
+      if ((vtx.positionError().matrix())(2, 2) != (WeightedMeanFitter::startError * WeightedMeanFitter::startError)) {
+        pvs.emplace_back(vtx);
       }
     }
+
     return pvs;
   }
 };

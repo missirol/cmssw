@@ -1,5 +1,5 @@
-#ifndef GapClusterizerInZ_h
-#define GapClusterizerInZ_h
+#ifndef RecoVertex_PrimaryVertexProducer_GapClusterizerInZ_h
+#define RecoVertex_PrimaryVertexProducer_GapClusterizerInZ_h
 
 /**\class GapClusterizerInZ
  
@@ -15,21 +15,20 @@
 class GapClusterizerInZ : public TrackClusterizerInZ {
 public:
   GapClusterizerInZ(const edm::ParameterSet& conf);
+  ~GapClusterizerInZ() override = default;
 
   static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
   std::vector<std::vector<reco::TransientTrack> > clusterize(
       const std::vector<reco::TransientTrack>& tracks) const override;
 
-  float zSeparation() const;
+  float zSeparation() const { return zSep_; }
 
   std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack>& tracks) const override;
 
-  ~GapClusterizerInZ() override{};
-
 private:
-  float zSep;
-  bool verbose_;
+  float const zSep_;
+  bool const verbose_;
 };
 
 #endif

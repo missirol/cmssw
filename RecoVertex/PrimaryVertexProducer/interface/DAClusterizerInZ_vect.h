@@ -231,5 +231,4 @@ private:
   double overlap_frac_;
 };
 
-//#ifndef DAClusterizerInZ_vect_h
 #endif

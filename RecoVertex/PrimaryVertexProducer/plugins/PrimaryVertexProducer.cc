@@ -1,40 +1,119 @@
+// -*- C++ -*-
+//
+// Package:    PrimaryVertexProducer
+// Class:      PrimaryVertexProducer
+//
+/**\class PrimaryVertexProducer PrimaryVertexProducer.cc RecoVertex/PrimaryVertexProducer/src/PrimaryVertexProducer.cc
 
+ Description: steers tracker primary vertex reconstruction and storage
 
-#include "RecoVertex/PrimaryVertexProducer/interface/PrimaryVertexProducer.h"
-#include "FWCore/Framework/interface/ConsumesCollector.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
+ Implementation:
+     <Notes on implementation>
+*/
+//
+// Original Author:  Pascal Vanlaer
+//         Created:  Tue Feb 28 11:06:34 CET 2006
+//
+//
+#include <memory>
+#include <algorithm>
+
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "DataFormats/Common/interface/Handle.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
-
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "RecoVertex/AdaptiveVertexFit/interface/AdaptiveVertexFitter.h"
+#include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/TrackFilterForPVFindingBase.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/TrackClusterizerInZ.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/DAClusterizerInZ_vect.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/DAClusterizerInZT_vect.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/TrackFilterForPVFinding.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/HITrackFilterForPVFinding.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/GapClusterizerInZ.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/DAClusterizerInZ.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/PrimaryVertexFitterBase.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/SequentialPrimaryVertexFitterAdapter.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/AdaptiveChisquarePrimaryVertexFitter.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/MultiPrimaryVertexFitter.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/VertexHigherPtSquared.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/VertexTimeAlgorithmBase.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/VertexTimeAlgorithmFromTracksPID.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/VertexTimeAlgorithmLegacy4D.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/WeightedMeanFitter.h"
+#include "RecoVertex/VertexPrimitives/interface/VertexException.h"
+#include "RecoVertex/VertexTools/interface/GeometricAnnealing.h"
+#include "RecoVertex/VertexTools/interface/VertexCompatibleWithBeam.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 #include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
 
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+class PrimaryVertexProducer : public edm::stream::EDProducer<> {
+public:
+  PrimaryVertexProducer(const edm::ParameterSet&);
+  ~PrimaryVertexProducer() override = default;
 
-#include "RecoVertex/VertexTools/interface/GeometricAnnealing.h"
+  void produce(edm::Event&, const edm::EventSetup&) override;
 
-PrimaryVertexProducer::PrimaryVertexProducer(const edm::ParameterSet& conf)
-    : theTTBToken(esConsumes(edm::ESInputTag("", "TransientTrackBuilder"))), theConfig(conf) {
-  fVerbose = conf.getUntrackedParameter<bool>("verbose", false);
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-  trkToken = consumes<reco::TrackCollection>(conf.getParameter<edm::InputTag>("TrackLabel"));
-  bsToken = consumes<reco::BeamSpot>(conf.getParameter<edm::InputTag>("beamSpotLabel"));
+private:
+  edm::EDGetTokenT<reco::BeamSpot> const bsToken;
+  edm::EDGetTokenT<reco::TrackCollection> const trkToken;
+  edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> const theTTBToken;
+  bool const fVerbose;
+
+  std::unique_ptr<TrackFilterForPVFindingBase> theTrackFilter;
+  std::unique_ptr<TrackClusterizerInZ> theTrackClusterizer;
+
+  // vtx fitting algorithms
+  struct algo {
+    std::string label;
+    bool useBeamConstraint;
+    double minNdof;
+    bool is4D;
+    std::unique_ptr<VertexCompatibleWithBeam> pv_selector;
+    std::unique_ptr<PrimaryVertexFitterBase> pv_fitter;
+    std::unique_ptr<VertexTimeAlgorithmBase> pv_time_estimator;
+  };
+
+  std::vector<algo> algorithms;
+
+  bool fRecoveryIteration;
+  edm::EDGetTokenT<reco::VertexCollection> recoveryVtxToken;
+
+  edm::EDGetTokenT<edm::ValueMap<float> > trkTimesToken;
+  edm::EDGetTokenT<edm::ValueMap<float> > trkTimeResosToken;
+
+  bool useTransientTrackTime;
+};
+
+PrimaryVertexProducer::PrimaryVertexProducer(const edm::ParameterSet& conf) :
+bsToken{consumes(conf.getParameter<edm::InputTag>("beamSpotLabel"))},
+trkToken{consumes(conf.getParameter<edm::InputTag>("TrackLabel"))},
+theTTBToken{esConsumes(conf.getParameter<edm::ESInputTag>("transientTrackBuilder"))},
+fVerbose{conf.getUntrackedParameter<bool>("verbose")} {
+
   useTransientTrackTime = false;
 
   // select and configure the track selection
   std::string trackSelectionAlgorithm =
       conf.getParameter<edm::ParameterSet>("TkFilterParameters").getParameter<std::string>("algorithm");
   if (trackSelectionAlgorithm == "filter") {
-    theTrackFilter = new TrackFilterForPVFinding(conf.getParameter<edm::ParameterSet>("TkFilterParameters"));
+    theTrackFilter = std::make_unique<TrackFilterForPVFinding>(conf.getParameter<edm::ParameterSet>("TkFilterParameters"));
   } else if (trackSelectionAlgorithm == "filterWithThreshold") {
-    theTrackFilter = new HITrackFilterForPVFinding(conf.getParameter<edm::ParameterSet>("TkFilterParameters"));
+    theTrackFilter = std::make_unique<HITrackFilterForPVFinding>(conf.getParameter<edm::ParameterSet>("TkFilterParameters"));
   } else {
-    std::cout << "PrimaryVertexProducer: unknown track selection algorithm: " + trackSelectionAlgorithm << std::endl;
     throw VertexException("PrimaryVertexProducer: unknown track selection algorithm: " + trackSelectionAlgorithm);
   }
 
@@ -42,192 +121,147 @@ PrimaryVertexProducer::PrimaryVertexProducer(const edm::ParameterSet& conf)
   std::string clusteringAlgorithm =
       conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<std::string>("algorithm");
   if (clusteringAlgorithm == "gap") {
-    theTrackClusterizer = new GapClusterizerInZ(
-        conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkGapClusParameters"));
+    theTrackClusterizer = std::make_unique<GapClusterizerInZ>(conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkGapClusParameters"));
   } else if (clusteringAlgorithm == "DA") {
-    theTrackClusterizer = new DAClusterizerInZ(
-        conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkDAClusParameters"));
+    theTrackClusterizer = std::make_unique<DAClusterizerInZ>(conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkDAClusParameters"));
   }
   // provide the vectorized version of the clusterizer, if supported by the build
   else if (clusteringAlgorithm == "DA_vect") {
-    theTrackClusterizer = new DAClusterizerInZ_vect(
-        conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkDAClusParameters"));
-  } else if (clusteringAlgorithm == "DA2D_vect") {
-    theTrackClusterizer = new DAClusterizerInZT_vect(
-        conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkDAClusParameters"));
+    theTrackClusterizer = std::make_unique<DAClusterizerInZ_vect>(conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkDAClusParameters"));
+  }
+  // 2D (z,t) Deterministic Annealing, vectorized
+  else if (clusteringAlgorithm == "DA2D_vect") {
+    theTrackClusterizer = std::make_unique<DAClusterizerInZT_vect>(conf.getParameter<edm::ParameterSet>("TkClusParameters").getParameter<edm::ParameterSet>("TkDAClusParameters"));
     useTransientTrackTime = true;
-  } else {
-    std::cout << "PrimaryVertexProducer: unknown clustering algorithm: " + clusteringAlgorithm << std::endl;
+  }
+  // unknown clustering algorithm, throw exception
+  else {
     throw VertexException("PrimaryVertexProducer: unknown clustering algorithm: " + clusteringAlgorithm);
   }
 
-  if (useTransientTrackTime) {
-    trkTimesToken = consumes<edm::ValueMap<float> >(conf.getParameter<edm::InputTag>("TrackTimesLabel"));
-    trkTimeResosToken = consumes<edm::ValueMap<float> >(conf.getParameter<edm::InputTag>("TrackTimeResosLabel"));
-  }
-
   // select and configure the vertex fitters
-  if (conf.exists("vertexCollections")) {
-    std::vector<edm::ParameterSet> vertexCollections =
-        conf.getParameter<std::vector<edm::ParameterSet> >("vertexCollections");
+  auto const& vertexCollections = conf.getParameter<std::vector<edm::ParameterSet> >("vertexCollections");
 
-    for (std::vector<edm::ParameterSet>::const_iterator algoconf = vertexCollections.begin();
-         algoconf != vertexCollections.end();
-         algoconf++) {
-      algo algorithm;
+  algorithms.clear();
+  algorithms.reserve(vertexCollections.size());
 
-      algorithm.label = algoconf->getParameter<std::string>("label");
-      algorithm.is_4D = false;  // override later when appropriate
+  for (auto const& algoconf : vertexCollections) {
+    algorithms.emplace_back();
+    auto& algorithm = algorithms.back();
 
-      // configure the fitter and selector
-      std::string fitterAlgorithm = algoconf->getParameter<std::string>("algorithm");
-      if (fitterAlgorithm == "KalmanVertexFitter") {
-        algorithm.pv_fitter = new SequentialPrimaryVertexFitterAdapter(new KalmanVertexFitter());
-      } else if (fitterAlgorithm == "AdaptiveVertexFitter") {
-        auto fitter = new AdaptiveVertexFitter(GeometricAnnealing(algoconf->getParameter<double>("chi2cutoff")));
-        algorithm.pv_fitter = new SequentialPrimaryVertexFitterAdapter(fitter);
-      } else if (fitterAlgorithm.empty()) {
-        algorithm.pv_fitter = nullptr;
-      } else if (fitterAlgorithm == "AdaptiveChisquareVertexFitter") {
-        algorithm.pv_fitter =
-            new AdaptiveChisquarePrimaryVertexFitter(algoconf->getParameter<double>("chi2cutoff"), 0.);
-      } else if (fitterAlgorithm == "MultiPrimaryVertexFitter") {
-        algorithm.pv_fitter = new MultiPrimaryVertexFitter(algoconf->getParameter<double>("chi2cutoff"),
-                                                           algoconf->getParameter<double>("mintrkweight"));
-      } else if (fitterAlgorithm == "WeightedMeanFitter") {
-        algorithm.pv_fitter = new WeightedMeanPrimaryVertexEstimator();
+    // configure the fitter and selector
+    auto const fitterAlgorithm = algoconf.getParameter<std::string>("algorithm");
+    if (fitterAlgorithm == "KalmanVertexFitter") {
+      algorithm.pv_fitter = std::make_unique<SequentialPrimaryVertexFitterAdapter>(std::make_unique<KalmanVertexFitter>());
+    } else if (fitterAlgorithm == "AdaptiveVertexFitter") {
+      algorithm.pv_fitter = std::make_unique<SequentialPrimaryVertexFitterAdapter>(std::make_unique<AdaptiveVertexFitter>(GeometricAnnealing(algoconf.getParameter<double>("chi2cutoff"))));
+    } else if (fitterAlgorithm == "AdaptiveChisquareVertexFitter") {
+      algorithm.pv_fitter = std::make_unique<AdaptiveChisquarePrimaryVertexFitter>(algoconf.getParameter<double>("chi2cutoff"), 0.);
+    } else if (fitterAlgorithm == "MultiPrimaryVertexFitter") {
+      algorithm.pv_fitter = std::make_unique<MultiPrimaryVertexFitter>(algoconf.getParameter<double>("chi2cutoff"), algoconf.getParameter<double>("mintrkweight"));
+    } else if (fitterAlgorithm == "WeightedMeanFitter") {
+      algorithm.pv_fitter = std::make_unique<WeightedMeanPrimaryVertexEstimator>();
+    } else if (not fitterAlgorithm.empty()) {
+      throw VertexException("PrimaryVertexProducer: unknown algorithm: " + fitterAlgorithm);
+    }
+    algorithm.label = algoconf.getParameter<std::string>("label");
+    algorithm.minNdof = algoconf.getParameter<double>("minNdof");
+    algorithm.useBeamConstraint = algoconf.getParameter<bool>("useBeamConstraint");
+    algorithm.pv_selector = std::make_unique<VertexCompatibleWithBeam>(VertexDistanceXY(), algoconf.getParameter<double>("maxDistanceToBeam"));
+    algorithm.is4D = algoconf.getParameter<bool>("is4D");
+
+    // configure separate vertex time reconstruction if applicable
+    // note that the vertex time could, in principle, also come from the clusterizer or the vertex fit
+    if (algorithm.is4D) {
+      auto const& pv_time_conf = algoconf.getParameter<edm::ParameterSet>("vertexTimeParameters");
+      auto const vertexTimeAlgorithm = pv_time_conf.getParameter<std::string>("algorithm");
+      LogDebug("PrimaryVertexProducer") << " vertexTimeParamers found  " << algorithm.label << " : [" << vertexTimeAlgorithm << "]";
+      if (vertexTimeAlgorithm == "legacy4D") {
+        algorithm.pv_time_estimator = std::make_unique<VertexTimeAlgorithmLegacy4D>(pv_time_conf.getParameter<edm::ParameterSet>("legacy4D"), consumesCollector());
+        useTransientTrackTime = true;
+      } else if (vertexTimeAlgorithm == "fromTracksPID") {
+        algorithm.pv_time_estimator = std::make_unique<VertexTimeAlgorithmFromTracksPID>(pv_time_conf.getParameter<edm::ParameterSet>("fromTracksPID"), consumesCollector());
       } else {
-        std::cout << "PrimaryVertexProducer: unknown algorithm: " + fitterAlgorithm << std::endl;
-        throw VertexException("PrimaryVertexProducer: unknown algorithm: " + fitterAlgorithm);
+        edm::LogWarning("PrimaryVertexProducer") << "unknown vertexTimeParameters.algorithm" << vertexTimeAlgorithm;
       }
-      algorithm.minNdof = algoconf->getParameter<double>("minNdof");
-      algorithm.useBeamConstraint = algoconf->getParameter<bool>("useBeamConstraint");
-      algorithm.vertexSelector =
-          new VertexCompatibleWithBeam(VertexDistanceXY(), algoconf->getParameter<double>("maxDistanceToBeam"));
-
-      // configure separate vertex time reconstruction if applicable
-      // note that the vertex time could, in principle, also come from the clusterizer or the vertex fit
-      if (algoconf->exists("vertexTimeParameters")) {
-        const auto& pv_time_conf = algoconf->getParameter<edm::ParameterSet>("vertexTimeParameters");
-        const std::string vertexTimeAlgorithm = pv_time_conf.getParameter<std::string>("algorithm");
-        std::cout << " vertexTimeParamers found  " << algorithm.label << " : [" << vertexTimeAlgorithm << "]"
-                  << std::endl;
-        edm::ConsumesCollector&& collector = consumesCollector();
-        if (vertexTimeAlgorithm.empty()) {
-          algorithm.pv_time_estimator = nullptr;
-        } else if (vertexTimeAlgorithm == "legacy4D") {
-          useTransientTrackTime = true;
-          algorithm.pv_time_estimator =
-              new VertexTimeAlgorithmLegacy4D(algoconf->getParameter<edm::ParameterSet>("legacy4D"), collector);
-          algorithm.is_4D = true;
-        } else if (vertexTimeAlgorithm == "fromTracksPID") {
-          algorithm.pv_time_estimator = new VertexTimeAlgorithmFromTracksPID(
-              pv_time_conf.getParameter<edm::ParameterSet>("fromTracksPID"), collector);
-          algorithm.is_4D = true;
-        } else {
-          edm::LogWarning("MisConfiguration") << "unknown vertexTimeParameters.algorithm" << vertexTimeAlgorithm;
-        }
-      } else {
-        std::cout << " no vertexTimeParamers found for " << algorithm.label << std::endl;
-      }
-      algorithms.push_back(algorithm);
-
-      produces<reco::VertexCollection>(algorithm.label);
     }
 
-  } else {  // is this code really still needed?
-    edm::LogWarning("MisConfiguration")
-        << "this module's configuration has changed, please update to have a vertexCollections=cms.VPSet parameter.";
+    produces<reco::VertexCollection>(algorithm.label);
+  }
+
+  if (useTransientTrackTime) {
+    trkTimesToken = consumes(conf.getParameter<edm::InputTag>("TrackTimesLabel"));
+    trkTimeResosToken = consumes(conf.getParameter<edm::InputTag>("TrackTimeResosLabel"));
   }
 
   //check if this is a recovery iteration
   fRecoveryIteration = conf.getParameter<bool>("isRecoveryIteration");
   if (fRecoveryIteration) {
     if (algorithms.empty()) {
-      std::cout << "PrimaryVertexProducer: No algorithm specified. " << std::endl;
-      throw VertexException("PrimaryVertexProducer: No algorithm specified. ");
+      throw VertexException("PrimaryVertexProducer: No algorithm specified.");
     } else if (algorithms.size() > 1) {
-      throw VertexException(
-          "PrimaryVertexProducer: Running in Recovery mode and more than one algorithm specified.  Please "
-          "only one algorithm.");
+      throw VertexException("PrimaryVertexProducer: Running in Recovery mode and more than one algorithm specified. Please specify only one algorithm.");
     }
-    recoveryVtxToken = consumes<reco::VertexCollection>(conf.getParameter<edm::InputTag>("recoveryVtxCollection"));
-  }
-}
-
-PrimaryVertexProducer::~PrimaryVertexProducer() {
-  if (theTrackFilter)
-    delete theTrackFilter;
-  if (theTrackClusterizer)
-    delete theTrackClusterizer;
-  for (std::vector<algo>::const_iterator algorithm = algorithms.begin(); algorithm != algorithms.end(); algorithm++) {
-    if (algorithm->pv_fitter)
-      delete algorithm->pv_fitter;
-    if (algorithm->pv_time_estimator)
-      delete algorithm->pv_time_estimator;
-    if (algorithm->vertexSelector)
-      delete algorithm->vertexSelector;
+    recoveryVtxToken = consumes(conf.getParameter<edm::InputTag>("recoveryVtxCollection"));
   }
 }
 
 void PrimaryVertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // get the BeamSpot, it will always be needed, even when not used as a constraint
   reco::BeamSpot beamSpot;
-  edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
-  iEvent.getByToken(bsToken, recoBeamSpotHandle);
+  bool validBS = true;
+
+  auto const recoBeamSpotHandle = iEvent.getHandle(bsToken);
   if (recoBeamSpotHandle.isValid()) {
     beamSpot = *recoBeamSpotHandle;
   } else {
-    edm::LogError("UnusableBeamSpot") << "No beam spot available from EventSetup";
-  }
-
-  bool validBS = true;
-  VertexState beamVertexState(beamSpot);
-  if ((beamVertexState.error().cxx() <= 0.) || (beamVertexState.error().cyy() <= 0.) ||
-      (beamVertexState.error().czz() <= 0.)) {
-    edm::LogError("UnusableBeamSpot") << "Beamspot with invalid errors " << beamVertexState.error().matrix();
+    edm::LogError("PrimaryVertexProducer") << "Invalid BeamSpot: handle to reco::Beamspot product is not valid";
     validBS = false;
   }
 
-  //if this is a recovery iteration, check if we already have a valid PV
+  VertexState const beamVertexState{beamSpot};
+  if (beamVertexState.error().cxx() <= 0. or beamVertexState.error().cyy() <= 0. or beamVertexState.error().czz() <= 0.) {
+    edm::LogError("PrimaryVertexProducer") << "Invalid BeamSpot: non-positive beamspot errors " << beamVertexState.error().matrix();
+    validBS = false;
+  }
+
+  // if this is a recovery iteration, check if we already have a valid PV
   if (fRecoveryIteration) {
     auto const& oldVertices = iEvent.get(recoveryVtxToken);
-    //look for the first valid (not-BeamSpot) vertex
+    // look for the first valid (not-BeamSpot) vertex
     for (auto const& old : oldVertices) {
-      if (!(old.isFake())) {
-        //found a valid vertex, write the first one to the collection and return
-        //otherwise continue with regular vertexing procedure
+      if (not old.isFake()) {
+        // found a valid vertex, write the first one to the collection and return
+        // otherwise continue with regular vertexing procedure
         auto result = std::make_unique<reco::VertexCollection>();
-        result->push_back(old);
+        result->emplace_back(old);
         iEvent.put(std::move(result), algorithms.begin()->label);
         return;
       }
     }
   }
 
-  // get RECO tracks from the event
-  // `tks` can be used as a ptr to a reco::TrackCollection
-  edm::Handle<reco::TrackCollection> tks;
-  iEvent.getByToken(trkToken, tks);
-
+  // initialise pv-time fitter
   for (auto& algo : algorithms) {
     if (algo.pv_time_estimator) {
       algo.pv_time_estimator->setEvent(iEvent, iSetup);
     }
   }
 
+  // get RECO tracks from the event
+  // tks can be used as a ptr to a reco::TrackCollection
+  auto const tks = iEvent.getHandle(trkToken);
+
   // interface RECO tracks to vertex reconstruction
-  const auto& theB = &iSetup.getData(theTTBToken);
+  const auto& theB = iSetup.getData(theTTBToken);
   std::vector<reco::TransientTrack> t_tks;
 
   if (useTransientTrackTime) {
-    edm::Handle<edm::ValueMap<float> > trackTimesH;
-    edm::Handle<edm::ValueMap<float> > trackTimeResosH;
-    iEvent.getByToken(trkTimesToken, trackTimesH);
-    iEvent.getByToken(trkTimeResosToken, trackTimeResosH);
-    t_tks = (*theB).build(tks, beamSpot, *(trackTimesH.product()), *(trackTimeResosH.product()));
+    auto const& trackTimes = iEvent.get(trkTimesToken);
+    auto const& trackTimeResos = iEvent.get(trkTimeResosToken);
+    t_tks = theB.build(tks, beamSpot, trackTimes, trackTimeResos);
   } else {
-    t_tks = (*theB).build(tks, beamSpot);
+    t_tks = theB.build(tks, beamSpot);
   }
 
   // select tracks
@@ -237,94 +271,87 @@ void PrimaryVertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
   std::vector<TransientVertex>&& clusters = theTrackClusterizer->vertices(seltks);
 
   if (fVerbose) {
-    std::cout << " clustering returned  " << clusters.size() << " clusters  from " << seltks.size()
-              << " selected tracks" << std::endl;
+    edm::LogPrint("PrimaryVertexProducer") << "Clustering returned " << clusters.size() << " clusters from " << seltks.size() << " selected tracks";
   }
 
   // vertex fits
-  for (std::vector<algo>::const_iterator algorithm = algorithms.begin(); algorithm != algorithms.end(); algorithm++) {
-    auto result = std::make_unique<reco::VertexCollection>();
-    reco::VertexCollection& vColl = (*result);
+  for (auto const& algo : algorithms) {
+
     std::vector<TransientVertex> pvs;
-
-    if (algorithm->pv_fitter == nullptr) {
-      pvs = clusters;
+    if (algo.useBeamConstraint and not validBS){
+      edm::LogError("PrimaryVertexProducer") << "Vertex Collection with label \"" << algo.label
+          << "\" requires beam-constrained fit, but no valid BeamSpot in the Event. Returning empty collection of TransientVertexs.";
     } else {
-      pvs = algorithm->pv_fitter->fit(seltks, clusters, beamSpot, algorithm->useBeamConstraint);
+      pvs = (algo.pv_fitter != nullptr) ? algo.pv_fitter->fit(seltks, clusters, beamSpot, algo.useBeamConstraint) : clusters;
     }
 
-    if (algorithm->pv_time_estimator != nullptr) {
-      algorithm->pv_time_estimator->fill_vertex_times(pvs);
+    // add vertex time
+    if (algo.pv_time_estimator != nullptr) {
+      algo.pv_time_estimator->fill_vertex_times(pvs);
     }
 
-    // sort vertices by pt**2  vertex
+    // sort vertices by pt**2 vertex
     if (pvs.size() > 1) {
-      sort(pvs.begin(), pvs.end(), VertexHigherPtSquared());
+      std::sort(pvs.begin(), pvs.end(), VertexHigherPtSquared());
     }
+
+    // output product (reco::VertexCollection)
+    auto vColl = std::make_unique<reco::VertexCollection>();
+    vColl->reserve(pvs.size());
 
     // select and convert transient vertices to (reco) vertices
-    for (std::vector<TransientVertex>::const_iterator iv = pvs.begin(); iv != pvs.end(); iv++) {
-      if(iv->isValid() && (iv->degreesOfFreedom() >= algorithm->minNdof)){
-	reco::Vertex v = *iv;
-	if (!validBS || ((*(algorithm->vertexSelector))(v, beamVertexState))){
-	  vColl.push_back(v);
+    for (auto const& iv : pvs) {
+      if(iv.isValid() and iv.degreesOfFreedom() >= algo.minNdof){
+	reco::Vertex v = iv;
+	if ((not validBS) or (*(algo.pv_selector))(v, beamVertexState)){
+	  vColl->emplace_back(v);
 	}
       }
     }
 
     if (fVerbose) {
-      std::cout << "PrimaryVertexProducer " << algorithm->label << "  candidates =" << pvs.size() << std::endl;
+      edm::LogPrint("PrimaryVertexProducer") << "PrimaryVertexProducer \"" << algo.label << "\" contains " << pvs.size() << " reco::Vertex candidates";
     }
 
-    if (clusters.size() > 2 && clusters.size() > 2 * pvs.size())
-      edm::LogWarning("PrimaryVertexProducer")
-          << "more than half of candidate vertices lost " << pvs.size() << ' ' << clusters.size();
+    if (clusters.size() > 2 and clusters.size() > 2 * pvs.size()) {
+      edm::LogWarning("PrimaryVertexProducer") << "More than 50% of candidate vertices lost (" << pvs.size() << " out of " << clusters.size() << ")";
+    }
 
-    if (pvs.empty() && seltks.size() > 5)
-      edm::LogWarning("PrimaryVertexProducer")
-          << "no vertex found with " << seltks.size() << " tracks and " << clusters.size() << " vertex-candidates";
+    if (pvs.empty() and seltks.size() > 5) {
+      edm::LogWarning("PrimaryVertexProducer") << "No vertex found with " << seltks.size() << " tracks and " << clusters.size() << " vertex candidates";
+    }
 
-    if (vColl.empty()) {
+    if (vColl->empty()) {
       GlobalError bse(beamSpot.rotatedCovariance3D());
       if ((bse.cxx() <= 0.) || (bse.cyy() <= 0.) || (bse.czz() <= 0.)) {
         AlgebraicSymMatrix33 we;
         we(0, 0) = 10000;
         we(1, 1) = 10000;
         we(2, 2) = 10000;
-        vColl.push_back(reco::Vertex(beamSpot.position(), we, 0., 0., 0));
-        if (fVerbose) {
-          std::cout << "RecoVertex/PrimaryVertexProducer: "
-                    << "Beamspot with invalid errors " << bse.matrix() << std::endl;
-          std::cout << "Will put Vertex derived from dummy-fake BeamSpot into Event.\n";
-        }
+        vColl->emplace_back(reco::Vertex(beamSpot.position(), we, 0., 0., 0));
+        edm::LogWarning("PrimaryVertexProducer") << "Zero recostructed vertices, will put reco::Vertex derived from dummy/fake BeamSpot into Event, BeamSpot has invalid errors: " << bse.matrix();
       } else {
-        vColl.push_back(reco::Vertex(beamSpot.position(), beamSpot.rotatedCovariance3D(), 0., 0., 0));
-        if (fVerbose) {
-          std::cout << "RecoVertex/PrimaryVertexProducer: "
-                    << " will put Vertex derived from BeamSpot into Event.\n";
-        }
+        vColl->emplace_back(reco::Vertex(beamSpot.position(), beamSpot.rotatedCovariance3D(), 0., 0., 0));
+        edm::LogWarning("PrimaryVertexProducer") << "Zero recostructed vertices, will put reco::Vertex derived from BeamSpot into Event.";
       }
     }
 
     if (fVerbose) {
       int ivtx = 0;
-      for (reco::VertexCollection::const_iterator v = vColl.begin(); v != vColl.end(); ++v) {
-        std::cout << "recvtx " << std::setw(3) << std::fixed << ivtx++ << " #trk " << std::setw(3) << v->tracksSize()
-                  << " chi2 " << std::setw(5) << std::setprecision(1) << v->chi2() << " ndof " << std::setw(5)
-                  << std::setprecision(1) << v->ndof() << " x " << std::setw(7) << std::setprecision(4)
-                  << v->position().x() << " dx " << std::setw(6) << std::setprecision(4) << v->xError() << " y "
-                  << std::setw(7) << std::setprecision(4) << v->position().y() << " dy " << std::setw(6)
-                  << std::setprecision(4) << v->yError() << " z " << std::setw(8) << std::setprecision(4)
-                  << v->position().z() << " dz " << std::setw(6) << std::setprecision(4) << v->zError();
-        if (algorithm->is_4D) {
-          std::cout << " t " << std::setw(6) << std::setprecision(3) << v->t() << " dt " << std::setw(6)
-                    << std::setprecision(3) << v->tError();
-        }
-        std::cout << std::endl;
+      for (auto const& vtx : *vColl) {
+        edm::LogPrint("PrimaryVertexProducer") << "recvtx " << std::setw(3) << std::fixed << ivtx++ << " #trk " << std::setw(3) << vtx.tracksSize()
+                  << " chi2 " << std::setw(5) << std::setprecision(1) << vtx.chi2() << " ndof " << std::setw(5)
+                  << std::setprecision(1) << vtx.ndof() << " x " << std::setw(7) << std::setprecision(4)
+                  << vtx.position().x() << " dx " << std::setw(6) << std::setprecision(4) << vtx.xError() << " y "
+                  << std::setw(7) << std::setprecision(4) << vtx.position().y() << " dy " << std::setw(6)
+                  << std::setprecision(4) << vtx.yError() << " z " << std::setw(8) << std::setprecision(4)
+                 << vtx.position().z() << " dz " << std::setw(6) << std::setprecision(4) << vtx.zError()
+ << " t " << std::setw(6) << std::setprecision(3) << vtx.t() << " dt " << std::setw(6)
+                    << std::setprecision(3) << vtx.tError();
       }
     }
 
-    iEvent.put(std::move(result), algorithm->label);
+    iEvent.put(std::move(vColl), algo.label);
   }
 }
 
@@ -332,12 +359,12 @@ void PrimaryVertexProducer::fillDescriptions(edm::ConfigurationDescriptions& des
   edm::ParameterSetDescription psd_pv_time;
   {
     edm::ParameterSetDescription psd1;
-    VertexTimeAlgorithmFromTracksPID::fillPSetDescription(psd1);
-    psd_pv_time.add<edm::ParameterSetDescription>("fromTracksPID", psd1);
+    VertexTimeAlgorithmLegacy4D::fillPSetDescription(psd1);
+    psd_pv_time.add<edm::ParameterSetDescription>("legacy4D", psd1);
 
     edm::ParameterSetDescription psd2;
-    VertexTimeAlgorithmLegacy4D::fillPSetDescription(psd2);
-    psd_pv_time.add<edm::ParameterSetDescription>("legacy4D", psd2);
+    VertexTimeAlgorithmFromTracksPID::fillPSetDescription(psd2);
+    psd_pv_time.add<edm::ParameterSetDescription>("fromTracksPID", psd2);
   }
   psd_pv_time.add<std::string>("algorithm", "");  // default = none
 
@@ -345,13 +372,14 @@ void PrimaryVertexProducer::fillDescriptions(edm::ConfigurationDescriptions& des
   edm::ParameterSetDescription desc;
   {
     edm::ParameterSetDescription vpsd1;
-    vpsd1.add<double>("maxDistanceToBeam", 1.0);
+    vpsd1.add<std::string>("label", "");
     vpsd1.add<std::string>("algorithm", "AdaptiveVertexFitter");
     vpsd1.add<bool>("useBeamConstraint", false);
-    vpsd1.add<std::string>("label", "");
+    vpsd1.add<double>("maxDistanceToBeam", 1.0);
     vpsd1.add<double>("chi2cutoff", 2.5);
     vpsd1.add<double>("mintrkweight", 0.0);
     vpsd1.add<double>("minNdof", 0.0);
+    vpsd1.add<bool>("is4D", false);
     vpsd1.add<edm::ParameterSetDescription>("vertexTimeParameters", psd_pv_time);
 
     // two default values : with- and without beam constraint
@@ -359,31 +387,33 @@ void PrimaryVertexProducer::fillDescriptions(edm::ConfigurationDescriptions& des
     temp1.reserve(2);
     {
       edm::ParameterSet temp2;
-      temp2.addParameter<double>("maxDistanceToBeam", 1.0);
+      temp2.addParameter<std::string>("label", "");
       temp2.addParameter<std::string>("algorithm", "AdaptiveVertexFitter");
       temp2.addParameter<bool>("useBeamConstraint", false);
-      temp2.addParameter<std::string>("label", "");
+      temp2.addParameter<double>("maxDistanceToBeam", 1.0);
       temp2.addParameter<double>("chi2cutoff", 2.5);
       temp2.addParameter<double>("mintrkweight", 0.);
       temp2.addParameter<double>("minNdof", 0.0);
+      temp2.addParameter<bool>("is4D", false);
       edm::ParameterSet temp_vertexTime;
       temp_vertexTime.addParameter<std::string>("algorithm", "");
       temp2.addParameter<edm::ParameterSet>("vertexTimeParameters", temp_vertexTime);
-      temp1.push_back(temp2);
+      temp1.emplace_back(temp2);
     }
     {
       edm::ParameterSet temp2;
-      temp2.addParameter<double>("maxDistanceToBeam", 1.0);
+      temp2.addParameter<std::string>("label", "WithBS");
       temp2.addParameter<std::string>("algorithm", "AdaptiveVertexFitter");
       temp2.addParameter<bool>("useBeamConstraint", true);
-      temp2.addParameter<std::string>("label", "WithBS");
+      temp2.addParameter<double>("maxDistanceToBeam", 1.0);
       temp2.addParameter<double>("chi2cutoff", 2.5);
       temp2.addParameter<double>("mintrkweight", 0.);
       temp2.addParameter<double>("minNdof", 2.0);
+      temp2.addParameter<bool>("is4D", false);
       edm::ParameterSet temp_vertexTime;
       temp_vertexTime.addParameter<std::string>("algorithm", "");
       temp2.addParameter<edm::ParameterSet>("vertexTimeParameters", temp_vertexTime);
-      temp1.push_back(temp2);
+      temp1.emplace_back(temp2);
     }
     desc.addVPSet("vertexCollections", vpsd1, temp1);
   }
@@ -416,9 +446,11 @@ void PrimaryVertexProducer::fillDescriptions(edm::ConfigurationDescriptions& des
 
   desc.add<bool>("isRecoveryIteration", false);
   desc.add<edm::InputTag>("recoveryVtxCollection", {""});
+  desc.add<edm::ESInputTag>("transientTrackBuilder", edm::ESInputTag("", "TransientTrackBuilder"));
 
-  descriptions.add("primaryVertexProducer", desc);
+  descriptions.addWithDefaultLabel(desc);
 }
 
 //define this as a plug-in
+#include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(PrimaryVertexProducer);

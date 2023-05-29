@@ -1,5 +1,5 @@
-#ifndef PrimaryVertexSorter_H
-#define PrimaryVertexSorter_H
+#ifndef RecoVertex_PrimaryVertexProducer_PrimaryVertexSorter_h
+#define RecoVertex_PrimaryVertexProducer_PrimaryVertexSorter_h
 
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include <vector>

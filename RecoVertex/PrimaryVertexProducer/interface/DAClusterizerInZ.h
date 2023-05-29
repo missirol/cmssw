@@ -1,19 +1,19 @@
-#ifndef DAClusterizerInZ_h
-#define DAClusterizerInZ_h
+#ifndef RecoVertex_PrimaryVertexProducer_DAClusterizerInZ_h
+#define RecoVertex_PrimaryVertexProducer_DAClusterizerInZ_h
 
 /**\class DAClusterizerInZ 
  
   Description: separates event tracks into clusters along the beam line
 
 */
-
-#include "RecoVertex/PrimaryVertexProducer/interface/TrackClusterizerInZ.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include <vector>
+
 #include "DataFormats/Math/interface/Error.h"
-#include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/TrackClusterizerInZ.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+#include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 
 class DAClusterizerInZ : public TrackClusterizerInZ {
 public:
@@ -40,8 +40,7 @@ public:
 
   DAClusterizerInZ(const edm::ParameterSet &conf);
 
-  std::vector<std::vector<reco::TransientTrack> > clusterize(
-      const std::vector<reco::TransientTrack> &tracks) const override;
+  std::vector<std::vector<reco::TransientTrack> > clusterize(const std::vector<reco::TransientTrack> &tracks) const override;
 
   std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack> &tracks) const override;
 

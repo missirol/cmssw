@@ -1,6 +1,6 @@
 /////////////////////////   OBSOLETE    ///////////////////
-#ifndef PrimaryVertexProducerAlgorithm_H
-#define PrimaryVertexProducerAlgorithm_H
+#ifndef RecoVertex_PrimaryVertexProducer_PrimaryVertexProducerAlgorithm_h
+#define RecoVertex_PrimaryVertexProducer_PrimaryVertexProducerAlgorithm_h
 // -*- C++ -*-
 //
 // Package:    PrimaryVertexProducerAlgorithm
@@ -92,4 +92,5 @@ private:
   edm::ParameterSet theConfig;
   bool fVerbose;
 };
+
 #endif

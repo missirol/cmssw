@@ -1,14 +1,12 @@
-#ifndef usercode_PrimaryVertexAnalyzer_VertexTimeLegacy4D_h
-#define usercode_PrimaryVertexAnalyzer_VertexTimeLegacy4D_h
+#ifndef RecoVertex_PrimaryVertexProducer_VertexTimeAlgorithmLegacy4D_h
+#define RecoVertex_PrimaryVertexProducer_VertexTimeAlgorithmLegacy4D_h
 
 #include "VertexTimeAlgorithmBase.h"
 
-#include "FWCore/Utilities/interface/EDGetToken.h"
-#include "DataFormats/Common/interface/ValueMap.h"
-
 class VertexTimeAlgorithmLegacy4D : public VertexTimeAlgorithmBase {
 public:
-  VertexTimeAlgorithmLegacy4D(const edm::ParameterSet& conf, edm::ConsumesCollector& iC);
+  VertexTimeAlgorithmLegacy4D(edm::ParameterSet const& iConfig, edm::ConsumesCollector& iCC);
+  VertexTimeAlgorithmLegacy4D(edm::ParameterSet const& iConfig, edm::ConsumesCollector&& iCC) : VertexTimeAlgorithmLegacy4D(iConfig, iCC) {}
   ~VertexTimeAlgorithmLegacy4D() override = default;
 
   static void fillPSetDescription(edm::ParameterSetDescription& iDesc);

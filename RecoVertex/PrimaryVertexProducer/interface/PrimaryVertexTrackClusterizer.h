@@ -1,5 +1,5 @@
-#ifndef PrimaryVertexTrackClusterizer_h
-#define PrimaryVertexTrackClusterizer_h
+#ifndef RecoVertex_PrimaryVertexProducer_PrimaryVertexTrackClusterizer_h
+#define RecoVertex_PrimaryVertexProducer_PrimaryVertexTrackClusterizer_h
 
 /**\class PrimaryVertexTrackClusterizer
  
@@ -15,13 +15,13 @@
 
 class PrimaryVertexTrackClusterizer : public TrackClusterizerInZ {
 public:
-  PrimaryVertexTrackClusterizer(){};
-  PrimaryVetrtexTrackClusterizer(const edm::ParameterSet& conf){};
+  PrimaryVertexTrackClusterizer() {}
+  PrimaryVetrtexTrackClusterizer(const edm::ParameterSet& conf) {}
+  virtual ~PrimaryVertexTrackClusterizerInZ() override = default;
+
   virtual std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack>& tracks) const = 0;
   virtual std::vector<std::vector<reco::TransientTrack> > clusterize(
       const std::vector<reco::TransientTrack>& tracks) const = 0;
-
-  virtual ~PrimaryVertexTrackClusterizerInZ(){};
 };
 
 #endif

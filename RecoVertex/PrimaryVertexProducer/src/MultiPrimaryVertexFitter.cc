@@ -1,24 +1,14 @@
-#include "RecoVertex/PrimaryVertexProducer/interface/MultiPrimaryVertexFitter.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "RecoVertex/PrimaryVertexProducer/interface/MultiPrimaryVertexFitter.h"
 
-//#define DEBUG
-#ifdef DEBUG
-#define DEBUGLEVEL 0
-#endif
+//#define PVTX_DEBUG
 
-/*
-MultiPrimaryVertexFitter(const edm::ParameterSet &conf){
-  chi2cutoff_ = conf.getUntrackedParameter<double>("chi2cutoff", 2.5);
-}
-*/
-
-const bool verbose_ = false;
-
-MultiPrimaryVertexFitter::MultiPrimaryVertexFitter(const double chi2cutoff, const double mintrkweight)
-    : chi2_cutoff_(chi2cutoff), min_trackweight_(mintrkweight) {
+MultiPrimaryVertexFitter::MultiPrimaryVertexFitter(double const chi2cutoff, double const mintrkweight, bool const verbose)
+  : chi2_cutoff_{chi2cutoff}, min_trackweight_{mintrkweight}, verbose_{verbose} {
   if (verbose_) {
-    std::cout << "instantiating MPV with   chi2_cutoff =" << chi2_cutoff_
-              << "  and min_trackweight=" << min_trackweight_ << std::endl;
+    edm::LogPrint("MultiPrimaryVertexFitter") << "instantiating MPV with   chi2_cutoff =" << chi2_cutoff_
+              << "  and min_trackweight=" << min_trackweight_;
   }
 }
 
@@ -67,7 +57,7 @@ void MultiPrimaryVertexFitter::fill_trackinfo(const std::vector<reco::TransientT
     // S = U^{-1}
     double DetU = U11 * U22 - U12 * U12;
     if (fabs(DetU) < 1.e-16) {
-      std::cout << "Warning, det(U) almost vanishes : " << DetU << " !! This should not happen!" << std::endl;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "Warning, det(U) almost vanishes : " << DetU << " !! This should not happen!";
       ti.S11 = 0;
       ti.S22 = 0;
       ti.S12 = 0;
@@ -76,7 +66,7 @@ void MultiPrimaryVertexFitter::fill_trackinfo(const std::vector<reco::TransientT
       ti.S22 = U11 / DetU;
       ti.S12 = -U12 / DetU;
     }
-#ifdef DEBUG
+#ifdef PVTX_DEBUG
     assert((ti.S11 >= 0) && "S11 positivity test");
     assert((ti.S22 >= 0) && "S22 positivity test");
 #endif
@@ -206,11 +196,11 @@ void MultiPrimaryVertexFitter::fill_weights(double beta, const reco::BeamSpot &b
       }
       rhoXcache += 1.;
       if (verbose_) {
-        std::cout << " updateWeights : Warning ! track " << i << " ztrk=" << std::setw(10) << std::fixed
+        edm::LogPrint("MultiPrimaryVertexFitter") << " updateWeights : Warning ! track " << i << " ztrk=" << std::setw(10) << std::fixed
                   << std::setprecision(4) << ti.z << " Z=0: " << Z[i] << std::setw(5) << std::fixed
                   << std::setprecision(1) << "  chi**2 min = " << temp_chsqmin[i]
                   << "   chi2zmin = " << temp_chsqzmin[i] << "   chi2_cutoff_=" << chi2_cutoff_
-                  << "  ipsig=" << ti.ipsig << std::endl;
+                  << "  ipsig=" << ti.ipsig;
       }
     }
 
@@ -223,14 +213,12 @@ void MultiPrimaryVertexFitter::fill_weights(double beta, const reco::BeamSpot &b
   }
   // just a test, is the noise cluster behaviour consistent?
   if (std::abs(1. - sum_rho - rhoXcache / nt) > 0.01) {
-    std::cout << " fill_weights sum_rho = " << sum_rho << "  1-sum_rho = " << 1. - sum_rho << " rhoX=" << rhoXcache / nt
-              << std::endl;
+    edm::LogPrint("MultiPrimaryVertexFitter") << " fill_weights sum_rho = " << sum_rho << "  1-sum_rho = " << 1. - sum_rho << " rhoX=" << rhoXcache / nt
+             ;
   }
 }
 
-/**********************************************************************************/
-/*
-void MultiPrimaryVertexFitter::test_chisquared(){
+void MultiPrimaryVertexFitter::test_chisquared(int const k, double const xb, double const yb, double const zb, TrackInfo const& ti) const {
       // test chi**2 = x'T C x' + 2 cTx' + d  == FT S F
       const double tx = xv[k] - xb;
       const double ty = yv[k] - yb;
@@ -241,42 +229,40 @@ void MultiPrimaryVertexFitter::test_chisquared(){
       //const double tz = ti.z -zb;
       double dchsq1 =
             pow(tx, 2) * ti.C(0,0)
-	+   pow(ty, 2) * ti.C(1,1)
-	+   pow(tz, 2) * ti.C(2,2)
-	+   tx * ty * (ti.C(0,1) + ti.C(1,0))
-	+   tx * tz * (ti.C(0,2) + ti.C(2,0))
-	+   ty * tz * (ti.C(1,2) + ti.C(2,1));
++   pow(ty, 2) * ti.C(1,1)
++   pow(tz, 2) * ti.C(2,2)
++   tx * ty * (ti.C(0,1) + ti.C(1,0))
++   tx * tz * (ti.C(0,2) + ti.C(2,0))
++   ty * tz * (ti.C(1,2) + ti.C(2,1));
       double dchsq2 = 
-	2* (ti.c[0] * tx + ti.c[1] * ty + ti.c[2] * tz);
+2* (ti.c[0] * tx + ti.c[1] * ty + ti.c[2] * tz);
       
       double tF1 = ti.b1 + tx * ti.a1[0] + ty * ti.a1[1] ; 
       double tF2 = ti.b2 + tx * ti.a2[0] + ty * ti.a2[1] +  tz * ti.a2[2];
       double tchsq = tF1 * tF1 * ti.S11 + tF2 * tF2 * ti.S22 + 2. * tF1 * tF2 * ti.S12 ;
 
-      std::cout << "YYYYY  xychsq = " <<   tchsq << "   dchsq = "<< dchsq1+dchsq2+ti.d << "   dchsq1=" << dchsq1  << "   dchsq2=" << dchsq2  << "   dchsq3=" << ti.d  <<  "  zb=" << zb << std::endl;
-      std::cout << "const  " << ti.d << " " << ti.b1*ti.b1*ti.S11 + ti.b2*ti.b2*ti.S22  + 2*ti.b1*ti.b2*ti.S12 << std::endl;
-      std::cout << "tx     " << ti.c[0] << " " << ti.b1*ti.a1[0]*ti.S11 + ti.b2*ti.a2[0]*ti.S22 + ti.b1*ti.a2[0]*ti.S12 + ti.a1[0]*ti.b2*ti.S12 << std::endl;
-      std::cout << "ty     " << ti.c[1] << " " << ti.b1*ti.a1[1]*ti.S11 + ti.b2*ti.a2[1]*ti.S22 + ti.b1*ti.a2[1]*ti.S12 + ti.a1[1]*ti.b2*ti.S12 << std::endl;
-      std::cout << "tz     " << ti.c[2] << " " << ti.b2*ti.a2[2]*ti.S22 + ti.b1*ti.a2[2]*ti.S12 << std::endl;
-      std::cout << "txtx   " << ti.C(0,0) << " " << ti.a1[0]*ti.a1[0]*ti.S11 + ti.a2[0]*ti.a2[0]*ti.S22 + 2*ti.a1[0]*ti.a2[0]*ti.S12 << std::endl;
-      std::cout << "tyty   " << ti.C(1,1) << " " << ti.a1[1]*ti.a1[1]*ti.S11 + ti.a2[1]*ti.a2[1]*ti.S22 + 2*ti.a1[1]*ti.a2[1]*ti.S12 << std::endl;
-      std::cout << "tztz   " << ti.C(2,2) << " " << ti.a2[2]*ti.a2[2]*ti.S22 << std::endl;
-      std::cout << "txty   " << ti.C(0,1) << "," << ti.C(1,0) << " " << ti.a1[0]*ti.a1[1]*ti.S11 + ti.a2[0]*ti.a2[1]*ti.S22 + ti.a1[0]*ti.a2[1]*ti.S12 + ti.a1[1]*ti.a2[0]*ti.S12 << std::endl;
-      std::cout << "txtz   " << ti.C(0,2) << "," << ti.C(2,0) << " " << ti.a2[0]*ti.a2[2]*ti.S22 + ti.a1[0]*ti.a2[2]*ti.S12 << std::endl;
-      std::cout << "tytz   " << ti.C(1,2) << "," << ti.C(1,2 )<< " " << ti.a2[1]*ti.a2[2]*ti.S22 + ti.a1[1]*ti.a2[2]*ti.S12 << std::endl;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "YYYYY  xychsq = " <<   tchsq << "   dchsq = "<< dchsq1+dchsq2+ti.d << "   dchsq1=" << dchsq1  << "   dchsq2=" << dchsq2  << "   dchsq3=" << ti.d  <<  "  zb=" << zb;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "const  " << ti.d << " " << ti.b1*ti.b1*ti.S11 + ti.b2*ti.b2*ti.S22  + 2*ti.b1*ti.b2*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "tx     " << ti.c[0] << " " << ti.b1*ti.a1[0]*ti.S11 + ti.b2*ti.a2[0]*ti.S22 + ti.b1*ti.a2[0]*ti.S12 + ti.a1[0]*ti.b2*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "ty     " << ti.c[1] << " " << ti.b1*ti.a1[1]*ti.S11 + ti.b2*ti.a2[1]*ti.S22 + ti.b1*ti.a2[1]*ti.S12 + ti.a1[1]*ti.b2*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "tz     " << ti.c[2] << " " << ti.b2*ti.a2[2]*ti.S22 + ti.b1*ti.a2[2]*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "txtx   " << ti.C(0,0) << " " << ti.a1[0]*ti.a1[0]*ti.S11 + ti.a2[0]*ti.a2[0]*ti.S22 + 2*ti.a1[0]*ti.a2[0]*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "tyty   " << ti.C(1,1) << " " << ti.a1[1]*ti.a1[1]*ti.S11 + ti.a2[1]*ti.a2[1]*ti.S22 + 2*ti.a1[1]*ti.a2[1]*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "tztz   " << ti.C(2,2) << " " << ti.a2[2]*ti.a2[2]*ti.S22;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "txty   " << ti.C(0,1) << "," << ti.C(1,0) << " " << ti.a1[0]*ti.a1[1]*ti.S11 + ti.a2[0]*ti.a2[1]*ti.S22 + ti.a1[0]*ti.a2[1]*ti.S12 + ti.a1[1]*ti.a2[0]*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "txtz   " << ti.C(0,2) << "," << ti.C(2,0) << " " << ti.a2[0]*ti.a2[2]*ti.S22 + ti.a1[0]*ti.a2[2]*ti.S12;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "tytz   " << ti.C(1,2) << "," << ti.C(1,2 )<< " " << ti.a2[1]*ti.a2[2]*ti.S22 + ti.a1[1]*ti.a2[2]*ti.S12;
  }
-*/
-/**********************************************************************************/
 
-double MultiPrimaryVertexFitter::single_fit(const reco::BeamSpot &beamspot,
-                                            const float beam_weight,
-                                            const bool fill_covariances) {
+double MultiPrimaryVertexFitter::single_fit(reco::BeamSpot const& beamspot,
+                                            float const beam_weight,
+                                            bool const fill_covariances) {
   double delta_z = 0;
   double delta_x = 0;
   double delta_y = 0;
   unsigned const int nt = trackinfo.size();
   unsigned const int nv = xv.size();
-#ifdef DEBUG
+#ifdef PVTX_DEBUG
   assert((nv == yv.size()) && "nv y mismatch");
   assert((nv == zv.size()) && "nv z mismatch");
   assert((nv == rho_vtx.size()) && "nv rho mismatch");
@@ -293,7 +279,7 @@ double MultiPrimaryVertexFitter::single_fit(const reco::BeamSpot &beamspot,
     if (SBeam.Invert()) {
       S0 = beam_weight * SBeam;
     } else {
-      std::cout << "Warning, beam-spot covariance matrix inversion failed " << std::endl;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "Warning, beam-spot covariance matrix inversion failed ";
       S0(0, 0) = beam_weight / pow(beamspot.BeamWidthX(), 2);
       S0(1, 1) = beam_weight / pow(beamspot.BeamWidthY(), 2);
       S0(2, 2) = beam_weight / pow(beamspot.sigmaZ(), 2);
@@ -312,11 +298,11 @@ double MultiPrimaryVertexFitter::single_fit(const reco::BeamSpot &beamspot,
       }
     }
 
-#ifdef DEBUG
+#ifdef PVTX_DEBUG
     if ((fabs(S(1, 2) - S(2, 1)) > 1e-3) || (fabs(S(0, 2) - S(2, 0)) > 1e-3) || (fabs(S(0, 1) - S(1, 0)) > 1e-3) ||
         (S(0, 0) <= 0) || (S(0, 0) <= 0) || (S(0, 0) <= 0)) {
-      std::cout << "MultiPrimaryVertexFitter::single_fit  bad S-matrix   S=" << std::endl << S << std::endl;
-      std::cout << "n-vertex = " << nv << "  n-track = " << nt << std::endl;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "MultiPrimaryVertexFitter::single_fit  bad S-matrix   S=" << S;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "n-vertex = " << nv << "  n-track = " << nt;
     }
 #endif
 
@@ -332,7 +318,7 @@ double MultiPrimaryVertexFitter::single_fit(const reco::BeamSpot &beamspot,
         V_vtx.emplace_back(S);
       }
     } else {
-      std::cout << "MultiPrimaryVertexFitter::single_fit   Matrix inversion failed" << S << std::endl;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "MultiPrimaryVertexFitter::single_fit   Matrix inversion failed" << S;
     }
 
     if ((rho_vtx[k] * nt) > 1.0) {
@@ -354,12 +340,8 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
                                     const double zmax,
                                     const unsigned int nit = 666) {
   double sumrho = 0;
-  std::cout << "dump ----------------- " << comment << "   nv=" << zv.size() << "   nt=" << trackinfo.size();
-  if (nit == 666) {
-    std::cout << std::endl;
-  } else {
-    std::cout << "  nit=" << nit << std::endl;
-  }
+  edm::LogPrint("MultiPrimaryVertexFitter") << "dump ----------------- " << comment << "   nv=" << zv.size() << "   nt=" << trackinfo.size() << "  nit=" << nit;
+
   const auto xb = beamspot.x0();
   const auto yb = beamspot.y0();
   const auto zb = beamspot.z0();
@@ -367,25 +349,20 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
   for (unsigned int k = 0; k < zv.size(); k++) {
     sumrho += rho_vtx[k];
     if ((zv[k] > zmin) && (zv[k] < zmax)) {
-      std::cout << std::setw(10) << std::setprecision(4) << std::fixed << clusters[k].position().z() << "  ->  "
+      edm::LogPrint("MultiPrimaryVertexFitter") << std::setw(10) << std::setprecision(4) << std::fixed << clusters[k].position().z() << "  ->  "
                 << std::setw(10) << std::setprecision(4) << std::fixed << zv[k] << "  x,y= " << std::setw(10)
                 << std::setprecision(4) << std::fixed << xv[k] << "," << std::setw(10) << std::setprecision(4)
                 << std::fixed << yv[k] << "     rho*nt= " << std::setw(10) << std::setprecision(3) << std::fixed
                 << rho_vtx[k] * trackinfo.size() << "     rho*nv= " << std::setw(10) << std::setprecision(3)
                 << std::fixed << rho_vtx[k] * zv.size() << "     nt(cluster) " << std::setw(10) << std::fixed
                 << clusters[k].originalTracks().size();
-      std::cout << "     d2Fperp = " << std::setw(12) << std::scientific << d2Fperp_vtx[k];
+      edm::LogPrint("MultiPrimaryVertexFitter") << "     d2Fperp = " << std::setw(12) << std::scientific << d2Fperp_vtx[k];
       if (d2Fperp_vtx[k] < 0) {
-        std::cout << " MERGER?";
+        edm::LogPrint("MultiPrimaryVertexFitter") << " MERGER?";
       } else {
-        std::cout << "        ";
+        edm::LogPrint("MultiPrimaryVertexFitter") << "        ";
       }
 
-      std::cout << std::endl;
-
-      // dump track details on selected vertices
-      //if((k==555555) ||((clusters[k].originalTracks().size() > 5) && ((fabs(xv[k]) > 0.025) || (fabs(yv[k]) > 0.025)))){
-      //	std::cout << " far-out vertex" << k << std::endl;
       if (k < 5) {
         for (unsigned int i = 0; i < trackinfo.size(); i++) {
           // is it an original part of the cluster?
@@ -401,9 +378,9 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
           if ((ti.weight[k] < 0.01) && (!in_original_tracks))
             continue;
           if (in_original_tracks) {
-            std::cout << "  * ";
+            edm::LogPrint("MultiPrimaryVertexFitter") << "  * ";
           } else {
-            std::cout << "    ";
+            edm::LogPrint("MultiPrimaryVertexFitter") << "    ";
           }
 
           double F1 = ti.b1 + (xv[k] - xb) * ti.a1[0] + (yv[k] - yb) * ti.a1[1];  // a1[2]==0
@@ -413,10 +390,10 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
           F2 = ti.b2 + (zv[k] - zb) * ti.a2[2];
           double chsq0 = F1 * F1 * ti.S11 + F2 * F2 * ti.S22 + 2. * F1 * F2 * ti.S12;
 
-          std::cout << std::setw(5) << std::fixed << std::setprecision(3) << ti.weight[k] << std::setw(8) << std::fixed
+          edm::LogPrint("MultiPrimaryVertexFitter") << std::setw(5) << std::fixed << std::setprecision(3) << ti.weight[k] << std::setw(8) << std::fixed
                     << std::setprecision(4) << ti.x << std::setw(8) << std::fixed << std::setprecision(4) << ti.y
                     << std::setw(10) << std::fixed << std::setprecision(4) << ti.z;
-          std::cout << "  ez= " << std::setw(7) << std::setprecision(4) << tracks[i].track().dzError()
+          edm::LogPrint("MultiPrimaryVertexFitter") << "  ez= " << std::setw(7) << std::setprecision(4) << tracks[i].track().dzError()
                     << "  exy= " << std::setw(7) << std::setprecision(4) << tracks[i].track().dxyError()
                     << "  phi= " << std::setw(7) << std::setprecision(4) << tracks[i].track().phi()
                     << "  eta= " << std::setw(7) << std::setprecision(4) << tracks[i].track().eta()
@@ -428,7 +405,6 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
                     << "  chsqv= " << std::setw(5) << std::setprecision(1) << chsqv << "  chsq0= " << std::setw(5)
                     << std::setprecision(1) << chsq0 << "  wdchsq= " << std::setw(5) << std::setprecision(1)
                     << (chsq0 - chsqv) * ti.weight[k];
-          std::cout << std::endl;
         }
       }
 
@@ -438,7 +414,7 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
                           (k == 55))) {
         hdump++;
         double z = zv[k];
-        std::cout << " dumping  the chi**2 map for z= " << z << "   dump " << hdump << std::endl;
+        edm::LogPrint("MultiPrimaryVertexFitter") << " dumping  the chi**2 map for z= " << z << "   dump " << hdump;
         for (int row = 500; row > -501; row -= 10) {
           double y = row * 1e-4;
           for (int col = -500; col < 501; col += 10) {
@@ -455,16 +431,16 @@ void MultiPrimaryVertexFitter::dump(const std::string &comment,
               sumchsq += ti.weight[k] * chsq;
             }
 
-            std::cout << "HH" << hdump << " " << std::fixed << std::setw(5) << row << std::setw(5) << col
+            edm::LogPrint("MultiPrimaryVertexFitter") << "HH" << hdump << " " << std::fixed << std::setw(5) << row << std::setw(5) << col
                       << std::setw(10) << std::setprecision(4) << x << std::setw(10) << std::setprecision(4) << y
-                      << std::scientific << std::setw(12) << sumchsq << std::endl;
+      << std::scientific << std::setw(12) << sumchsq;
           }
         }
       }
     }
   }
   if (zv.size() > 1) {
-    std::cout << " sum rho = " << sumrho << std::endl;
+    edm::LogPrint("MultiPrimaryVertexFitter") << " sum rho = " << sumrho;
   }
 }
 
@@ -495,13 +471,13 @@ void MultiPrimaryVertexFitter::clean(const std::vector<reco::TransientTrack> &tr
   }
 }
 
-std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(const std::vector<reco::TransientTrack> &tracks,
-                                                           const std::vector<TransientVertex> &clusters,
-                                                           const reco::BeamSpot &beamspot,
-                                                           const bool useBeamConstraint) {
+std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(std::vector<reco::TransientTrack> const& tracks,
+                                                           std::vector<TransientVertex> const& clusters,
+                                                           reco::BeamSpot const& beamspot,
+                                                           bool const useBeamConstraint) {
   // normalized number of tracks for initial guess of rho
   unsigned int numtk = 0;
-  for (auto &clu : clusters) {
+  for (auto const& clu : clusters) {
     numtk += clu.originalTracks().size();
   }
   hdump = 0;
@@ -523,7 +499,7 @@ std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(const std::vector<rec
   d2Fperp_vtx.reserve(clusters.size());
 
   // seeds
-  for (auto &clu : clusters) {
+  for (auto const& clu : clusters) {
     const double zclu = clu.position().z();
     xv.emplace_back(beamspot.x(zclu));
     yv.emplace_back(beamspot.y(zclu));
@@ -541,7 +517,7 @@ std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(const std::vector<rec
   float beta = 1.0;
   double delta = 0;
   float beam_weight = 1.;
-#ifdef DEBUG
+#ifdef PVTX_DEBUG
   double Zcutoff = 0.;
 #endif
 
@@ -554,8 +530,8 @@ std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(const std::vector<rec
 
   if (verbose_) {
     if (clusters.size() > 1) {
-      std::cout << "MultiPrimaryVertexFitter::fit  converged in " << nit << " iterations   delta=" << delta
-                << "  clusters.size=" << clusters.size() << std::endl;
+      edm::LogPrint("MultiPrimaryVertexFitter") << "MultiPrimaryVertexFitter::fit  converged in " << nit << " iterations   delta=" << delta
+<< "  clusters.size=" << clusters.size();
     }
     dump("final", clusters, tracks, beamspot, -20., 20., nit);
   }
@@ -571,7 +547,7 @@ std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(const std::vector<rec
       }
     }
   }
-#ifdef DEBUG
+#ifdef PVTX_DEBUG
   for (unsigned int i = 0; i < trackinfo.size(); i++) {
     if (maxweight > 1.1) {
       assert(maxweight == trackinfo[i].weight[kmaxweight[i]]);
@@ -584,13 +560,13 @@ std::vector<TransientVertex> MultiPrimaryVertexFitter::fit(const std::vector<rec
       double F2 = ti.b2 + (xv[k] - xb) * ti.a2[0] + (yv[k] - yb) * ti.a2[1] + (zv[k] - zb) * ti.a2[2];
       double chsq = F1 * F1 * ti.S11 + F2 * F2 * ti.S22 + 2. * F1 * F2 * ti.S12;
 
-      std::cout << "track " << i << " vertex " << kmaxweight[i] << "  weight " << trackinfo[i].weight[kmaxweight[i]]
+      edm::LogPrint("MultiPrimaryVertexFitter") << "track " << i << " vertex " << kmaxweight[i] << "  weight " << trackinfo[i].weight[kmaxweight[i]]
                 << " rho = " << rho_vtx[kmaxweight[i]]
                 << " maxweight = " << rho_vtx[kmaxweight[i]] / (Zcutoff / zv.size() + rho_vtx[kmaxweight[i]])
                 << " Zcutoff_eff = " << Zcutoff / (zv.size() * rho_vtx[kmaxweight[i]]) << " Zcutoff = " << Zcutoff
                 << " F1 = " << F1 << " (" << F1 * sqrt(ti.S11) << ")"
                 << " F2 = " << F2 << " (" << F2 * sqrt(ti.S22) << ")"
-                << " chsq = " << chsq << " corr" << ti.S12 / sqrt(ti.S11 * ti.S22) << std::endl;
+<< " chsq = " << chsq << " corr" << ti.S12 / sqrt(ti.S11 * ti.S22);
     }
   }
 #endif

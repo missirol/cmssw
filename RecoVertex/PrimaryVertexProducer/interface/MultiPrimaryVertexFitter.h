@@ -1,31 +1,31 @@
-#ifndef MultiPrimaryVertexFitter_h
-#define MultiPrimaryVertexFitter_h
+#ifndef RecoVertex_PrimaryVertexProducer_MultiPrimaryVertexFitter_h
+#define RecoVertex_PrimaryVertexProducer_MultiPrimaryVertexFitter_h
 
 /**\class MultiPrimaryVertexFitter
- 
+
   Description: simultaneaous fit of primary vertices
 
 */
+#include <vector>
 
-//#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 #include "RecoVertex/PrimaryVertexProducer/interface/PrimaryVertexFitterBase.h"
 
-typedef ROOT::Math::SMatrix<double, 3> Error3;
-
 class MultiPrimaryVertexFitter : public PrimaryVertexFitterBase {
 public:
   //MultiPrimaryVertexFitter(const edm::ParameterSet &conf);
-  MultiPrimaryVertexFitter(double chi2cutoff = 2.5, double mintrkweight = 0.2);
+  MultiPrimaryVertexFitter(double const chi2cutoff = 2.5, double const mintrkweight = 0.2, bool const verbose = false);
   ~MultiPrimaryVertexFitter() override = default;
 
-  std::vector<TransientVertex> fit(const std::vector<reco::TransientTrack> &,
-                                   const std::vector<TransientVertex> &,
-                                   const reco::BeamSpot &,
-                                   const bool) override;
+  std::vector<TransientVertex> fit(std::vector<reco::TransientTrack> const&,
+                                   std::vector<TransientVertex> const&,
+                                   reco::BeamSpot const&,
+                                   bool const) override;
 
 protected:
+  using Error3 = ROOT::Math::SMatrix<double, 3>;
+
   std::vector<reco::TransientTrack> input_tracks;
 
   struct TrackInfo {
@@ -56,6 +56,8 @@ protected:
   double single_fit(const reco::BeamSpot &, float beam_weight, const bool fill_covariances = false);
   std::vector<TrackInfo> trackinfo;
 
+  void test_chisquared(int const k, double const xb, double const yb, double const zb, TrackInfo const& ti) const;
+
   std::vector<double> xv;
   std::vector<double> yv;
   std::vector<double> zv;
@@ -69,5 +71,7 @@ protected:
   // configuration
   double chi2_cutoff_;
   double min_trackweight_;
+  const bool verbose_ = false;
 };
+
 #endif

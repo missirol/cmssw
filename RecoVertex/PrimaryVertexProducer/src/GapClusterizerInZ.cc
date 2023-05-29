@@ -2,8 +2,6 @@
 #include "RecoVertex/PrimaryVertexProducer/interface/GapClusterizerInZ.h"
 #include "RecoVertex/VertexPrimitives/interface/VertexException.h"
 
-using namespace std;
-
 namespace {
 
   bool recTrackLessZ(const reco::TransientTrack& tk1, const reco::TransientTrack& tk2) {
@@ -13,21 +11,18 @@ namespace {
 
 }  // namespace
 
-GapClusterizerInZ::GapClusterizerInZ(const edm::ParameterSet& conf) {
-  // some defaults to avoid uninitialized variables
-  verbose_ = conf.getUntrackedParameter<bool>("verbose", false);
-  zSep = conf.getParameter<double>("zSeparation");
+GapClusterizerInZ::GapClusterizerInZ(const edm::ParameterSet& conf):
+  zSep_{(float) conf.getParameter<double>("zSeparation")},
+  verbose_{conf.getUntrackedParameter<bool>("verbose")} {
   if (verbose_) {
-    std::cout << "TrackClusterizerInZ:  algorithm=gap, zSeparation=" << zSep << std::endl;
+    std::cout << "TrackClusterizerInZ:  algorithm=gap, zSeparation=" << zSep_ << std::endl;
   }
 }
 
-float GapClusterizerInZ::zSeparation() const { return zSep; }
+std::vector<std::vector<reco::TransientTrack>> GapClusterizerInZ::clusterize(const std::vector<reco::TransientTrack>& tracks) const {
+  std::vector<reco::TransientTrack> tks = tracks;  // copy to be sorted
 
-vector<vector<reco::TransientTrack> > GapClusterizerInZ::clusterize(const vector<reco::TransientTrack>& tracks) const {
-  vector<reco::TransientTrack> tks = tracks;  // copy to be sorted
-
-  vector<vector<reco::TransientTrack> > clusters;
+  std::vector<std::vector<reco::TransientTrack>> clusters;
   if (tks.empty())
     return clusters;
 
@@ -35,8 +30,8 @@ vector<vector<reco::TransientTrack> > GapClusterizerInZ::clusterize(const vector
   stable_sort(tks.begin(), tks.end(), recTrackLessZ);
 
   // init first cluster
-  vector<reco::TransientTrack>::const_iterator it = tks.begin();
-  vector<reco::TransientTrack> currentCluster;
+  std::vector<reco::TransientTrack>::const_iterator it = tks.begin();
+  std::vector<reco::TransientTrack> currentCluster;
   currentCluster.push_back(*it);
 
   it++;
@@ -44,7 +39,7 @@ vector<vector<reco::TransientTrack> > GapClusterizerInZ::clusterize(const vector
     double zPrev = currentCluster.back().stateAtBeamLine().trackStateAtPCA().position().z();
     double zCurr = (*it).stateAtBeamLine().trackStateAtPCA().position().z();
 
-    if (abs(zCurr - zPrev) < zSeparation()) {
+    if (std::abs(zCurr - zPrev) < zSeparation()) {
       // close enough ? cluster together
       currentCluster.push_back(*it);
     } else {
@@ -61,7 +56,7 @@ vector<vector<reco::TransientTrack> > GapClusterizerInZ::clusterize(const vector
   return clusters;
 }
 
-vector<TransientVertex> GapClusterizerInZ::vertices(const vector<reco::TransientTrack>& tracks) const {
+std::vector<TransientVertex> GapClusterizerInZ::vertices(const std::vector<reco::TransientTrack>& tracks) const {
   /* repackage track clusters, compatibility with newer clusterizers */
   std::vector<TransientVertex> primary_vertices;
   auto trackClusters = clusterize(tracks);

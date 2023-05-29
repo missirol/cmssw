@@ -1,15 +1,16 @@
-#ifndef VertexHigherPtSquared_H
-#define VertexHigherPtSquared_H
-
-#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "DataFormats/VertexReco/interface/Vertex.h"
-#include <vector>
+#ifndef RecoVertex_PrimaryVertexProducer_VertexHigherPtSquared_h
+#define RecoVertex_PrimaryVertexProducer_VertexHigherPtSquared_h
 
 /** \class VertexHigherPtSquared
  * operator for sorting TransientVertex objects
  * in decreasing order of the sum of the squared track pT's
  */
+#include <vector>
+
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+
 struct VertexHigherPtSquared {
   bool operator()(const TransientVertex& v1, const TransientVertex& v2) const;
 

@@ -1,5 +1,5 @@
-#ifndef HITrackFilterForPVFinding_h
-#define HITrackFilterForPVFinding_h
+#ifndef RecoVertex_PrimaryVertexProducer_HITrackFilterForPVFinding_h
+#define RecoVertex_PrimaryVertexProducer_HITrackFilterForPVFinding_h
 
 /**\class HITrackFilterForPVFinding 
  
@@ -7,22 +7,21 @@
   returns the input set of tracks if less than NumTracksThreshold tracks were selected
 
 */
+#include <limits>
 
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "RecoVertex/PrimaryVertexProducer/interface/TrackFilterForPVFinding.h"
 
-class HITrackFilterForPVFinding : public TrackFilterForPVFinding {
-private:
-  unsigned int NumTracksThreshold_;
-  unsigned int MaxNumTracksThreshold_;
-  double minPtTight_;
+namespace edm {
+  class ParameterSet;
+}
 
+class HITrackFilterForPVFinding : public TrackFilterForPVFinding {
 public:
-  HITrackFilterForPVFinding(const edm::ParameterSet& conf) : TrackFilterForPVFinding(conf) {
-    NumTracksThreshold_ = conf.getParameter<int>("numTracksThreshold");
-    MaxNumTracksThreshold_ = conf.getParameter<int>("maxNumTracksThreshold");
-    minPtTight_ = conf.getParameter<double>("minPtTight");
-    //std::cout << "HITrackFilterForPVFinding  numTracksThreshold="<< NumTracksThreshold_ <<  std::endl;
-  }
+  HITrackFilterForPVFinding(const edm::ParameterSet& conf) : TrackFilterForPVFinding(conf),
+    NumTracksThreshold_{(unsigned int) conf.getParameter<int>("numTracksThreshold")},
+    MaxNumTracksThreshold_{(unsigned int) conf.getParameter<int>("maxNumTracksThreshold")},
+    minPtTight_{conf.getParameter<double>("minPtTight")} {}
 
   // override the select method
   std::vector<reco::TransientTrack> select(const std::vector<reco::TransientTrack>& tracks) const override {
@@ -44,6 +43,11 @@ public:
     desc.add<int>("maxNumTracksThreshold", std::numeric_limits<int>::max());
     desc.add<double>("minPtTight", 0.0);
   }
+
+private:
+  unsigned int const NumTracksThreshold_;
+  unsigned int const MaxNumTracksThreshold_;
+  double const minPtTight_;
 };
 
 #endif

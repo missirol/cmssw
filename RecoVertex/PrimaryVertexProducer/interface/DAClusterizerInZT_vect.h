@@ -320,5 +320,4 @@ private:
   const double zrange_min_ = 0.1;  // smallest z-range to be included in a tracks cluster list
 };
 
-//#ifndef DAClusterizerInZT_vect_h
 #endif
