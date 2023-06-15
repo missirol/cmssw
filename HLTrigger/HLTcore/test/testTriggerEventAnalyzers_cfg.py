@@ -4,11 +4,11 @@ import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
 options = VarParsing.VarParsing('analysis')
 options.register('logLevel', 'WARNING', options.multiplicity.singleton, options.varType.string, 'value of MessageLogger.cerr.threshold')
-options.register('globalTag', '125X_mcRun3_2022_realistic_v3', options.multiplicity.singleton, options.varType.string, 'name of GlobalTag')
+options.register('globalTag', '131X_mcRun3_2022_realistic_v3', options.multiplicity.singleton, options.varType.string, 'name of GlobalTag')
 options.setDefault('inputFiles', [
-  '/store/mc/CMSSW_13_0_0_pre2/RelValWToLNu_14TeV/GEN-SIM-DIGI-RAW/125X_mcRun3_2022_realistic_v5-v2/80000/155dc2cf-2b77-4797-883c-c22d6c065d59.root',
+  '/store/relval/CMSSW_13_2_0_pre1/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU_131X_mcRun3_2022_realistic_v3-v1/2590000/712bcbbf-468a-4b97-96dc-b208b7f07fcb.root',
 ])
-options.setDefault('maxEvents', 10)
+options.setDefault('maxEvents', 100)
 options.parseArguments()
 
 ## Process
