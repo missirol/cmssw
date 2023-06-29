@@ -1,11 +1,9 @@
-#include <alpaka/alpaka.hpp>
+#include <vector>
 
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/GeometrySurface/interface/Plane.h"
-#include "DataFormats/Portable/interface/HostProductAlpaka.h"
 #include "DataFormats/SiPixelClusterSoA/interface/ClusteringConstants.h"
 #include "DataFormats/Track/interface/TrackSoAHost.h"
-#include "DataFormats/Track/interface/alpaka/PixelTrackUtilities.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackExtra.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -24,10 +22,12 @@
 #include "Geometry/CommonTopologies/interface/SimplePixelTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-#include "RecoTracker/PixelTrackFitting/interface/alpaka/FitUtils.h"
 #include "TrackingTools/AnalyticalJacobians/interface/JacobianLocalToCurvilinear.h"
 #include "TrackingTools/TrajectoryParametrization/interface/CurvilinearTrajectoryError.h"
 #include "TrackingTools/TrajectoryParametrization/interface/GlobalTrajectoryParameters.h"
+
+#include "DataFormats/Track/interface/alpaka/PixelTrackUtilities.h"
+#include "RecoTracker/PixelTrackFitting/interface/alpaka/FitUtils.h"
 
 #include "storeTracks.h"
 
@@ -40,6 +40,7 @@ template <typename TrackerTraits>
 class PixelTrackProducerFromSoAAlpaka : public edm::global::EDProducer<> {
   using TkSoAHost = TrackSoAHost<TrackerTraits>;
   using tracksHelpers = TracksUtilities<TrackerTraits>;
+  using HMSstorage = std::vector<uint32_t>;
 
 public:
   using IndToEdm = std::vector<uint32_t>;
@@ -48,8 +49,6 @@ public:
   ~PixelTrackProducerFromSoAAlpaka() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions &descriptions);
-
-  using HMSstorage = HostProductAlpaka<uint32_t[]>;
 
 private:
   void produce(edm::StreamID streamID, edm::Event &iEvent, const edm::EventSetup &iSetup) const override;
@@ -136,24 +135,23 @@ void PixelTrackProducerFromSoAAlpaka<TrackerTraits>::produce(edm::StreamID strea
   auto const &rechits = iEvent.get(cpuHits_);
   std::vector<TrackingRecHit const *> hitmap;
   auto const &rcs = rechits.data();
-  auto nhits = rcs.size();
+  auto const nhits = rcs.size();
 
   hitmap.resize(nhits, nullptr);
 
-  auto const *hitsModuleStart = iEvent.get(hmsToken_).get();
-  auto fc = hitsModuleStart;
+  auto const& hitsModuleStart = iEvent.get(hmsToken_);
 
-  for (auto const &h : rcs) {
-    auto const &thit = static_cast<BaseTrackerRecHit const &>(h);
-    auto detI = thit.det()->index();
+  for (auto const &hit : rcs) {
+    auto const &thit = static_cast<BaseTrackerRecHit const &>(hit);
+    auto const detI = thit.det()->index();
     auto const &clus = thit.firstClusterRef();
     assert(clus.isPixel());
-    auto i = fc[detI] + clus.pixelCluster().originalId();
-    if (i >= hitmap.size())
-      hitmap.resize(i + 256, nullptr);  // only in case of hit overflow in one module
+    auto const idx = hitsModuleStart[detI] + clus.pixelCluster().originalId();
+    if (idx >= hitmap.size())
+      hitmap.resize(idx + 256, nullptr);  // only in case of hit overflow in one module
 
-    assert(nullptr == hitmap[i]);
-    hitmap[i] = &h;
+    assert(nullptr == hitmap[idx]);
+    hitmap[idx] = &hit;
   }
 
   std::vector<const TrackingRecHit *> hits;
