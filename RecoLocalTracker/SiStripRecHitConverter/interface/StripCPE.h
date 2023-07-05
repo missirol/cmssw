@@ -57,7 +57,7 @@ public:
   AlgoParam getAlgoParam(const GeomDetUnit& det, const LocalTrajectoryParameters& ltp) const {
     StripCPE::Param const& p = param(det);
     SiStripDetId::SubDetector loc = SiStripDetId(det.geographicalId()).subDetector();
-
+//edm::LogPrint("StripCPE") << " StripCPE : " << loc;
     LocalVector track = ltp.directionNotNormalized();
     track *= -p.thickness;
 
@@ -65,6 +65,8 @@ public:
 
     auto const corr =
         -0.5f * (1.f - p.backplanecorrection) * fullProjection + 0.5f * p.coveredStrips(track, ltp.position());
+
+edm::LogPrint("StripCPE") << " StripCPE : track=" << track << " p.drift=" << p.drift << " ltp.position=" << ltp.position() << " fullProjection=" << fullProjection << " corr=" << corr;
 
     return AlgoParam{p, ltp, loc, std::abs(fullProjection), corr};
   }

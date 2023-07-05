@@ -94,16 +94,24 @@ HitDoublets HitPairGeneratorFromLayerPair::doublets(const TrackingRegion& region
                                                     const Layer& innerLayer,
                                                     const Layer& outerLayer,
                                                     LayerCacheType& layerCache) {
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- A";
   const RecHitsSortedInPhi& innerHitsMap = layerCache(innerLayer, region);
   if (innerHitsMap.empty())
     return HitDoublets(innerHitsMap, innerHitsMap);
 
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- B";
+
+
   const RecHitsSortedInPhi& outerHitsMap = layerCache(outerLayer, region);
   if (outerHitsMap.empty())
     return HitDoublets(innerHitsMap, outerHitsMap);
+
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- C";
   const auto& field = iSetup.getData(theFieldToken);
   const auto& msmaker = iSetup.getData(theMSMakerToken);
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- D";
   HitDoublets result(innerHitsMap, outerHitsMap);
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- E";
   result.reserve(std::max(innerHitsMap.size(), outerHitsMap.size()));
   doublets(region,
            *innerLayer.detLayer(),
@@ -114,6 +122,7 @@ HitDoublets HitPairGeneratorFromLayerPair::doublets(const TrackingRegion& region
            msmaker,
            theMaxElement,
            result);
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- F";
 
   return result;
 }
@@ -128,22 +137,30 @@ void HitPairGeneratorFromLayerPair::doublets(const TrackingRegion& region,
                                              const unsigned int theMaxElement,
                                              HitDoublets& result) {
   //  HitDoublets result(innerHitsMap,outerHitsMap); result.reserve(std::max(innerHitsMap.size(),outerHitsMap.size()));
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
   typedef RecHitsSortedInPhi::Hit Hit;
   InnerDeltaPhi deltaPhi(outerHitDetLayer, innerHitDetLayer, region, field, msmaker);
 
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
   // std::cout << "layers " << theInnerLayer.detLayer()->seqNum()  << " " << outerLayer.detLayer()->seqNum() << std::endl;
 
   // constexpr float nSigmaRZ = std::sqrt(12.f);
   constexpr float nSigmaPhi = 3.f;
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
   for (int io = 0; io != int(outerHitsMap.theHits.size()); ++io) {
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     if (!deltaPhi.prefilter(outerHitsMap.x[io], outerHitsMap.y[io]))
       continue;
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     Hit const& ohit = outerHitsMap.theHits[io].hit();
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     PixelRecoRange<float> phiRange =
         deltaPhi(outerHitsMap.x[io], outerHitsMap.y[io], outerHitsMap.z[io], nSigmaPhi * outerHitsMap.drphi[io]);
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
 
     if (phiRange.empty())
       continue;
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
 
     std::unique_ptr<const HitRZCompatibility> checkRZ =
         region.checkRZ(&innerHitDetLayer,
@@ -153,15 +170,19 @@ void HitPairGeneratorFromLayerPair::doublets(const TrackingRegion& region,
                        outerHitsMap.z[io],
                        outerHitsMap.isBarrel ? outerHitsMap.du[io] : outerHitsMap.dv[io],
                        outerHitsMap.isBarrel ? outerHitsMap.dv[io] : outerHitsMap.du[io]);
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     if (!checkRZ)
       continue;
 
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     Kernels<HitZCheck, HitRCheck, HitEtaCheck> kernels;
 
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     auto innerRange = innerHitsMap.doubleRange(phiRange.min(), phiRange.max());
     LogDebug("HitPairGeneratorFromLayerPair")
         << "preparing for combination of: " << innerRange[1] - innerRange[0] + innerRange[3] - innerRange[2]
         << " inner and: " << outerHitsMap.theHits.size() << " outter";
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
     for (int j = 0; j < 3; j += 2) {
       auto b = innerRange[j];
       auto e = innerRange[j + 1];
@@ -182,6 +203,7 @@ void HitPairGeneratorFromLayerPair::doublets(const TrackingRegion& region,
           std::get<2>(kernels)(b, e, innerHitsMap, ok);
           break;
       }
+edm::LogPrint("HitPairGeneratorFromLayerPair") << "doublets -- " << __LINE__;
       for (int i = 0; i != e - b; ++i) {
         if (!ok[i])
           continue;

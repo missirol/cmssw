@@ -2,6 +2,7 @@
 #define MeasurementDetWithData_H
 
 #include "TrackingTools/MeasurementDet/interface/MeasurementDet.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 class MeasurementDetWithData {
 public:
@@ -34,6 +35,7 @@ public:
   bool recHits(SimpleHitContainer& result,
                const TrajectoryStateOnSurface& stateOnThisDet,
                const MeasurementEstimator& me) const {
+edm::LogPrint("MeasurementDetWithData") << "MeasurementDetWithData-1 " << __LINE__ << " " << stateOnThisDet.globalPosition() << " " << stateOnThisDet.localPosition();
     return mdet().recHits(result, stateOnThisDet, me, data());
   }
 

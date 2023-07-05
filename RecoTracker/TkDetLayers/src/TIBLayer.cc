@@ -124,6 +124,16 @@ void TIBLayer::searchNeighbors(const TrajectoryStateOnSurface& tsos,
     }
   }
 
+for(auto const& foo0: result){
+for(auto const& foo: foo0){
+edm::LogPrint("TIBLayer") << "  TIBLayer::searchNeighbors-0 " << __LINE__ << " " << foo.det()
+<< " " << foo.det()->position()
+<< " " << foo.det()->subDetector()
+<< " " << foo.det()->geographicalId()
+<< " " << foo.trajectoryState().isValid()
+<< " " << foo.trajectoryState().globalPosition();
+}}
+
   typedef CompatibleDetToGroupAdder Adder;
   for (int idet = negStartIndex; idet >= 0; idet--) {
     const GeometricSearchDet* neighborRing = sLayer[idet];
@@ -132,6 +142,17 @@ void TIBLayer::searchNeighbors(const TrajectoryStateOnSurface& tsos,
     if (!Adder::add(*neighborRing, tsos, prop, est, result))
       break;
   }
+
+for(auto const& foo0: result){
+for(auto const& foo: foo0){
+edm::LogPrint("TIBLayer") << "  TIBLayer::searchNeighbors-1 " << __LINE__ << " " << foo.det()
+<< " " << foo.det()->position()
+<< " " << foo.det()->subDetector()
+<< " " << foo.det()->geographicalId()
+<< " " << foo.trajectoryState().isValid()
+<< " " << foo.trajectoryState().globalPosition();
+}}
+
   for (int idet = posStartIndex; idet < static_cast<int>(sLayer.size()); idet++) {
     const GeometricSearchDet* neighborRing = sLayer[idet];
     if (!overlap(gCrossingPos, *neighborRing, window))
@@ -139,6 +160,17 @@ void TIBLayer::searchNeighbors(const TrajectoryStateOnSurface& tsos,
     if (!Adder::add(*neighborRing, tsos, prop, est, result))
       break;
   }
+
+for(auto const& foo0: result){
+for(auto const& foo: foo0){
+edm::LogPrint("TIBLayer") << "  TIBLayer::searchNeighbors-2 " << __LINE__ << " " << foo.det()
+<< " " << foo.det()->position()
+<< " " << foo.det()->subDetector()
+<< " " << foo.det()->geographicalId()
+<< " " << foo.trajectoryState().isValid()
+<< " " << foo.trajectoryState().globalPosition();
+}}
+
 }
 
 bool TIBLayer::overlap(const GlobalPoint& crossPoint, const GeometricSearchDet& det, float window) {

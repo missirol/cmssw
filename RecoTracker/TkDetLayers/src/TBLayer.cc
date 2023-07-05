@@ -16,10 +16,15 @@ void TBLayer::groupedCompatibleDetsV(const TrajectoryStateOnSurface& tsos,
                                      const Propagator& prop,
                                      const MeasurementEstimator& est,
                                      std::vector<DetGroup>& result) const {
+
+edm::LogPrint("TBLayer") << "  TBLayer::groupedCompatibleDetsV-0 " << __LINE__ << " [" << result.size() << "] " << tsos.globalPosition();
+
   SubLayerCrossings crossings;
   crossings = computeCrossings(tsos, prop.propagationDirection());
   if (!crossings.isValid())
     return;
+
+edm::LogPrint("TBLayer") << "  TBLayer::groupedCompatibleDetsV-1 " << __LINE__ << " [" << result.size() << "] " << tsos.globalPosition();
 
   std::vector<DetGroup> closestResult;
   addClosest(tsos, prop, est, crossings.closest(), closestResult);
@@ -30,13 +35,45 @@ void TBLayer::groupedCompatibleDetsV(const TrajectoryStateOnSurface& tsos,
     return;
   }
 
+for(auto const& foo0: closestResult){
+for(auto const& foo: foo0){
+edm::LogPrint("TBLayer") << "  TBLayer::groupedCompatibleDetsV-11 (closestResult) " << __LINE__ << " " << foo.det()
+<< " " << foo.det()->position()
+<< " " << foo.det()->subDetector()
+<< " " << foo.det()->geographicalId()
+<< " " << foo.trajectoryState().isValid()
+<< " " << foo.trajectoryState().globalPosition();
+}}
+
+edm::LogPrint("TBLayer") << "  TBLayer::groupedCompatibleDetsV-2 " << __LINE__ << " [" << result.size() << "] " << tsos.globalPosition() << " " << closestResult.size();
+
   DetGroupElement closestGel(closestResult.front().front());
   float window = computeWindowSize(closestGel.det(), closestGel.trajectoryState(), est);
 
   searchNeighbors(tsos, prop, est, crossings.closest(), window, closestResult, false);
 
+for(auto const& foo0: closestResult){
+for(auto const& foo: foo0){
+edm::LogPrint("TBLayer") << "  TBLayer::groupedCompatibleDetsV-3 (closestResult) " << __LINE__ << " " << foo.det()
+<< " " << foo.det()->position()
+<< " " << foo.det()->subDetector()
+<< " " << foo.det()->geographicalId()
+<< " " << foo.trajectoryState().isValid()
+<< " " << foo.trajectoryState().globalPosition();
+}}
+
   std::vector<DetGroup> nextResult;
   searchNeighbors(tsos, prop, est, crossings.other(), window, nextResult, true);
+
+for(auto const& foo0: nextResult){
+for(auto const& foo: foo0){
+edm::LogPrint("TBLayer") << "  TBLayer::groupedCompatibleDetsV-3 (nextResult) " << __LINE__ << " " << foo.det()
+<< " " << foo.det()->position()
+<< " " << foo.det()->subDetector()
+<< " " << foo.det()->geographicalId()
+<< " " << foo.trajectoryState().isValid()
+<< " " << foo.trajectoryState().globalPosition();
+}}
 
   int crossingSide = LayerCrossingSide().barrelSide(closestGel.trajectoryState(), prop);
   DetGroupMerger::orderAndMergeTwoLevels(

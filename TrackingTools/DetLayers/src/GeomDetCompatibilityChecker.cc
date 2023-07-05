@@ -61,6 +61,8 @@ std::pair<bool, TrajectoryStateOnSurface> GeomDetCompatibilityChecker::isCompati
                                                                                     const MeasurementEstimator& est) {
   stat.ntot++;
 
+edm::LogPrint("GeomDetCompatibilityChecker") << "    GeomDetCompatibilityChecker::isCompatible " << __LINE__ << " tsos.globalPos=" << tsos.globalPosition();
+
   auto const sagCut = est.maxSagitta();
   auto const minTol2 = est.minTolerance2();
 
@@ -71,6 +73,8 @@ std::pair<bool, TrajectoryStateOnSurface> GeomDetCompatibilityChecker::isCompati
   auto largeErr = err2> 0.1*tolerance2;
   if (largeErr) stat.nle++; 
   */
+
+edm::LogPrint("GeomDetCompatibilityChecker") << "    GeomDetCompatibilityChecker::isCompatible " << __LINE__ << " geoId=" << theDet->geographicalId() << " tsos.globalPos=" << tsos.globalPosition();
 
   bool isIn = false;
   float sagitta = 99999999.0f;
@@ -107,12 +111,16 @@ std::pair<bool, TrajectoryStateOnSurface> GeomDetCompatibilityChecker::isCompati
     }
   }
 
+edm::LogPrint("GeomDetCompatibilityChecker") << "    GeomDetCompatibilityChecker::isCompatible " << __LINE__ << " geoId=" << theDet->geographicalId() << " tsos.globalPos=" << tsos.globalPosition();
+
   // precise propagation
   TrajectoryStateOnSurface&& propSt = prop.propagate(tsos, theDet->specificSurface());
   if UNLIKELY (!propSt.isValid()) {
     stat.nf1++;
     return std::make_pair(false, std::move(propSt));
   }
+
+edm::LogPrint("GeomDetCompatibilityChecker") << "    GeomDetCompatibilityChecker::isCompatible " << __LINE__ << " geoId=" << theDet->geographicalId() << " tsos.globalPos=" << tsos.globalPosition() << " propSt.globalPos=" << propSt.globalPosition();
 
   auto es = est.estimate(propSt, theDet->specificSurface());
   if (!es)
@@ -122,5 +130,8 @@ std::pair<bool, TrajectoryStateOnSurface> GeomDetCompatibilityChecker::isCompati
   if (close && es && (!isIn)) {
     stat.ns21++;
   }  // std::cout << sagitta << std::endl;}
+
+edm::LogPrint("GeomDetCompatibilityChecker") << "    GeomDetCompatibilityChecker::isCompatible " << __LINE__ << " geoId=" << theDet->geographicalId() << " tsos.globalPos=" << tsos.globalPosition() << " propSt.globalPos=" << propSt.globalPosition() << " es=" << es;
+
   return std::make_pair(es, std::move(propSt));
 }

@@ -132,6 +132,13 @@ private:
     //Use 2D SiStripRecHit in endcap
     bool endcap = idet.type().isEndcap();
     auto &&lv = theCPE->localParameters(clus.stripCluster(), idet);
+
+
+
+edm::LogPrint("Traj2TrackHits") << "TTT Traj2TrackHits  (" << idet << ") : " << clus.stripCluster().firstStrip() << " " << clus.stripCluster().size() << " " << clus.stripCluster().charge() << " " << clus.stripCluster().barycenter() << " " << lv;
+
+
+
     if (endcap)
       return new SiStripRecHit2D(lv.first, lv.second, idet, clus);
     return new SiStripRecHit1D(

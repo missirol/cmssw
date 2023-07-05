@@ -37,10 +37,16 @@ namespace {
     //throw MeasurementDetException("TkGluedMeasurementDet plane not parallel to DetUnit plane");
     //}
 
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << hit.localPosition();
     double delta = gluedPlane.localZ(hitPlane.position());
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << delta;
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << gdir;
     LocalVector ldir = gluedPlane.toLocal(gdir);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << ldir;
     LocalPoint lhitPos = gluedPlane.toLocal(hit.globalPosition());
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << lhitPos;
     LocalPoint projectedHitPos = lhitPos - ldir * delta / ldir.z();
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << projectedHitPos;
 
     LocalVector hitXAxis = gluedPlane.toLocal(hitPlane.toGlobal(LocalVector(1, 0, 0)));
     LocalError hitErr = hit.localPositionError();
@@ -49,6 +55,7 @@ namespace {
       hitErr = LocalError(hitErr.xx(), -hitErr.xy(), hitErr.yy());
     }
     LocalError rotatedError = hitErr.rotate(hitXAxis.x(), hitXAxis.y());
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet::projectedPos " << __LINE__ << " " << rotatedError;
 
     return std::make_pair(projectedHitPos, rotatedError);
   }
@@ -86,6 +93,7 @@ TkGluedMeasurementDet::RecHitContainer TkGluedMeasurementDet::recHits(const Traj
                                                                       const MeasurementTrackerEvent& data) const {
   RecHitContainer result;
   HitCollectorForRecHits collector(&fastGeomDet(), theMatcher, theCPE, result);
+edm::LogPrint("TkGluedMeasurementDet") << "pre-collectRecHits-1 " << __LINE__ << " " << ts.globalPosition() << " " << ts.localPosition();
   collectRecHits(ts, data, collector);
   return result;
 }
@@ -99,6 +107,7 @@ bool TkGluedMeasurementDet::recHits(SimpleHitContainer& result,
     return false;
   auto oldSize = result.size();
   HitCollectorForSimpleHits collector(&fastGeomDet(), theMatcher, theCPE, stateOnThisDet, est, result);
+edm::LogPrint("TkGluedMeasurementDet") << "pre-collectRecHits-2 " << __LINE__ << " " << stateOnThisDet.globalPosition() << " " << stateOnThisDet.localPosition();
   collectRecHits(stateOnThisDet, data, collector);
 
   return result.size() > oldSize;
@@ -117,6 +126,7 @@ bool TkGluedMeasurementDet::measurements(const TrajectoryStateOnSurface& stateOn
   auto oldSize = result.size();
 
   HitCollectorForFastMeasurements collector(&fastGeomDet(), theMatcher, theCPE, stateOnThisDet, est, result);
+edm::LogPrint("TkGluedMeasurementDet") << "pre-collectRecHits-3 " << __LINE__ << " " << stateOnThisDet.globalPosition() << " " << stateOnThisDet.localPosition();
   collectRecHits(stateOnThisDet, data, collector);
 
   if (result.size() > oldSize)
@@ -163,6 +173,7 @@ template <typename Collector>
 void TkGluedMeasurementDet::collectRecHits(const TrajectoryStateOnSurface& ts,
                                            const MeasurementTrackerEvent& data,
                                            Collector& collector) const {
+edm::LogPrint("TkGluedMeasurementDet") << "Pre-doubleMatch " << __LINE__ << " " << ts.globalPosition() << " " << ts.localPosition();
   doubleMatch(ts, data, collector);
 }
 #else
@@ -208,11 +219,15 @@ void TkGluedMeasurementDet::collectRecHits(const TrajectoryStateOnSurface& ts,
                           &specificGeomDet(),
                           tkDir);
 
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet WWW " << __LINE__ << " " << tkhit->localPosition();
+
         if (collector.hasNewMatchedHits()) {
           collector.clearNewMatchedHitsFlag();
         } else {
           collector.addProjected(**monoHit, glbDir);
         }
+
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet WWW " << __LINE__;
       }  // loop on mono hit
     }
     //GIO// std::cerr << "TkGluedMeasurementDet hits " << monoHits.size() << "/" << stereoHits.size() << " => " << result.size() << std::endl;
@@ -297,8 +312,10 @@ TkGluedMeasurementDet::RecHitContainer TkGluedMeasurementDet::projectOnGluedDet(
   RecHitContainer result;
   for (auto const& hit : hits) {
     auto&& vl = projectedPos(*hit, fastGeomDet(), ts.globalParameters().momentum(), theCPE);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << vl.first << " " << vl.second << " " << hit->localPosition();
     auto&& phit = std::make_shared<ProjectedSiStripRecHit2D>(
         vl.first, vl.second, fastGeomDet(), static_cast<SiStripRecHit2D const&>(*hit));
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << phit->localPosition();
     result.push_back(std::move(phit));
   }
   return result;
@@ -309,7 +326,9 @@ void TkGluedMeasurementDet::projectOnGluedDet(Collector& collector,
                                               const RecHitContainer& hits,
                                               const GlobalVector& gdir) const {
   for (RecHitContainer::const_iterator ihit = hits.begin(); ihit != hits.end(); ihit++) {
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet WWW2 " << __LINE__ << " " << (*ihit)->localPosition();
     collector.addProjected(**ihit, gdir);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet WWW2 " << __LINE__;
   }
 }
 
@@ -318,8 +337,10 @@ TkGluedMeasurementDet::RecHitContainer TkGluedMeasurementDet::projectOnGluedDet(
   RecHitContainer result;
   for (auto const& hit : hits) {
     auto&& vl = projectedPos(hit, fastGeomDet(), ts.globalParameters().momentum(), theCPE);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << vl.first << " " << vl.second << " " << hit.localPosition();
     auto&& phit = std::make_shared<ProjectedSiStripRecHit2D>(
         vl.first, vl.second, fastGeomDet(), static_cast<SiStripRecHit2D const&>(hit));
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << phit->localPosition();
     result.push_back(std::move(phit));
   }
   return result;
@@ -329,8 +350,11 @@ template <typename Collector>
 void TkGluedMeasurementDet::projectOnGluedDet(Collector& collector,
                                               std::vector<SiStripRecHit2D> const& hits,
                                               const GlobalVector& gdir) const {
-  for (auto const& hit : hits)
+  for (auto const& hit : hits) {
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet WWW3 " << __LINE__ << " " << hit.localPosition();
     collector.addProjected(hit, gdir);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet WWW3 " << __LINE__;
+  }
 }
 
 void TkGluedMeasurementDet::checkProjection(const TrajectoryStateOnSurface& ts,
@@ -348,7 +372,9 @@ void TkGluedMeasurementDet::checkHitProjection(const TrackingRecHit& hit,
                                                const TrajectoryStateOnSurface& ts,
                                                const GeomDet& det) const {
   auto&& vl = projectedPos(hit, det, ts.globalParameters().momentum(), theCPE);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << vl.first << " " << vl.second << " " << hit.localPosition();
   ProjectedSiStripRecHit2D projectedHit(vl.first, vl.second, det, static_cast<SiStripRecHit2D const&>(hit));
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << projectedHit.localPosition();
 
   RecHitPropagator prop;
   TrajectoryStateOnSurface propState = prop.propagate(hit, det.surface(), ts);
@@ -448,8 +474,10 @@ TkGluedMeasurementDet::HitCollectorForSimpleHits::HitCollectorForSimpleHits(
 
 void TkGluedMeasurementDet::HitCollectorForRecHits::addProjected(const TrackingRecHit& hit, const GlobalVector& gdir) {
   auto&& vl = projectedPos(hit, *geomDet_, gdir, cpe_);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << vl.first << " " << vl.second << " " << hit.localPosition();
   auto&& phit = std::make_shared<ProjectedSiStripRecHit2D>(
       vl.first, vl.second, *geomDet_, static_cast<SiStripRecHit2D const&>(hit));
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << phit->localPosition();
   target_.push_back(std::move(phit));
 }
 
@@ -472,9 +500,12 @@ void TkGluedMeasurementDet::HitCollectorForSimpleHits::addProjected(const Tracki
     return;
 
   // here we're ok with some extra casual new's and delete's
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << hit.localPosition();
   auto&& vl = projectedPos(hit, *geomDet_, gdir, cpe_);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << hit.localPosition() << " " << vl.first << " " << vl.second;
   std::unique_ptr<ProjectedSiStripRecHit2D> phit(
       new ProjectedSiStripRecHit2D(vl.first, vl.second, *geomDet_, static_cast<SiStripRecHit2D const&>(hit)));
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << phit->localPosition();
   std::pair<bool, double> diffEst = est_.estimate(stateOnThisDet_, *phit);
   if (diffEst.first) {
     target_.emplace_back(phit.release());
@@ -518,8 +549,10 @@ void TkGluedMeasurementDet::HitCollectorForFastMeasurements::addProjected(const 
 
   // here we're ok with some extra casual new's and delete's
   auto&& vl = projectedPos(hit, *geomDet_, gdir, cpe_);
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << vl.first << " " << vl.second << " " << hit.localPosition();
   auto&& phit = std::make_shared<ProjectedSiStripRecHit2D>(
       vl.first, vl.second, *geomDet_, static_cast<SiStripRecHit2D const&>(hit));
+edm::LogPrint("TkGluedMeasurementDet") << " TkGluedMeasurementDet " << __LINE__ << " " << phit->localPosition();
 
   std::pair<bool, double> diffEst = est_.estimate(stateOnThisDet_, *phit);
   if (diffEst.first) {

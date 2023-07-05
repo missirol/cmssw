@@ -103,10 +103,24 @@ StripClusterParameterEstimator::LocalValues StripCPEfromTrackAngle::localParamet
 
   auto N = cluster.amplitudes().size();
 
+edm::LogPrint("") << "  StripCPEfromTrackAngle::localParameters " << __LINE__ << " : " << cluster.size()
+<< " " << cluster.charge()
+<< " " << cluster.barycenter()
+//<< " " << p
+//<< " " << ltp
+//<< " " << loc
+<< " " << corr
+<< " " << afp
+<< " " << N;
+
+
+
+
   switch (m_algo) {
     case Algo::chargeCK: {
       auto dQdx = siStripClusterTools::chargePerCM(cluster, ltp, p.invThickness);
       uerr2 = dQdx > maxChgOneMIP ? legacyStripErrorSquared(N, afp) : stripErrorSquared(N, afp, loc);
+edm::LogPrint("") << "  StripCPEfromTrackAngle::localParameters " << __LINE__ << " : " << dQdx << " " << uerr2;
     } break;
     case Algo::legacy:
       uerr2 = legacyStripErrorSquared(N, afp);
@@ -114,9 +128,12 @@ StripClusterParameterEstimator::LocalValues StripCPEfromTrackAngle::localParamet
     case Algo::mergeCK:
       uerr2 = cluster.isMerged() ? legacyStripErrorSquared(N, afp) : stripErrorSquared(N, afp, loc);
       break;
+
+edm::LogPrint("") << "  StripCPEfromTrackAngle::localParameters " << __LINE__ << " : " << uerr2;
   }
 
   const float strip = cluster.barycenter() + corr;
+edm::LogPrint("") << "  StripCPEfromTrackAngle::localParameters " << __LINE__ << " : " << strip;
 
   return std::make_pair(p.topology->localPosition(strip, ltp.vector()),
                         p.topology->localError(strip, uerr2, ltp.vector()));

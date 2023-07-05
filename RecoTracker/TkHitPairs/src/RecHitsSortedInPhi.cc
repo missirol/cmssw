@@ -1,5 +1,8 @@
 #include "RecoTracker/TkHitPairs/interface/RecHitsSortedInPhi.h"
 #include "DataFormats/TrackerRecHit2D/interface/BaseTrackerRecHit.h"
+#include "FWCore/Utilities/interface/isFinite.h"
+
+#include "DataFormats/TrackerRecHit2D/interface/ProjectedSiStripRecHit2D.h"
 
 #include <algorithm>
 #include <cassert>
@@ -21,8 +24,28 @@ RecHitsSortedInPhi::RecHitsSortedInPhi(const std::vector<Hit>& hits, GlobalPoint
   // assert(origin.x()==0 && origin.y()==0);
 
   theHits.reserve(hits.size());
-  for (auto const& hp : hits)
-    theHits.emplace_back(hp);
+  for (auto const& hp : hits) {
+    auto gp = hp->globalPosition();
+    auto phi = gp.barePhi();
+
+
+    edm::LogPrint("RecHitsSortedInPhi") << "RecHit layer " << layer << ' ' << hp->rawId() << ' ' << hp->type() << ' '
+                                        << phi << ' ' << gp << ' ' << hp->localPosition() << " " << hp->det();
+
+
+
+    if (!edm::isFinite(phi)) {
+
+      ProjectedSiStripRecHit2D const* rh = dynamic_cast<ProjectedSiStripRecHit2D const*>(hp);
+      if(rh) {
+        auto const& clus = rh->cluster();
+        edm::LogError("RecHitsSortedInPhi") << "  PjRH " << rh->originalId() << " " << clus->size() << " " << clus->charge() << " " << clus->barycenter() << " " << rh->localPosition() << " " << rh->rawId();
+      }
+
+    } else {
+      theHits.emplace_back(hp);
+    }
+  }
 
   std::sort(theHits.begin(), theHits.end(), HitLessPhi());
 

@@ -12,6 +12,7 @@
 #include "DataFormats/CLHEP/interface/AlgebraicObjects.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "TrackingTools/TransientTrackingRecHit/interface/HelpertRecHit2DLocalPos.h"
 
@@ -149,6 +150,10 @@ void SiStripRecHitMatcher::doubleMatch(MonoIterator monoRHiter,
                                        CollectorHelper& collectorHelper) const {
   using matcherDetails::StereoInfo;
 
+
+edm::LogPrint("TkGluedMeasurementDet") << " SiStripRecHitMatcher.h HHH2 " << __LINE__;
+
+
   typedef GloballyPositioned<float> ToGlobal;
   typedef typename GloballyPositioned<float>::ToLocal ToLocal;
 
@@ -220,8 +225,11 @@ void SiStripRecHitMatcher::doubleMatch(MonoIterator monoRHiter,
   for (; monoRHiter != monoRHend; ++monoRHiter) {
     SiStripRecHit2D const& monoRH = CollectorHelper::monoHit(monoRHiter);
 
+edm::LogPrint("TkGluedMeasurementDet") << " SiStripRecHitMatcher.h OOO1 " << __LINE__ << " " << monoRH.localPosition();
+
     // position of the initial and final point of the strip (RPHI cluster) in local strip coordinates
     auto RPHIpointX = topol.measurementPosition(monoRH.localPositionFast()).x();
+edm::LogPrint("TkGluedMeasurementDet") << " SiStripRecHitMatcher.h OOO2 " << __LINE__ << " " << RPHIpointX;
     MeasurementPoint RPHIpointini(RPHIpointX, -0.5f);
     MeasurementPoint RPHIpointend(RPHIpointX, 0.5f);
 
@@ -313,12 +321,15 @@ void SiStripRecHitMatcher::doubleMatch(MonoIterator monoRHiter,
         //Change NSigmaInside in the configuration file to accept more hits
         //...and add it to the Rechit collection
 
+edm::LogPrint("TkGluedMeasurementDet") << " SiStripRecHitMatcher.h HHH0 " << __LINE__ << " " << position << " " << error;
+
         collectorHelper.collector()(
             SiStripMatchedRecHit2D(LocalPoint(position), error, *gluedDet, &monoRH, si.secondHit));
       }
 
     }  // loop on cache info
 
+edm::LogPrint("TkGluedMeasurementDet") << " SiStripRecHitMatcher.h WWW9 " << __LINE__ << " " << monoRHiter->localPosition();
     collectorHelper.closure(monoRHiter);
   }  // loop on mono hit
 }

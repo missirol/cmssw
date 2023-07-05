@@ -252,6 +252,18 @@ void SiStripClusterizerFromRaw::run(const FEDRawDataCollection& rawColl, edmNew:
       record.abort();
 
   }  // end loop over dets
+
+edm::LogPrint("") << "--- SiStripClusterizerFromRaw" << output.subdetId();
+uint dset_i = 0;
+for(auto const& dset : output){
+  edm::LogPrint("") << "XXX SiStripClusterizerFromRaw " << dset_i << " :" << " " << dset.detId();
+  dset_i++;
+  for(size_t jjj=0; jjj<dset.size(); ++jjj){
+    edm::LogPrint("") << "YYY SiStripClusterizerFromRaw     " << jjj << " : " << dset[jjj].firstStrip() << " " << dset[jjj].barycenter();
+  }
+}
+
+
 }
 
 namespace {

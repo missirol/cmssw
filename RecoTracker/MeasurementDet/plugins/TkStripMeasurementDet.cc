@@ -111,8 +111,8 @@ bool TkStripMeasurementDet::simpleRecHits(const TrajectoryStateOnSurface& stateO
 
   int utraj = specificGeomDet().specificTopology().measurementPosition(stateOnThisDet.localPosition()).x();
   const detset& detSet = data.stripData().detSet(index());
+edm::LogPrint("TkStripMeasurementDet") << " TkStripMeasurementDet SSS1 " << stateOnThisDet.isValid() << " " << stateOnThisDet.localPosition();
   auto const& cpepar = cpe()->getAlgoParam(specificGeomDet(), stateOnThisDet.localParameters());
-
   auto rightCluster = std::find_if(
       detSet.begin(), detSet.end(), [utraj](const SiStripCluster& hit) { return hit.firstStrip() > utraj; });
 

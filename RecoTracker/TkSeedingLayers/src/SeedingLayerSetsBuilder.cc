@@ -371,6 +371,7 @@ std::unique_ptr<SeedingLayerSetsHits> SeedingLayerSetsBuilder::hits(const edm::E
         layer.extractor->hits((const TkTransientTrackingRecHitBuilder&)(*theTTRHBuilders[layer.nameIndex]), ev, es));
   }
   ret->shrink_to_fit();
+
   return ret;
 }
 //new function for FastSim only

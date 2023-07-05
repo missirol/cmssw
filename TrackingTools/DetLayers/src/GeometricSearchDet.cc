@@ -17,12 +17,16 @@ void GeometricSearchDet::compatibleDetsV(const TrajectoryStateOnSurface& startin
   // groupedCompatibleDets implemented.
 
   std::vector<DetGroup> vectorGroups;
+edm::LogPrint("GeometricSearchDet") << "GeometricSearchDet::compatibleDetsV-0 " << __LINE__ << " " << startingState.globalPosition() << " " << startingState.localPosition();
   groupedCompatibleDetsV(startingState, prop, est, vectorGroups);
   for (auto itDG = vectorGroups.begin(); itDG != vectorGroups.end(); itDG++) {
     for (auto itDGE = itDG->begin(); itDGE != itDG->end(); itDGE++) {
+edm::LogPrint("GeometricSearchDet") << "  GeometricSearchDet::compatibleDetsV-10 " << __LINE__ << " " << itDGE->det() << " " << itDGE->trajectoryState().isValid() << " " << itDGE->trajectoryState().globalPosition();
+edm::LogPrint("GeometricSearchDet") << "  GeometricSearchDet::compatibleDetsV-11 " << __LINE__ << " " << itDGE->det()->position() << " " << itDGE->det()->subDetector() << " " << itDGE->det()->geographicalId();
       result.emplace_back(itDGE->det(), itDGE->trajectoryState());
     }
   }
+edm::LogPrint("GeometricSearchDet") << "GeometricSearchDet::compatibleDetsV-2 " << __LINE__ << " " << startingState.globalPosition() << " " << startingState.localPosition();
 }
 
 void GeometricSearchDet::groupedCompatibleDetsV(const TrajectoryStateOnSurface& startingState,
@@ -35,7 +39,9 @@ void GeometricSearchDet::groupedCompatibleDetsV(const TrajectoryStateOnSurface& 
 std::vector<GeometricSearchDet::DetWithState> GeometricSearchDet::compatibleDets(
     const TrajectoryStateOnSurface& startingState, const Propagator& prop, const MeasurementEstimator& est) const {
   std::vector<DetWithState> result;
+edm::LogPrint("GeometricSearchDet") << "GeometricSearchDet::compatibleDets-0 " << __LINE__ << " " << startingState.globalPosition() << " " << startingState.localPosition();
   compatibleDetsV(startingState, prop, est, result);
+edm::LogPrint("GeometricSearchDet") << "GeometricSearchDet::compatibleDets-1 " << __LINE__ << " " << startingState.globalPosition() << " " << startingState.localPosition() << " " << result.size();
   return result;
 }
 

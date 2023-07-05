@@ -67,6 +67,8 @@ StripClusterParameterEstimator::LocalValues StripCPE::localParameters(const SiSt
       p.coveredStrips(p.drift + LocalVector(0, 0, -p.thickness), p.topology->localPosition(barycenter));
   const float strip = barycenter - 0.5f * (1.f - p.backplanecorrection) * fullProjection;
 
+edm::LogPrint("") << "ZZZ1 StripCPE -- " << det.geographicalId().rawId() << " : " << cluster.firstStrip() << " " << cluster.barycenter() << " " << fullProjection << " " << p.topology->localPosition(strip);
+
   return std::make_pair(p.topology->localPosition(strip), p.topology->localError(strip, 1.f / 12.f));
 }
 

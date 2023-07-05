@@ -24,6 +24,7 @@ SeedingLayersEDProducer::SeedingLayersEDProducer(const edm::ParameterSet& iConfi
     : builder_(iConfig, consumesCollector()) {
   produces<SeedingLayerSetsHits>();
 }
+
 SeedingLayersEDProducer::~SeedingLayersEDProducer() {}
 
 void SeedingLayersEDProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -35,7 +36,10 @@ void SeedingLayersEDProducer::fillDescriptions(edm::ConfigurationDescriptions& d
 
 void SeedingLayersEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   auto prod = builder_.hits(iEvent, iSetup);
-  //prod->print();
+
+edm::LogPrint("") << "MMM " << moduleDescription().moduleLabel();
+  prod->print();
+edm::LogPrint("") << "MMM END";
 
   iEvent.put(std::move(prod));
 }

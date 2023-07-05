@@ -344,7 +344,7 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(const SeedingLayerSet
     } else {
       LogDebug("RectangularEtaPhiTrackingRegion") << "use generic etat phi estimator.";
     }
-
+edm::LogPrint("RectangularEtaPhiTrackingRegion") << "RectangularEtaPhiTrackingRegion " << __LINE__;
     // TSOS
     float phi = phiDirection();
     // std::cout << "dir " << direction().x()/direction().perp() <<','<< direction().y()/direction().perp() << " " << sin(phi) <<','<<cos(phi)<< std::endl;
@@ -352,6 +352,14 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(const SeedingLayerSet
 
     Plane::PlanePointer surface = Plane::build(GlobalPoint(0., 0., 0.), rot);
     //TrajectoryStateOnSurface tsos(lpar, *surface, theField);
+
+edm::LogPrint("RectangularEtaPhiTrackingRegion") << "RectangularEtaPhiTrackingRegion " << __LINE__
+ << " vtx=" << vtx
+ << " dir=" << dir
+ << " theField.nominalValue=" << theField->nominalValue()
+ << " surface=" << surface
+ << " phi=" << phi
+;
 
     FreeTrajectoryState fts(GlobalTrajectoryParameters(vtx, dir, 1, theField));
     TrajectoryStateOnSurface tsos(fts, *surface);
@@ -361,7 +369,13 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(const SeedingLayerSet
 
     LayerMeasurements lm(theMeasurementTracker->measurementTracker(), *theMeasurementTracker);
 
+edm::LogPrint("RectangularEtaPhiTrackingRegion") << "RectangularEtaPhiTrackingRegion " << __LINE__ << " tsos.isValid=" << tsos.isValid() << " tsos.globalPosition=" << tsos.globalPosition();
+
     auto hits = lm.recHits(*detLayer, tsos, prop, *findDetAndHits);
+
+for(auto const& rh : hits) {
+  edm::LogPrint("RectangularEtaPhiTrackingRegion") << "RectangularEtaPhiTrackingRegion " << __LINE__ << " RH : " << rh->localPosition() << " " << phi;
+}
 
     result.reserve(hits.size());
     for (auto h : hits) {

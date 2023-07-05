@@ -205,7 +205,10 @@ public:
       return true;
     if (!est.preFilter(ltp, ClusterFilterPayload(rawId(), &*cluster)))
       return true;  // avoids shadow; consistent with previous statement...
+
+edm::LogPrint("") << "  TkStripMeasurementDet::filteredRecHits " << __LINE__ << " : " << cluster->size() << " " << cluster->charge() << " " << cluster->barycenter(); 
     auto const& vl = cpe()->localParameters(*cluster, cpepar);
+edm::LogPrint("") << "  TkStripMeasurementDet::filteredRecHits " << __LINE__ << " : " << vl.first << " " << vl.second;
     result.emplace_back(vl.first, vl.second, fastGeomDet(), cluster);  // FIXME add cluster count in OmniRef
     std::pair<bool, double> diffEst = est.estimate(ltp, result.back());
     LogDebug("TkStripMeasurementDet") << " chi2=" << diffEst.second;
@@ -268,9 +271,14 @@ private:
     const GeomDetUnit& gdu(specificGeomDet());
     declareDynArray(LocalValues, clusters.size(), alv);
     cpe()->localParameters(clusters, alv, gdu, ltp.localParameters());
+
+
     res.reserve(alv.size());
-    for (unsigned int i = 0; i < clusters.size(); ++i)
+    for (unsigned int i = 0; i < clusters.size(); ++i){
+edm::LogPrint("TkStripMeasurementDet") << " TkStripMeasurementDet SSS2 " //<< ltp.localParameters() 
+<< " " << clusters[i]->size() << " " << clusters[i]->charge() << " " << clusters[i]->barycenter();
       res.emplace_back(alv[i].first, alv[i].second, gdu, detSet.makeRefTo(data.stripData().handle(), clusters[i]));
+    }
   }
 
 public:

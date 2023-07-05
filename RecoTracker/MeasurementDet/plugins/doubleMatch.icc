@@ -28,7 +28,9 @@ namespace {
       if (m_collector.hasNewMatchedHits()) {
         m_collector.clearNewMatchedHitsFlag();
       } else {
+edm::LogPrint("TkGluedMeasurementDet") << " doubleMatch WWW4 " << __LINE__ << " " << (*monoHit)->localPosition();
         m_collector.addProjected(**monoHit, glbDir);
+edm::LogPrint("TkGluedMeasurementDet") << " doubleMatch WWW4 " << __LINE__;
       }
     }
 
@@ -36,7 +38,9 @@ namespace {
       if (m_collector.hasNewMatchedHits()) {
         m_collector.clearNewMatchedHitsFlag();
       } else {
+edm::LogPrint("TkGluedMeasurementDet") << " doubleMatch WWW5 " << __LINE__ << " " << monoHit->localPosition();
         m_collector.addProjected(*monoHit, glbDir);
+edm::LogPrint("TkGluedMeasurementDet") << " doubleMatch WWW5 " << __LINE__;
       }
     }
   };
@@ -81,7 +85,9 @@ void TkGluedMeasurementDet::doubleMatch(const TrajectoryStateOnSurface& ts,
     emptyMono = theMonoDet->empty(data);
     if LIKELY (!emptyMono) {
       // mono does require "projection" for precise estimate
+edm::LogPrint("doubleMatch") << "doubleMatch DDD0 " << __LINE__ << " " << ts.globalPosition() << " " << ts.localPosition();
       TrajectoryStateOnSurface mts = fastProp(ts, geomDet().surface(), theMonoDet->geomDet().surface());
+edm::LogPrint("doubleMatch") << "doubleMatch DDD1 " << __LINE__ << " " << mts.globalPosition() << " " << mts.localPosition();
       theMonoDet->simpleRecHits(mts, collector.estimator(), data, monoHits);
     }
     // print("mono", mts,ts);

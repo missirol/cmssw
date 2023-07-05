@@ -181,7 +181,9 @@ void HitExtractorSTRP::cleanedOfClusters(const TkTransientTrackingRecHitBuilder&
 HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder& ttrhBuilder,
                                           const edm::Event& ev,
                                           const edm::EventSetup& es) const {
-  LogDebug("HitExtractorSTRP") << "HitExtractorSTRP::hits";
+edm::LogPrint("HitExtractorSTRP") << "HitExtractorSTRP::hits";
+edm::LogPrint("HitExtractorSTRP") << "HitExtractorSTRP::hits hasMatchedHits=" << hasMatchedHits << " hasRPhiHits=" << hasRPhiHits << " hasStereoHits=" << hasStereoHits << " hasVectorHits=" << hasVectorHits;
+
   HitExtractor::Hits result;
   unsigned int cleanFrom = 0;
 
@@ -192,7 +194,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
   // TIB
   //
   if (theLayerSubDet == GeomDetEnumerators::TIB) {
-    LogTrace("HitExtractorSTRP") << "Getting hits into the TIB";
+    edm::LogPrint("HitExtractorSTRP") << "Getting hits into the TIB";
     if (hasMatchedHits) {
       edm::Handle<SiStripMatchedRecHit2DCollection> matchedHits;
       ev.getByToken(theMatchedHits, matchedHits);
@@ -247,7 +249,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
   // TID
   //
   else if (theLayerSubDet == GeomDetEnumerators::TID) {
-    LogTrace("HitExtractorSTRP") << "Getting hits into the TID";
+    edm::LogPrint("HitExtractorSTRP") << "Getting hits into the TID";
     if (hasMatchedHits) {
       edm::Handle<SiStripMatchedRecHit2DCollection> matchedHits;
       ev.getByToken(theMatchedHits, matchedHits);
@@ -306,7 +308,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
         cleanedOfClusters(ttrhBuilder, ev, result, false, cleanFrom);
     }
     if (hasVectorHits) {
-      LogTrace("HitExtractorSTRP") << "Getting vector hits for IdLayer " << theIdLayer;
+      edm::LogPrint("HitExtractorSTRP") << "Getting vector hits for IdLayer " << theIdLayer;
       auto const& vectorHits = ev.get(theVectorHits);
       //FIXME: check the skipClusters with VHits
       if (skipClusters)
@@ -321,7 +323,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
           result.emplace_back(*hit);
         }
       }
-      LogTrace("HitExtractorSTRP") << "result size value:" << result.size();
+      edm::LogPrint("HitExtractorSTRP") << "result size value:" << result.size();
       if (skipClusters)
         cleanedOfClusters(ttrhBuilder, ev, result, false, cleanFrom);
     }
@@ -330,7 +332,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
   // TOB
   //
   else if (theLayerSubDet == GeomDetEnumerators::TOB) {
-    LogTrace("HitExtractorSTRP") << "Getting hits into the TOB";
+    edm::LogPrint("HitExtractorSTRP") << "Getting hits into the TOB";
     if (hasMatchedHits) {
       edm::Handle<SiStripMatchedRecHit2DCollection> matchedHits;
       ev.getByToken(theMatchedHits, matchedHits);
@@ -381,7 +383,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
         cleanedOfClusters(ttrhBuilder, ev, result, false, cleanFrom);
     }
     if (hasVectorHits) {
-      LogTrace("HitExtractorSTRP") << "Getting vector hits for IdLayer " << theIdLayer;
+      edm::LogPrint("HitExtractorSTRP") << "Getting vector hits for IdLayer " << theIdLayer;
       edm::Handle<VectorHitCollection> vectorHits;
       ev.getByToken(theVectorHits, vectorHits);
       //FIXME: check the skipClusters with VHits
@@ -398,7 +400,7 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
   // TEC
   //
   else if (theLayerSubDet == GeomDetEnumerators::TEC) {
-    LogTrace("HitExtractorSTRP") << "Getting hits into the TEC";
+    edm::LogPrint("HitExtractorSTRP") << "Getting hits into the TEC";
     if (hasMatchedHits) {
       edm::Handle<SiStripMatchedRecHit2DCollection> matchedHits;
       ev.getByToken(theMatchedHits, matchedHits);
@@ -478,6 +480,6 @@ HitExtractor::Hits HitExtractorSTRP::hits(const TkTransientTrackingRecHitBuilder
     }
   }
 
-  LogDebug("HitExtractorSTRP") << " giving: " << result.size() << " out for charge cut " << minGoodCharge;
+  edm::LogPrint("HitExtractorSTRP") << " giving: " << result.size() << " out for charge cut " << minGoodCharge;
   return result;
 }

@@ -110,11 +110,13 @@ std::vector<BaseTrackerRecHit*> LayerMeasurements::recHits(const DetLayer& layer
                                                            const Propagator& prop,
                                                            const MeasurementEstimator& est) const {
   std::vector<BaseTrackerRecHit*> result;
+edm::LogPrint("LayerMeasurements") << "LayerMeasurements-0 " << __LINE__ << " " << startingState.globalPosition() << " " << startingState.localPosition();
   auto const& compatDets = layer.compatibleDets(startingState, prop, est);
   if (compatDets.empty())
     return result;
   for (auto const& ds : compatDets) {
     auto mdet = detSystem_.idToDet(ds.first->geographicalId(), data_);
+edm::LogPrint("LayerMeasurements") << "LayerMeasurements-1 " << __LINE__ << " " << ds.second.globalPosition() << " " << ds.second.localPosition();
     mdet.recHits(result, ds.second, est);
   }
   return result;
