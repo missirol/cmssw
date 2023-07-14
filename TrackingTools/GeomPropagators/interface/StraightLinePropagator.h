@@ -36,6 +36,8 @@ public:
   const MagneticField* magneticField() const override { return theField; }
 
 private:
+  static constexpr float kMaxPositionXY = 2e3;
+
   const MagneticField* theField;
 
   // compute propagated state, with errors if needed

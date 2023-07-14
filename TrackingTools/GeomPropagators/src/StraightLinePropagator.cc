@@ -3,6 +3,7 @@
 #include "DataFormats/Math/interface/AlgebraicROOTObjects.h"
 #include "DataFormats/GeometrySurface/interface/Plane.h"
 #include "DataFormats/GeometrySurface/interface/Cylinder.h"
+#include "FWCore/Utilities/interface/isFinite.h"
 #include "TrackingTools/GeomPropagators/interface/PropagationExceptions.h"
 
 std::pair<TrajectoryStateOnSurface, double> StraightLinePropagator::propagateWithPath(const FreeTrajectoryState& fts,
@@ -131,7 +132,15 @@ bool StraightLinePropagator::propagateParametersOnPlane(
   if ((p.x() != 0 || p.y() != 0) && p.z() == 0 && s != 0)
     return false;
 
-  x = LocalPoint(x.x() + (p.x() / p.z()) * s, x.y() + (p.y() / p.z()) * s, x.z() + s);
+  auto const lp_x = x.x() + (p.x() / p.z()) * s;
+  if (edm::isNotFinite(lp_x) or lp_x > kMaxPositionXY)
+    return false;
+
+  auto const lp_y = x.y() + (p.y() / p.z()) * s;
+  if (edm::isNotFinite(lp_y) or lp_y > kMaxPositionXY)
+    return false;
+
+  x = LocalPoint(lp_x, lp_y, 0. /* x.z() + s */);
 
   return true;
 }
