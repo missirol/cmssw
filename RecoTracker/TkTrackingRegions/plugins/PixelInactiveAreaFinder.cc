@@ -110,18 +110,19 @@ namespace {
         << setw(7) << cspan.zSpan.second << ">" << deli << noshowpos << "r:<" << right << setw(10) << cspan.rSpan.first
         << "," << left << setw(10) << cspan.rSpan.second << ">" << deli;
   }
-  void printOverlapSpans(const PixelInactiveAreaFinder::InactiveAreas& areasLayers) {
+  void printOverlapSpans(const std::string& log, const PixelInactiveAreaFinder::InactiveAreas& areasLayers) {
     auto spansLayerSets = areasLayers.spansAndLayerSets(GlobalPoint(0, 0, 0), std::numeric_limits<float>::infinity());
 
     Stream ss;
     for (auto const& spansLayers : spansLayerSets) {
       ss << "Overlapping detGroups:\n";
       for (auto const& cspan : spansLayers.first) {
+        ss << log;
         detGroupSpanInfo(cspan, ss);
         ss << std::endl;
       }
     }
-    edm::LogPrint("PixelInactiveAreaFinder") << ss.str();
+    edm::LogPrint("PixelInactiveAreaFinder") << log << ss.str();
   }
 
   // Functions for finding bad detGroups
@@ -473,13 +474,13 @@ PixelInactiveAreaFinder::PixelInactiveAreaFinder(
       trackerGeometryToken_(iC.esConsumes()),
       trackerTopologyToken_(iC.esConsumes()),
       pixelQualityToken_(iC.esConsumes()) {
-#ifdef EDM_ML_DEBUG
+//#ifdef EDM_ML_DEBUG
   for (const auto& layer : seedingLayers) {
-    LogTrace("PixelInactiveAreaFinder") << "Input layer subdet " << std::get<0>(layer) << " side "
+    edm::LogPrint("PixelInactiveAreaFinder") << "Input layer subdet " << std::get<0>(layer) << " side "
                                         << static_cast<unsigned int>(std::get<1>(layer)) << " layer "
                                         << std::get<2>(layer);
   }
-#endif
+//#endif
 
   auto findOrAdd = [&](SeedingLayerId layer) -> unsigned short {
     auto found = std::find(inactiveLayers_.cbegin(), inactiveLayers_.cend(), layer);
@@ -507,7 +508,7 @@ PixelInactiveAreaFinder::PixelInactiveAreaFinder(
              "input or the mapping (in PixelInactiveAreaFinder.cc)";
     }
 
-    LogTrace("PixelInactiveAreaFinder") << "Input layer set " << layerSet[0] << "+" << layerSet[1];
+    edm::LogPrint("PixelInactiveAreaFinder") << "Input layer set " << layerSet[0] << "+" << layerSet[1];
     for (const auto& inactiveLayerSet : found->second) {
       auto innerInd = findOrAdd(inactiveLayerSet.first);
       auto outerInd = findOrAdd(inactiveLayerSet.second);
@@ -529,13 +530,13 @@ PixelInactiveAreaFinder::PixelInactiveAreaFinder(
     ++i;
   }
 
-#ifdef EDM_ML_DEBUG
+//#ifdef EDM_ML_DEBUG
   LogDebug("PixelInactiveAreaFinder") << "All inactive layer sets";
   for (const auto& idxPair : inactiveLayerSetIndices_) {
-    LogTrace("PixelInactiveAreaFinder") << " " << inactiveLayers_[idxPair.first] << "+"
+    edm::LogPrint("PixelInactiveAreaFinder") << " " << inactiveLayers_[idxPair.first] << "+"
                                         << inactiveLayers_[idxPair.second];
   }
-#endif
+//#endif
 }
 
 void PixelInactiveAreaFinder::fillDescriptions(edm::ParameterSetDescription& desc) {
@@ -595,7 +596,12 @@ PixelInactiveAreaFinder::InactiveAreas PixelInactiveAreaFinder::inactiveAreas(co
       InactiveAreas(&inactiveLayers_, std::move(spans), &inactiveLayerSetIndices_, &layerSetIndexInactiveToActive_);
 
   if (debug_) {
-    printOverlapSpans(ret);
+
+  std::stringstream rle_ss;
+  rle_ss << iEvent.id().run() << ":" << iEvent.luminosityBlock() << ":" << iEvent.id().event() << " ";
+  auto const rle = rle_ss.str();
+
+    printOverlapSpans(rle, ret);
   }
 
   return ret;
@@ -682,6 +688,9 @@ void PixelInactiveAreaFinder::updatePixelDets(const edm::EventSetup& iSetup) {
   std::sort(pixelDetsEndcap_.begin(), pixelDetsEndcap_.end());
 }
 void PixelInactiveAreaFinder::getBadPixelDets(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+//  badPixelDetsBarrel_.clear();
+//  badPixelDetsEndcap_.clear();
+
   auto addDetId = [&](const auto id) {
     const auto detid = DetId(id);
     const auto subdet = detid.subdetId();
@@ -695,7 +704,18 @@ void PixelInactiveAreaFinder::getBadPixelDets(const edm::Event& iEvent, const ed
   // SiPixelQuality
   auto const& pixelQuality = iSetup.getData(pixelQualityToken_);
 
+  std::stringstream rle_ss;
+  rle_ss << iEvent.id().run() << ":" << iEvent.luminosityBlock() << ":" << iEvent.id().event() << " ";
+  auto const rle = rle_ss.str();
+
+
   for (auto const& disabledModule : pixelQuality.getBadComponentList()) {
+    const auto detid = DetId(disabledModule.DetID);
+    const auto subdet = detid.subdetId();
+
+std::string const disabledModuleType = (subdet == PixelSubdetector::PixelBarrel) ? "B" : ((subdet == PixelSubdetector::PixelEndcap) ? "E" : "?");
+edm::LogPrint("PixelInactiveAreaFinder") << rle << " disabledModule = " << disabledModuleType << " " << detid.rawId();
+
     addDetId(disabledModule.DetID);
   }
 
