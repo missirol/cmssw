@@ -1,4 +1,4 @@
-# hltGetConfiguration /dev/CMSSW_13_0_0/PRef --cff --data --type PRef
+# hltGetConfiguration /dev/CMSSW_13_0_0/PRef/V140 --cff --data --type PRef
 
 # /dev/CMSSW_13_0_0/PRef/V140 (CMSSW_13_0_2)
 
@@ -3618,19 +3618,6 @@ fragment.preshowerDetIdAssociator = cms.ESProducer( "DetIdAssociatorESProducer",
   includeME0 = cms.bool( False )
 )
 fragment.siPixelGainCalibrationForHLTGPU = cms.ESProducer( "SiPixelGainCalibrationForHLTGPUESProducer",
-  appendToDataLabel = cms.string( "" )
-)
-fragment.siPixelQualityESProducer = cms.ESProducer( "SiPixelQualityESProducer",
-  siPixelQualityLabel = cms.string( "" ),
-  siPixelQualityLabel_RawToDigi = cms.string( "" ),
-  ListOfRecordToMerge = cms.VPSet( 
-    cms.PSet(  record = cms.string( "SiPixelQualityFromDbRcd" ),
-      tag = cms.string( "" )
-    ),
-    cms.PSet(  record = cms.string( "SiPixelDetVOffRcd" ),
-      tag = cms.string( "" )
-    )
-  ),
   appendToDataLabel = cms.string( "" )
 )
 fragment.siPixelROCsStatusAndMappingWrapperESProducer = cms.ESProducer( "SiPixelROCsStatusAndMappingWrapperESProducer",

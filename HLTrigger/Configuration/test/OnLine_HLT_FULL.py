@@ -1,4 +1,4 @@
-# hltGetConfiguration /dev/CMSSW_13_0_0/HLT --full --data --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
+# hltGetConfiguration /dev/CMSSW_13_0_0/HLT/V156 --full --data --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
 
 # /dev/CMSSW_13_0_0/HLT/V156 (CMSSW_13_0_2)
 

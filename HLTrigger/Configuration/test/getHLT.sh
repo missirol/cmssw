@@ -6,6 +6,11 @@ TARGET="/dev/CMSSW_13_0_0/\$TABLE"  # no explicit version, take the most recent
 
 TABLES="GRun HIon PIon PRef"        # $TABLE in the above variable will be expanded to these TABLES
 
+# (MASTER|TABLES)_VER: strings to be appended to MASTER (combined table) and/or TABLES (subtables)
+# to specify version numbers, e.g. TABLES_VER="/V140" to choose V140 of all subtables
+MASTER_VER="/V156"
+TABLES_VER="/V140"
+
 # command-line arguments
 VERBOSE=false # print extra messages to stdout
 DBPROXYOPTS="" # db-proxy configuration
@@ -53,9 +58,9 @@ cd "${CMSSW_BASE}"/src/HLTrigger/Configuration/test
 # create cff fragments and cfg configs
 for TABLE in FULL ${TABLES}; do
   if [ "${TABLE}" = "FULL" ]; then
-    CONFIG="${MASTER}"
+    CONFIG="${MASTER}""${MASTER_VER}"
   else
-    CONFIG=$(eval echo ${TARGET})
+    CONFIG=$(eval echo "${TARGET}")"${TABLES_VER}"
   fi
 
   echo "${TABLE} (config: ${CONFIG})"
@@ -67,7 +72,7 @@ for TABLE in FULL ${TABLES}; do
   # cff fragment of EventContents (only for MASTER config)
   if [ "${TABLE}" = "FULL" ]; then
     log "  creating cff fragment of EventContents..."
-    ./getEventContent.py "${MASTER}" ${DBPROXYOPTS} > ../python/HLTrigger_EventContent_cff.py
+    ./getEventContent.py "${CONFIG}" ${DBPROXYOPTS} > ../python/HLTrigger_EventContent_cff.py
   fi
 
   # cff fragment of PrimaryDatasets of each HLT menu (except for MASTER config)

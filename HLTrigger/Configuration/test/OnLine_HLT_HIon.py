@@ -1,4 +1,4 @@
-# hltGetConfiguration /dev/CMSSW_13_0_0/HIon --full --data --type HIon --unprescale --process HLTHIon --globaltag auto:run3_hlt_HIon --input file:RelVal_Raw_HIon_DATA.root
+# hltGetConfiguration /dev/CMSSW_13_0_0/HIon/V140 --full --data --type HIon --unprescale --process HLTHIon --globaltag auto:run3_hlt_HIon --input file:RelVal_Raw_HIon_DATA.root
 
 # /dev/CMSSW_13_0_0/HIon/V140 (CMSSW_13_0_2)
 

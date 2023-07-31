@@ -1,4 +1,4 @@
-# hltGetConfiguration /dev/CMSSW_13_0_0/GRun --full --data --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
+# hltGetConfiguration /dev/CMSSW_13_0_0/GRun/V140 --full --data --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
 
 # /dev/CMSSW_13_0_0/GRun/V140 (CMSSW_13_0_2)
 

@@ -1,4 +1,4 @@
-# hltGetConfiguration /dev/CMSSW_13_0_0/PIon --full --data --type PIon --unprescale --process HLTPIon --globaltag auto:run3_hlt_PIon --input file:RelVal_Raw_PIon_DATA.root
+# hltGetConfiguration /dev/CMSSW_13_0_0/PIon/V140 --full --data --type PIon --unprescale --process HLTPIon --globaltag auto:run3_hlt_PIon --input file:RelVal_Raw_PIon_DATA.root
 
 # /dev/CMSSW_13_0_0/PIon/V140 (CMSSW_13_0_2)
 
