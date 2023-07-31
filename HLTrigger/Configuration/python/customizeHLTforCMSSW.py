@@ -236,6 +236,19 @@ def customizeHLTfor41815(process):
 
     return process
 
+def customizeHLTforVWXYZ(process):
+    for producer in esproducers_by_type(process, 'SiPixelQualityESProducer'):
+        producer.siPixelQualityFromDbLabel = cms.string('')
+        producer.appendToDataLabel = ''
+        for parName in [
+            'siPixelQualityLabel',
+            'siPixelQualityLabel_RawToDigi',
+        ]:
+            if hasattr(producer, parName):
+                producer.__delattr__(parName)
+
+    return process
+
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
 
@@ -247,5 +260,7 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
     process = customizeHLTfor41058(process)
     process = customizeHLTfor41495(process)
     process = customizeHLTfor41815(process)
+
+    process = customizeHLTforVWXYZ(process)
 
     return process
