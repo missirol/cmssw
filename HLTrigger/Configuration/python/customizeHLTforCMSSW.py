@@ -268,6 +268,11 @@ def customizeHLTfor42410(process):
 
     return process
 
+def customizeHLTfor42514(process):
+    process.load('RecoLocalTracker.SiPixelRecHits.SiPixelTemplateStoreESProducer_cfi')
+
+    return process
+    
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
 
@@ -281,5 +286,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
     process = customizeHLTfor41815(process)
     process = customizeHLTfor41632(process)
     process = customizeHLTfor42410(process)
-
+    process = customizeHLTfor42514(process)
+    
     return process
