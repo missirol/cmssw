@@ -35,7 +35,7 @@ namespace l1t {
   class L1TZDCAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
   public:
     explicit L1TZDCAnalyzer(const edm::ParameterSet&);
-    ~L1TZDCAnalyzer() override;
+    ~L1TZDCAnalyzer() override = default;
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -54,15 +54,9 @@ namespace l1t {
     float m_zdcEtSumP[m_maxBPX];
     float m_zdcEtSumM[m_maxBPX];
 
-    //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
-    //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
-    //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
-    //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
-
     // ----------member data ---------------------------
     edm::EDGetToken m_sumToken;
 
-    bool doText_;
     bool doHistos_;
 
     TFileDirectory evtDispDir_;
@@ -80,8 +74,7 @@ namespace l1t {
   // constructors and destructor
   //
   L1TZDCAnalyzer::L1TZDCAnalyzer(const edm::ParameterSet& iConfig)
-      : doText_(iConfig.getUntrackedParameter<bool>("doText", true)),
-        doHistos_(iConfig.getUntrackedParameter<bool>("doHistos", true)) {
+      : doHistos_(iConfig.getUntrackedParameter<bool>("doHistos", true)) {
     usesResource(TFileService::kSharedResource);
     //now do what ever initialization is needed
 
@@ -94,11 +87,6 @@ namespace l1t {
     std::cout << "Processing " << sumTag.label() << std::endl;
   }
 
-  L1TZDCAnalyzer::~L1TZDCAnalyzer() {
-    // do anything here that needs to be done at desctruction time
-    // (e.g. close files, deallocate resources etc.)
-  }
-
   //
   // member functions
   //
@@ -106,8 +94,6 @@ namespace l1t {
   // ------------ method called for each event  ------------
   void L1TZDCAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     using namespace edm;
-
-    std::stringstream text;
 
     //    Handle<EtSumBxCollection> sums;
     Handle<BXVector<l1t::EtSum> > sums;
@@ -123,9 +109,6 @@ namespace l1t {
     }
 
     m_zdcEtSumTree_p->Fill();
-
-    if (doText_)
-      edm::LogVerbatim("L1TCaloEvents") << text.str();
   }
 
   // ------------ method called once each job just before starting event loop  ------------

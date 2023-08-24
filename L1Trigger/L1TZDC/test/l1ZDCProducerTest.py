@@ -54,8 +54,7 @@ process.source = cms.Source("PoolSource",
 
 #Try some real basic replacement - producer and analyzer
 process.zdcEtSumProducer = cms.EDProducer('L1TZDCProducer',
-                                          zdcToken = cms.InputTag("hcalDigis", "ZDC", "reRECO"),
-                                          doHardCodeLUT = cms.bool(True)           
+                                          zdcToken = cms.InputTag("hcalDigis", "ZDC", "reRECO")
 )
 
 process.zdcEtSumAnalyzer = cms.EDAnalyzer('L1TZDCAnalyzer',

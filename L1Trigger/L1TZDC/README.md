@@ -94,8 +94,7 @@ process.l1UpgradeTree.sumZDCToken = cms.untracked.InputTag("zdcEtSumProducer", "
 process.l1UpgradeEmuTree.sumZDCToken = cms.untracked.InputTag("zdcEtSumProducer", "zdcEtSums")
 
 process.zdcEtSumProducer = cms.EDProducer('L1TZDCProducer',
-  zdcToken = cms.InputTag("hcalDigis", "ZDC"),
-  doHardCodeLUT = cms.bool(True)
+  zdcToken = cms.InputTag("hcalDigis", "ZDC")
 )
 
 process.zdcEtSum = cms.Path(process.zdcEtSumProducer)
