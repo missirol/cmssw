@@ -126,7 +126,6 @@ void L1TZDCProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) 
   //rawadc[detector index][time slices]
   unsigned short rawadc[18][10];
 
-  int counter = 0;
   // the loop below loops over all the elements of the QIE10DigiCollection. Each entry corresponds to one channel
   for (QIE10DigiCollection::const_iterator it = zdcDigiCollection->begin(); it != zdcDigiCollection->end(); it++) {
     const QIE10DataFrame& frame(*it);
@@ -145,7 +144,6 @@ void L1TZDCProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) 
       continue;
 
     int ihitid = (zside == 1 ? 9 : 0) + (section == 2 ? 5 : 0) + (channel - 1);
-    counter++;
     //the loop below iterates over the time slices
     for (int iTS = 0; iTS < nSamples; iTS++) {
       unsigned short adc = (unsigned short)frame[iTS].adc();

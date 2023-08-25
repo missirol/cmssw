@@ -84,7 +84,7 @@ namespace l1t {
     edm::InputTag sumTag = iConfig.getParameter<edm::InputTag>("etSumToken");
     m_sumToken = consumes<l1t::EtSumBxCollection>(sumTag);
 
-    std::cout << "Processing " << sumTag.label() << std::endl;
+    edm::LogInfo("L1TZDCAnalyzer") << "Processing " << sumTag.label() << std::endl;
   }
 
   //
