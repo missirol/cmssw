@@ -81,6 +81,11 @@ private:
   edm::EDGetTokenT<QIE10DigiCollection> m_zdcToken;
   edm::ESGetToken<CaloParams, L1TCaloParamsRcd> m_candidateToken;
 
+  //input ints
+  int bxFirst_;
+  int bxLast_;
+  int sampleToCenterBX_;
+
   // put tokens
   edm::EDPutTokenT<EtSumBxCollection> m_etToken;
 
@@ -96,6 +101,10 @@ L1TZDCProducer::L1TZDCProducer(const edm::ParameterSet& ps) {
   // register what you consume and keep token for later access:
   m_zdcToken = consumes<QIE10DigiCollection>(ps.getParameter<edm::InputTag>("zdcToken"));
   m_candidateToken = esConsumes<CaloParams, L1TCaloParamsRcd, edm::Transition::BeginRun>();
+
+  bxFirst_ = ps.getParameter<int>("bxFirst");
+  bxLast_ = ps.getParameter<int>("bxLast");
+  sampleToCenterBX_ = ps.getParameter<int>("sampleToCenterBX");
 }
 
 // ------------ method called to produce the data  ------------
@@ -114,14 +123,13 @@ void L1TZDCProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) 
   int nSamples = frametest.samples();
   //outputs
 
-  EtSumBxCollection etsums(0, 0, nSamples);
-  EtSumBxCollection etsumsReduced(0, 0, nSamples);
+  int fullBXFirst = -sampleToCenterBX_;
+  int fullBXLast = nSamples - sampleToCenterBX_;
+  if (nSamples % 2 == 0)
+    ++fullBXLast;
 
-  //We need to reduce to 5 bunches
-  const int peakBX = 4;
-  const int bxRPlusMinus = 2;
-  const int startBXR = peakBX - bxRPlusMinus;
-  const int endBXR = peakBX + bxRPlusMinus;
+  EtSumBxCollection etsums(0, fullBXFirst, fullBXLast);
+  EtSumBxCollection etsumsReduced(0, bxFirst_, bxLast_);
 
   //rawadc[detector index][time slices]
   unsigned short rawadc[18][10];
@@ -202,12 +210,12 @@ void L1TZDCProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) 
     tempEtP.setType(EtSum::EtSumType::kZDCP);
 
     //One object distinguished by type P, M
-    etsums.push_back(ibx, CaloTools::etSumP4Demux(tempEtP));
-    etsums.push_back(ibx, CaloTools::etSumP4Demux(tempEtM));
+    etsums.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtP));
+    etsums.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtM));
 
-    if (ibx >= startBXR && ibx <= endBXR) {
-      etsumsReduced.push_back(ibx - startBXR, CaloTools::etSumP4Demux(tempEtP));
-      etsumsReduced.push_back(ibx - startBXR, CaloTools::etSumP4Demux(tempEtM));
+    if (ibx >= sampleToCenterBX_ + bxFirst_ && ibx <= sampleToCenterBX_ + bxLast_) {
+      etsumsReduced.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtP));
+      etsumsReduced.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtM));
     }
   }  // end of loop over bunch crossings
 
@@ -230,6 +238,9 @@ int L1TZDCProducer::zdcLUTIndexHelper(int iDetPos, int iBxPos) { return 1 + iDet
 void L1TZDCProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("zdcToken", edm::InputTag("hcalDigis", "ZDC"));
+  desc.add<int>("bxFirst", -2);
+  desc.add<int>("bxLast", 2);
+  desc.add<int>("sampleToCenterBX", 4);
   descriptions.add("l1tZDCProducer", desc);
 }
 

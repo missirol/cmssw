@@ -99,12 +99,14 @@ namespace l1t {
     Handle<BXVector<l1t::EtSum> > sums;
     iEvent.getByToken(m_sumToken, sums);
 
-    for (int ibx = sums->getFirstBX(); ibx <= sums->getLastBX(); ++ibx) {
+    int startBX = sums->getFirstBX();
+
+    for (int ibx = startBX; ibx <= sums->getLastBX(); ++ibx) {
       for (auto itr = sums->begin(ibx); itr != sums->end(ibx); ++itr) {
         if (itr->getType() == l1t::EtSum::EtSumType::kZDCP)
-          m_zdcEtSumP[ibx] = itr->hwPt();
+          m_zdcEtSumP[ibx - startBX] = itr->hwPt();
         if (itr->getType() == l1t::EtSum::EtSumType::kZDCM)
-          m_zdcEtSumM[ibx] = itr->hwPt();
+          m_zdcEtSumM[ibx - startBX] = itr->hwPt();
       }
     }
 
