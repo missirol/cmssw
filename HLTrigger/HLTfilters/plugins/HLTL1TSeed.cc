@@ -56,6 +56,9 @@ HLTL1TSeed::HLTL1TSeed(const edm::ParameterSet& parSet)
       m_l1EtSumCollectionsTag(parSet.getParameter<edm::InputTag>("L1EtSumInputTag")),  // FIX WHEN UNPACKERS ADDED
       m_l1EtSumTag(m_l1EtSumCollectionsTag),
       m_l1EtSumToken(consumes<l1t::EtSumBxCollection>(m_l1EtSumTag)),
+      m_l1EtSumZDCCollectionsTag(parSet.getParameter<edm::InputTag>("L1EtSumZDCInputTag")),  // FIX WHEN UNPACKERS ADDED
+      m_l1EtSumZDCTag(m_l1EtSumZDCCollectionsTag),
+      m_l1EtSumZDCToken(consumes<l1t::EtSumBxCollection>(m_l1EtSumZDCTag)),
       m_l1GlobalDecision(false),
       m_isDebugEnabled(edm::isDebugEnabled()) {
   if (m_l1SeedsLogicalExpression.empty()) {
@@ -104,6 +107,7 @@ void HLTL1TSeed::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
   desc.add<edm::InputTag>("L1JetInputTag", edm::InputTag("hltGtStage2Digis:Jet"));
   desc.add<edm::InputTag>("L1TauInputTag", edm::InputTag("hltGtStage2Digis:Tau"));
   desc.add<edm::InputTag>("L1EtSumInputTag", edm::InputTag("hltGtStage2Digis:EtSum"));
+  desc.add<edm::InputTag>("L1EtSumZDCInputTag", edm::InputTag("hltGtStage2Digis:EtSumZDC"));
   descriptions.add("hltL1TSeed", desc);
 }
 
@@ -131,6 +135,9 @@ bool HLTL1TSeed::hltFilter(edm::Event& iEvent,
 
     // etsum
     filterproduct.addCollectionTag(m_l1EtSumTag);
+
+    // etsumZDC
+    filterproduct.addCollectionTag(m_l1EtSumZDCTag);
   }
 
   // Get all the seeding from iEvent (i.e. L1TriggerObjectMapRecord)
@@ -423,6 +430,36 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
     LogTrace("HLTL1TSeed") << "\tL1EtSum  AsymHtHF: hwPt = " << obj->hwPt();
   }
 
+  vector<l1t::EtSumRef> seedsL1EtSumZDCP;
+  filterproduct.getObjects(trigger::TriggerL1ZDCP, seedsL1EtSumZDCP);
+  const size_t sizeSeedsL1EtSumZDCP = seedsL1EtSumZDCP.size();
+  LogTrace("HLTL1TSeed") << "\n  L1EtSum ZDCP seeds:      " << sizeSeedsL1EtSumZDCP << endl << endl;
+
+  for (size_t i = 0; i != sizeSeedsL1EtSumZDCP; i++) {
+    l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumZDCP[i]);
+
+    LogTrace("HLTL1TSeed") << "\tL1EtSum  ZDCP"
+                           << "\t"
+                           << "pt = " << obj->pt() << "\t"
+                           << "eta =  " << obj->eta() << "\t"
+                           << "phi =  " << obj->phi();  //<< "\t" << "BX = " << obj->bx();
+  }
+
+  vector<l1t::EtSumRef> seedsL1EtSumZDCM;
+  filterproduct.getObjects(trigger::TriggerL1ZDCM, seedsL1EtSumZDCM);
+  const size_t sizeSeedsL1EtSumZDCM = seedsL1EtSumZDCM.size();
+  LogTrace("HLTL1TSeed") << "\n  L1EtSum ZDCM seeds:      " << sizeSeedsL1EtSumZDCM << endl << endl;
+
+  for (size_t i = 0; i != sizeSeedsL1EtSumZDCM; i++) {
+    l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumZDCM[i]);
+
+    LogTrace("HLTL1TSeed") << "\tL1EtSum  ZDCM"
+                           << "\t"
+                           << "pt = " << obj->pt() << "\t"
+                           << "eta =  " << obj->eta() << "\t"
+                           << "phi =  " << obj->phi();  //<< "\t" << "BX = " << obj->bx();
+  }
+
   LogTrace("HLTL1TSeed") << " \n\n" << endl;
 }
 
@@ -463,6 +500,8 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
   std::list<int> listAsymHt;
   std::list<int> listAsymEtHF;
   std::list<int> listAsymHtHF;
+  std::list<int> listZDCP;
+  std::list<int> listZDCM;
 
   // get handle to unpacked GT
   edm::Handle<GlobalAlgBlkBxCollection> uGtAlgoBlocks;
@@ -780,6 +819,12 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
             case l1t::gtAsymmetryHtHF: {
               listAsymHtHF.push_back(*itObject);
             } break;
+            case l1t::gtZDCP: {
+              listZDCP.push_back(*itObject);
+            } break;
+            case l1t::gtZDCM: {
+              listZDCM.push_back(*itObject);
+            } break;
             case l1t::gtCentrality0:
             case l1t::gtCentrality1:
             case l1t::gtCentrality2:
@@ -884,6 +929,12 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
 
   listAsymHtHF.sort();
   listAsymHtHF.unique();
+
+  listZDCP.sort();
+  listZDCP.unique();
+
+  listZDCM.sort();
+  listZDCM.unique();
 
   // record the L1 physics objects in the HLT filterproduct
   // //////////////////////////////////////////////////////
@@ -1067,6 +1118,38 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
           break;
         default:
           LogTrace("HLTL1TSeed") << "  L1EtSum seed of currently unsuported HLT TriggerType. l1t::EtSum type:      "
+                                 << iter->getType() << "\n";
+
+      }  // end switch
+
+    }  // end for
+
+  }  // end else
+
+  // ZDCP, ZDCM
+  edm::Handle<l1t::EtSumBxCollection> etsumzdcs;
+  iEvent.getByToken(m_l1EtSumZDCToken, etsumzdcs);
+  if (!etsumzdcs.isValid()) {
+    edm::LogWarning("HLTL1TSeed") << "\nWarning: L1EtSumBxCollection with input tag " << m_l1EtSumZDCTag
+                                  << "\nrequested in configuration, but not found in the event."
+                                  << "\nNo etsums (ZDC) added to filterproduct." << endl;
+  } else {
+    l1t::EtSumBxCollection::const_iterator iter;
+
+    for (iter = etsumzdcs->begin(0); iter != etsumzdcs->end(0); ++iter) {
+      l1t::EtSumRef myref(etsumzdcs, etsumzdcs->key(iter));
+
+      switch (iter->getType()) {
+        case l1t::EtSum::kZDCP:
+          if (!listZDCP.empty())
+            filterproduct.addObject(trigger::TriggerL1ZDCP, myref);
+          break;
+        case l1t::EtSum::kZDCM:
+          if (!listZDCM.empty())
+            filterproduct.addObject(trigger::TriggerL1ZDCM, myref);
+          break;
+        default:
+          LogTrace("HLTL1TSeed") << "  L1EtSum (ZDC) seed of currently unsuported HLT TriggerType. l1t::EtSum type:      "
                                  << iter->getType() << "\n";
 
       }  // end switch
