@@ -1,5 +1,5 @@
 /**
- 1;95;0c* \class ZdcEnergySumCondition
+\class ZdcEnergySumCondition
  *
  *
  * Description: evaluation of a CondEnergySum condition for ZDC objects.
@@ -8,7 +8,7 @@
  *                 and is adapted to evaluate a condition on ZDC objects as a threshold on an energy sum value.
  *                 The object types are kZDCP and kZDCM and share the standard EtSum DataFormat.
  *
- * \author: Elisa Fontanesi and Christopher MC GINN
+ * \author: Elisa Fontanesi and Christopher Mc Ginn
  *
  */
 
@@ -132,7 +132,6 @@ const bool l1t::ZdcEnergySumCondition::evaluateCondition(const int bxEval) const
 
   for (int iEtSum = 0; iEtSum < numberObjectsZdc; ++iEtSum) {
     l1t::EtSum candZdc = *(candVecZdc->at(useBx, iEtSum));
-    // NOTE: usage of Bx 2 has to be fixed. At the moment it corresponds to 0
 
     if (l1t::EtSum::EtSumType::kZDCP == candZdc.getType())
       candZdcPlus = *(candVecZdc->at(useBx, iEtSum));
@@ -153,18 +152,14 @@ const bool l1t::ZdcEnergySumCondition::evaluateCondition(const int bxEval) const
       return false;
     }
 
-    LogDebug("L1TGlobal")
-        << "----------------------------------------------> ZDC EtSumType object from ZdcEnergySumTemplate"
-        << "\n objPar.etLowThreshold = " << objPar.etLowThreshold
-        << "\n objPar.etHighThreshold = " << objPar.etHighThreshold << "\n candZDCPEsum = " << candZDCPEsum
-        << "\n candZDCMEsum = " << candZDCMEsum << "\n condGEqVal = " << condGEqVal << "\n myres = " << myres
-        << std::endl;
+    LogDebug("L1TGlobal") << "ZDC EtSumType object from ZdcEnergySumTemplate: "
+                          << "\n objPar.etLowThreshold = " << objPar.etLowThreshold
+                          << "\n objPar.etHighThreshold = " << objPar.etHighThreshold
+                          << "\n candZDCPEsum = " << candZDCPEsum << "\n candZDCMEsum = " << candZDCMEsum
+                          << "\n condGEqVal = " << condGEqVal << "\n myres = " << myres << std::endl;
   }
 
-  if (!condGEqVal)
-    return false;
-
-  if (!myres)
+  if (!(myres && condGEqVal))
     return false;
 
   // index is always zero, as they are global quantities (there is only one object)

@@ -114,111 +114,123 @@ void L1TZDCProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) 
 
   LogDebug("l1t|stage 2") << "L1TZDCProducer::produce function called..." << std::endl;
 
+  // reduced collection to be emplaced in output
+  EtSumBxCollection etsumsReduced(0, bxFirst_, bxLast_);
+
   //inputs
   Handle<QIE10DigiCollection> zdcDigiCollection;
   iEvent.getByToken(m_zdcToken, zdcDigiCollection);
 
-  //In lieu of bxFirst, bxLast, use the number of the timeslice samples
-  const QIE10DataFrame& frametest = (*zdcDigiCollection)[0];
-  int nSamples = frametest.samples();
-  //outputs
+  //Produce ZDC EtSums IF input zdcDigiCollection is valid
+  if (zdcDigiCollection.isValid()) {
+    //In lieu of bxFirst, bxLast, use the number of the timeslice samples
+    const QIE10DataFrame& frametest = (*zdcDigiCollection)[0];
+    int nSamples = frametest.samples();
 
-  int fullBXFirst = -sampleToCenterBX_;
-  int fullBXLast = nSamples - sampleToCenterBX_;
-  if (nSamples % 2 == 0)
-    ++fullBXLast;
+    // Full BX Handling
+    int fullBXFirst = -sampleToCenterBX_;
+    int fullBXLast = nSamples - sampleToCenterBX_;
+    if (nSamples % 2 == 0)
+      ++fullBXLast;
 
-  EtSumBxCollection etsums(0, fullBXFirst, fullBXLast);
-  EtSumBxCollection etsumsReduced(0, bxFirst_, bxLast_);
+    // Full etsum collection, not to be emplaced
+    EtSumBxCollection etsums(0, fullBXFirst, fullBXLast);
 
-  //rawadc[detector index][time slices]
-  unsigned short rawadc[18][10];
+    //rawadc[detector index][time slices]
+    unsigned short rawadc[18][10];
 
-  // the loop below loops over all the elements of the QIE10DigiCollection. Each entry corresponds to one channel
-  for (QIE10DigiCollection::const_iterator it = zdcDigiCollection->begin(); it != zdcDigiCollection->end(); it++) {
-    const QIE10DataFrame& frame(*it);
-    HcalZDCDetId cell = frame.id();
-    int zside = cell.zside();
-    int section = cell.section();
-    int channel = cell.channel();
+    // the loop below loops over all the elements of the QIE10DigiCollection. Each entry corresponds to one channel
+    for (QIE10DigiCollection::const_iterator it = zdcDigiCollection->begin(); it != zdcDigiCollection->end(); it++) {
+      const QIE10DataFrame& frame(*it);
+      HcalZDCDetId cell = frame.id();
+      int zside = cell.zside();
+      int section = cell.section();
+      int channel = cell.channel();
 
-    if (zside != -1 && zside != 1)
-      continue;
-    if (section != 1 && section != 2)
-      continue;
-    if (section == 1 && (channel < 1 || channel > 5))
-      continue;
-    if (section == 2 && (channel < 1 || channel > 4))
-      continue;
+      if (zside != -1 && zside != 1)
+        continue;
+      if (section != 1 && section != 2)
+        continue;
+      if (section == 1 && (channel < 1 || channel > 5))
+        continue;
+      if (section == 2 && (channel < 1 || channel > 4))
+        continue;
 
-    int ihitid = (zside == 1 ? 9 : 0) + (section == 2 ? 5 : 0) + (channel - 1);
-    //the loop below iterates over the time slices
-    for (int iTS = 0; iTS < nSamples; iTS++) {
-      unsigned short adc = (unsigned short)frame[iTS].adc();
-      rawadc[ihitid][iTS] = adc;
-    }  // end of loop over iTS
-  }    //end of loop over channels
+      int ihitid = (zside == 1 ? 9 : 0) + (section == 2 ? 5 : 0) + (channel - 1);
+      //the loop below iterates over the time slices
+      for (int iTS = 0; iTS < nSamples; iTS++) {
+        unsigned short adc = (unsigned short)frame[iTS].adc();
+        rawadc[ihitid][iTS] = adc;
+      }  // end of loop over iTS
+    }    //end of loop over channels
 
-  for (int ibx = 0; ibx < nSamples; ibx++) {
-    double cEMP = 0, cEMM = 0, cHDP = 0, cHDM = 0;
-    double sumcEMP = 0, sumcEMM = 0, sumcHDP = 0, sumcHDM = 0;
-    //idet=0-4 correpond to the EM channels
-    for (int idet = 0; idet < 5; idet++) {
-      unsigned short EMP = rawadc[idet + 9][ibx];
-      unsigned short EMM = rawadc[idet][ibx];
+    for (int ibx = 0; ibx < nSamples; ibx++) {
+      double cEMP = 0, cEMM = 0, cHDP = 0, cHDM = 0;
+      double sumcEMP = 0, sumcEMM = 0, sumcHDP = 0, sumcHDM = 0;
+      //idet=0-4 correpond to the EM channels
+      for (int idet = 0; idet < 5; idet++) {
+        unsigned short EMP = rawadc[idet + 9][ibx];
+        unsigned short EMM = rawadc[idet][ibx];
 
-      int cEMP_LUTIndex = zdcLUTIndexHelper(idet + 9, (int)EMP);
-      int cEMM_LUTIndex = zdcLUTIndexHelper(idet, (int)EMM);
+        int cEMP_LUTIndex = zdcLUTIndexHelper(idet + 9, (int)EMP);
+        int cEMM_LUTIndex = zdcLUTIndexHelper(idet, (int)EMM);
 
-      cEMP = ((double)m_params->zdcLUT()->data(cEMP_LUTIndex)) / ((double)m_scaleFactor);
-      cEMM = ((double)m_params->zdcLUT()->data(cEMM_LUTIndex)) / ((double)m_scaleFactor);
+        cEMP = ((double)m_params->zdcLUT()->data(cEMP_LUTIndex)) / ((double)m_scaleFactor);
+        cEMM = ((double)m_params->zdcLUT()->data(cEMM_LUTIndex)) / ((double)m_scaleFactor);
 
-      sumcEMP = sumcEMP + cEMP;
-      sumcEMM = sumcEMM + cEMM;
-    }
-    //idet=5-8 correspond to HAD channels
-    for (int idet = 5; idet < 9; idet++) {
-      unsigned short HDP = rawadc[idet + 9][ibx];
-      unsigned short HDM = rawadc[idet][ibx];
+        sumcEMP = sumcEMP + cEMP;
+        sumcEMM = sumcEMM + cEMM;
+      }
+      //idet=5-8 correspond to HAD channels
+      for (int idet = 5; idet < 9; idet++) {
+        unsigned short HDP = rawadc[idet + 9][ibx];
+        unsigned short HDM = rawadc[idet][ibx];
 
-      int cHDP_LUTIndex = zdcLUTIndexHelper(idet + 9, (int)HDP);
-      int cHDM_LUTIndex = zdcLUTIndexHelper(idet, (int)HDM);
+        int cHDP_LUTIndex = zdcLUTIndexHelper(idet + 9, (int)HDP);
+        int cHDM_LUTIndex = zdcLUTIndexHelper(idet, (int)HDM);
 
-      cHDP = ((double)m_params->zdcLUT()->data(cHDP_LUTIndex)) / ((double)m_scaleFactor);
-      cHDM = ((double)m_params->zdcLUT()->data(cHDM_LUTIndex)) / ((double)m_scaleFactor);
+        cHDP = ((double)m_params->zdcLUT()->data(cHDP_LUTIndex)) / ((double)m_scaleFactor);
+        cHDM = ((double)m_params->zdcLUT()->data(cHDM_LUTIndex)) / ((double)m_scaleFactor);
 
-      sumcHDP = sumcHDP + cHDP;
-      sumcHDM = sumcHDM + cHDM;
-    }
-    double sumM = sumcEMM + sumcHDM;
-    double sumP = sumcEMP + sumcHDP;
+        sumcHDP = sumcHDP + cHDP;
+        sumcHDM = sumcHDM + cHDM;
+      }
+      double sumM = sumcEMM + sumcHDM;
+      double sumP = sumcEMP + sumcHDP;
 
-    if (ibx == 4) {
-      edm::LogInfo("L1TZDCProducer") << ", sumM= " << sumM << std::endl;
-      edm::LogInfo("L1TZDCProducer") << ", sumP= " << sumP << std::endl;
-    }
-    l1t::EtSum tempEtM = l1t::EtSum();
-    tempEtM.setHwPt(sumM);
-    tempEtM.setHwEta(-1.);
-    tempEtM.setHwPhi(0.);
-    tempEtM.setType(EtSum::EtSumType::kZDCM);
+      if (ibx == 4) {
+        edm::LogInfo("L1TZDCProducer") << ", sumM= " << sumM << std::endl;
+        edm::LogInfo("L1TZDCProducer") << ", sumP= " << sumP << std::endl;
+      }
+      l1t::EtSum tempEtM = l1t::EtSum();
+      tempEtM.setHwPt(sumM);
+      tempEtM.setHwEta(-1.);
+      tempEtM.setHwPhi(0.);
+      tempEtM.setType(EtSum::EtSumType::kZDCM);
 
-    l1t::EtSum tempEtP = l1t::EtSum();
-    tempEtP.setHwPt(sumP);
-    tempEtP.setHwEta(1.);
-    tempEtP.setHwPhi(0.);
-    tempEtP.setType(EtSum::EtSumType::kZDCP);
+      l1t::EtSum tempEtP = l1t::EtSum();
+      tempEtP.setHwPt(sumP);
+      tempEtP.setHwEta(1.);
+      tempEtP.setHwPhi(0.);
+      tempEtP.setType(EtSum::EtSumType::kZDCP);
 
-    //One object distinguished by type P, M
-    etsums.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtP));
-    etsums.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtM));
+      //One object distinguished by type P, M
+      etsums.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtP));
+      etsums.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtM));
 
-    if (ibx >= sampleToCenterBX_ + bxFirst_ && ibx <= sampleToCenterBX_ + bxLast_) {
-      etsumsReduced.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtP));
-      etsumsReduced.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtM));
-    }
-  }  // end of loop over bunch crossings
+      if (ibx >= sampleToCenterBX_ + bxFirst_ && ibx <= sampleToCenterBX_ + bxLast_) {
+        etsumsReduced.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtP));
+        etsumsReduced.push_back(ibx - sampleToCenterBX_, CaloTools::etSumP4Demux(tempEtM));
+      }
+    }  // end of loop over bunch crossings
+  }    // end if(zdcDigiCollection.isValid())
+  else {
+    // If the collection is not valid issue a warning before putting an empty collection
+    edm::LogWarning("L1TZDCProducer") << "zdcToken is not valid; return empty ZDC Et Sum BXCollection" << std::endl;
+  }
 
+  // Emplace even if !zdcDigiCollection.isValid()
+  // Output in this case will be an empty collection
   iEvent.emplace(m_etToken, std::move(etsumsReduced));
 }
 
