@@ -87,20 +87,19 @@ PrimaryVertexProducer::PrimaryVertexProducer(const edm::ParameterSet& conf)
       } else if (fitterAlgorithm.empty()) {
         algorithm.pv_fitter = nullptr;
       } else if (fitterAlgorithm == "AdaptiveChisquareVertexFitter") {
-        algorithm.pv_fitter =
-	  new AdaptiveChisquarePrimaryVertexFitter(algoconf->getParameter<double>("chi2cutoff"), 
-						   algoconf->getParameter<double>("zcutoff"),
-						   algoconf->getParameter<double>("mintrkweight"),
-						   false);
+        algorithm.pv_fitter = new AdaptiveChisquarePrimaryVertexFitter(algoconf->getParameter<double>("chi2cutoff"),
+                                                                       algoconf->getParameter<double>("zcutoff"),
+                                                                       algoconf->getParameter<double>("mintrkweight"),
+                                                                       false);
       } else if (fitterAlgorithm == "MultiPrimaryVertexFitter") {
         algorithm.pv_fitter = new AdaptiveChisquarePrimaryVertexFitter(algoconf->getParameter<double>("chi2cutoff"),
-								       algoconf->getParameter<double>("zcutoff"),
-								       algoconf->getParameter<double>("mintrkweight"),
-								       true); 
+                                                                       algoconf->getParameter<double>("zcutoff"),
+                                                                       algoconf->getParameter<double>("mintrkweight"),
+                                                                       true);
       } else if (fitterAlgorithm == "AMultiPrimaryVertexFitter") {
         algorithm.pv_fitter = new AMultiPrimaryVertexFitter(algoconf->getParameter<double>("chi2cutoff"),
-                                                           algoconf->getParameter<double>("zcutoff"),
-                                                           algoconf->getParameter<double>("mintrkweight"));
+                                                            algoconf->getParameter<double>("zcutoff"),
+                                                            algoconf->getParameter<double>("mintrkweight"));
       } else if (fitterAlgorithm == "WeightedMeanFitter") {
         algorithm.pv_fitter = new WeightedMeanPrimaryVertexEstimator();
       } else {
@@ -120,21 +119,18 @@ PrimaryVertexProducer::PrimaryVertexProducer(const edm::ParameterSet& conf)
       edm::ConsumesCollector&& collector = consumesCollector();
 
       if (vertexTimeAlgorithm.empty()) {
-
-	algorithm.pv_time_estimator = nullptr;
+        algorithm.pv_time_estimator = nullptr;
 
       } else if (vertexTimeAlgorithm == "legacy4D") {
-
-	useTransientTrackTime = true;
-	algorithm.pv_time_estimator =
-          new VertexTimeAlgorithmLegacy4D(pv_time_conf.getParameter<edm::ParameterSet>("legacy4D"), collector);
+        useTransientTrackTime = true;
+        algorithm.pv_time_estimator =
+            new VertexTimeAlgorithmLegacy4D(pv_time_conf.getParameter<edm::ParameterSet>("legacy4D"), collector);
       } else if (vertexTimeAlgorithm == "fromTracksPID") {
-
-	algorithm.pv_time_estimator = new VertexTimeAlgorithmFromTracksPID(
-	   pv_time_conf.getParameter<edm::ParameterSet>("fromTracksPID"), collector);
+        algorithm.pv_time_estimator = new VertexTimeAlgorithmFromTracksPID(
+            pv_time_conf.getParameter<edm::ParameterSet>("fromTracksPID"), collector);
 
       } else {
-	edm::LogWarning("Misconfiguration") << "unknown vertexTimeParameters.algorithm" << vertexTimeAlgorithm;
+        edm::LogWarning("Misconfiguration") << "unknown vertexTimeParameters.algorithm" << vertexTimeAlgorithm;
       }
 
       algorithms.push_back(algorithm);
@@ -292,11 +288,11 @@ void PrimaryVertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
 
     // select and convert transient vertices to (reco) vertices
     for (std::vector<TransientVertex>::const_iterator iv = pvs.begin(); iv != pvs.end(); iv++) {
-      if(iv->isValid() && (iv->degreesOfFreedom() >= algorithm->minNdof)){
-	reco::Vertex v = *iv;
-	if (!validBS || ((*(algorithm->vertexSelector))(v, beamVertexState))){
-	  vColl.push_back(v);
-	}
+      if (iv->isValid() && (iv->degreesOfFreedom() >= algorithm->minNdof)) {
+        reco::Vertex v = *iv;
+        if (!validBS || ((*(algorithm->vertexSelector))(v, beamVertexState))) {
+          vColl.push_back(v);
+        }
       }
     }
 
@@ -344,7 +340,7 @@ void PrimaryVertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
                   << std::setw(7) << std::setprecision(4) << v->position().y() << " dy " << std::setw(6)
                   << std::setprecision(4) << v->yError() << " z " << std::setw(8) << std::setprecision(4)
                   << v->position().z() << " dz " << std::setw(6) << std::setprecision(4) << v->zError();
-        if (v->tError() > 0){
+        if (v->tError() > 0) {
           std::cout << " t " << std::setw(6) << std::setprecision(3) << v->t() << " dt " << std::setw(6)
                     << std::setprecision(3) << v->tError();
         }

@@ -36,7 +36,6 @@ public:
       if (v.isValid()) {
         pvs.push_back(v);
       }
-      
     }
     return pvs;
   };

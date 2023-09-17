@@ -40,10 +40,13 @@ void VertexTimeAlgorithmFromTracksPID::fillPSetDescription(edm::ParameterSetDesc
       ->setComment("");
   iDesc.add<edm::InputTag>("trackMTDTimeQualityVMapTag", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"))
       ->setComment("");
-  iDesc.add<edm::InputTag>("trackMTDTofPiVMapTag", edm::InputTag("trackExtenderWithMTD:generalTrackTofPi"))->setComment("");
-  iDesc.add<edm::InputTag>("trackMTDTofKVMapTag", edm::InputTag("trackExtenderWithMTD:generalTrackTofK"))->setComment("");
-  iDesc.add<edm::InputTag>("trackMTDTofPVMapTag", edm::InputTag("trackExtenderWithMTD:generalTrackTofP"))->setComment("");
-  
+  iDesc.add<edm::InputTag>("trackMTDTofPiVMapTag", edm::InputTag("trackExtenderWithMTD:generalTrackTofPi"))
+      ->setComment("");
+  iDesc.add<edm::InputTag>("trackMTDTofKVMapTag", edm::InputTag("trackExtenderWithMTD:generalTrackTofK"))
+      ->setComment("");
+  iDesc.add<edm::InputTag>("trackMTDTofPVMapTag", edm::InputTag("trackExtenderWithMTD:generalTrackTofP"))
+      ->setComment("");
+
   iDesc.add<double>("minTrackVtxWeight", 0.3)->setComment("");
   iDesc.add<double>("minTrackTimeQuality", 0.8)->setComment("");
 
@@ -85,7 +88,6 @@ bool VertexTimeAlgorithmFromTracksPID::vertexTime(float& vtxTime,
   std::vector<TrackInfo> v_trackInfo;
   v_trackInfo.reserve(vtx.originalTracks().size());
 
-
   // initial guess
   for (const auto& trk : vtx.originalTracks()) {
     auto const trkWeight = vtx.trackWeight(trk);
@@ -102,9 +104,9 @@ bool VertexTimeAlgorithmFromTracksPID::vertexTime(float& vtxTime,
         trkInfo.trkWeight = trkWeight;
         trkInfo.trkTimeError = trkTimeError;
 
-	trkInfo.trkTimeHyp[0] = trkTime - trackMTDTofPi_[trk.trackBaseRef()];
-	trkInfo.trkTimeHyp[1] = trkTime - trackMTDTofK_[trk.trackBaseRef()];
-	trkInfo.trkTimeHyp[2] = trkTime - trackMTDTofP_[trk.trackBaseRef()];
+        trkInfo.trkTimeHyp[0] = trkTime - trackMTDTofPi_[trk.trackBaseRef()];
+        trkInfo.trkTimeHyp[1] = trkTime - trackMTDTofK_[trk.trackBaseRef()];
+        trkInfo.trkTimeHyp[2] = trkTime - trackMTDTofP_[trk.trackBaseRef()];
 
         auto const wgt = trkWeight / (trkTimeError * trkTimeError);
         wsum += wgt;
@@ -115,9 +117,8 @@ bool VertexTimeAlgorithmFromTracksPID::vertexTime(float& vtxTime,
         LOG << "vertexTimeFromTracks:     track"
             << " pt=" << trk.track().pt() << " eta=" << trk.track().eta() << " phi=" << trk.track().phi()
             << " vtxWeight=" << trkWeight << " time=" << trkTime << " timeError=" << trkTimeError
-            << " timeQuality=" << trkTimeQuality
-            << " timeHyp[pion]=" << trkInfo.trkTimeHyp[0] << " timeHyp[kaon]=" << trkInfo.trkTimeHyp[1]
-            << " timeHyp[proton]=" << trkInfo.trkTimeHyp[2];
+            << " timeQuality=" << trkTimeQuality << " timeHyp[pion]=" << trkInfo.trkTimeHyp[0]
+            << " timeHyp[kaon]=" << trkInfo.trkTimeHyp[1] << " timeHyp[proton]=" << trkInfo.trkTimeHyp[2];
       }
     }
   }

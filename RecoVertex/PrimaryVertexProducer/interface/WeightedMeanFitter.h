@@ -58,7 +58,7 @@ namespace WeightedMeanFitter {
       wz = p.second.z() <= precision ? 1. / std::pow(precision, 2) : 1. / std::pow(p.second.z(), 2);
 
       x += p.first.x() * wx;  // sum nearest point, weight by 1/xyerror**2
-      y += p.first.y() * wx;  
+      y += p.first.y() * wx;
       z += p.first.z() * wz;  // sum nearest point, weight by 1/zerror**2
 
       s_wx += wx;
@@ -83,7 +83,6 @@ namespace WeightedMeanFitter {
 
     err_x = 1. / s_wx;
     err_z = 1. / s_wz;
-
 
     //while ((niter++) < 2000) {
     while ((niter++) < 2) {
@@ -110,7 +109,7 @@ namespace WeightedMeanFitter {
         if (std::pow(p.first.x() - old_x, 2) / (wx + err_x) < muSquare &&
             std::pow(p.first.y() - old_y, 2) / (wx + err_x) < muSquare &&
             std::pow(p.first.z() - old_z, 2) / (wz + err_z) < muSquare)
-          xpull = 1.; // really binary adaptive weight, not a pull
+          xpull = 1.;  // really binary adaptive weight, not a pull
 
         ndof_x += xpull;  // really counts tracks that are not rejected
 
@@ -144,7 +143,6 @@ namespace WeightedMeanFitter {
           std::abs(z - old_z) < (precision / 1.)) {
         break;
       }
-
     }
 
     err(0, 0) = err_x * corr_x * corr_x;
@@ -165,7 +163,8 @@ namespace WeightedMeanFitter {
       chi2 += dist;
     }
     //TransientVertex v(GlobalPoint(x, y, z), err, iclus, chi2, (int)ndof_x);
-    float ndof = ndof_x > 1 ? (2 * ndof_x -3) : 0.00001; // ndof_x is actually the number of tracks with non-zero weight
+    float ndof =
+        ndof_x > 1 ? (2 * ndof_x - 3) : 0.00001;  // ndof_x is actually the number of tracks with non-zero weight
     TransientVertex v(GlobalPoint(x, y, z), err, iclus, chi2, ndof);
     return v;
   }

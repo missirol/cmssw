@@ -19,7 +19,6 @@ public:
   bool vertexTime(float& vtxTime, float& vtxTimeError, TransientVertex const& vtx) const override;
 
 protected:
-
   struct TrackInfo {
     double trkWeight;
     double trkTimeError;

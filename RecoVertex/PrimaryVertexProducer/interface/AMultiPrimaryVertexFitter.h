@@ -12,7 +12,6 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 #include "RecoVertex/PrimaryVertexProducer/interface/PrimaryVertexFitterBase.h"
 
-
 class AMultiPrimaryVertexFitter : public PrimaryVertexFitterBase {
 public:
   AMultiPrimaryVertexFitter(double chicutoff = 2.5, double zcutoff = 1.0, double mintrkweight = 0.4);
@@ -26,12 +25,11 @@ public:
   using Error3 = ROOT::Math::SMatrix<double, 3>;
 
 protected:
-
   std::vector<reco::TransientTrack> input_tracks;
 
   struct TrackInfo {
-    double S11, S22, S12;     // inverse of the covariance (sub-)matrix
-    Error3 C;                 // HT S H
+    double S11, S22, S12;  // inverse of the covariance (sub-)matrix
+    Error3 C;              // HT S H
     double g[3];
     double H1[3], H2[3];
     double b1, b2;
@@ -46,37 +44,36 @@ protected:
   double update(const reco::BeamSpot &, float beam_weight, const bool fill_covariances = false);
   void remove_vertex(unsigned int);
 
-  void verify(){
+  void verify() {
     unsigned int nt = trackinfo.size();
     unsigned int nv = xv.size();
-    assert( (yv.size() == nv) && "yv size");
-    assert( (zv.size() == nv) && "zv size");
-    assert( (rho_vtx.size() == nv) && "rho_vtx size");
-    assert( (tkfirstv.size() == (nv+1)) && "tkfirstv size");
-    assert( (tkmap.size() == tkweight.size()) && "tkmapsize <> tkweightssize");
+    assert((yv.size() == nv) && "yv size");
+    assert((zv.size() == nv) && "zv size");
+    assert((rho_vtx.size() == nv) && "rho_vtx size");
+    assert((tkfirstv.size() == (nv + 1)) && "tkfirstv size");
+    assert((tkmap.size() == tkweight.size()) && "tkmapsize <> tkweightssize");
 
-    for(unsigned int k = 0; k< nv; k++){
-      assert( (tkfirstv[k] < tkweight.size()) && "tkfirst[k]");
-      assert( (tkfirstv[k+1] < tkweight.size()) && "tkfirst[k+1]");
-      assert( (tkfirstv[k] <= tkfirstv[k+1]) && "tkfirst[k/k+1]");
-      for(unsigned int j = tkfirstv[k]; j < tkfirstv[k+1]; k++){
-	assert( (j<tkmap.size()) && "illegal tkfirst entry");
-	unsigned int i = tkmap[j];
-	assert( (i<nt) && "illegal tkmap entry");
-	assert( (tkweight[i] >=0 ) && "negative tkweight or nan");
-	assert( (tkweight[i] <=1 ) && "tkweight > 1 or nan");
+    for (unsigned int k = 0; k < nv; k++) {
+      assert((tkfirstv[k] < tkweight.size()) && "tkfirst[k]");
+      assert((tkfirstv[k + 1] < tkweight.size()) && "tkfirst[k+1]");
+      assert((tkfirstv[k] <= tkfirstv[k + 1]) && "tkfirst[k/k+1]");
+      for (unsigned int j = tkfirstv[k]; j < tkfirstv[k + 1]; k++) {
+        assert((j < tkmap.size()) && "illegal tkfirst entry");
+        unsigned int i = tkmap[j];
+        assert((i < nt) && "illegal tkmap entry");
+        assert((tkweight[i] >= 0) && "negative tkweight or nan");
+        assert((tkweight[i] <= 1) && "tkweight > 1 or nan");
       }
     }
 
     double rho_sum = 0;
-    for(unsigned int k = 0; k< nv; k++){
-      assert( (rho_vtx[k]==rho_vtx[k]) && "nan in rho_vtx");
-      assert( (rho_vtx[k] >= 0) && "negative rho or nan");
-      assert( (rho_vtx[k] <= 1) && "rho > 1 or nan");
+    for (unsigned int k = 0; k < nv; k++) {
+      assert((rho_vtx[k] == rho_vtx[k]) && "nan in rho_vtx");
+      assert((rho_vtx[k] >= 0) && "negative rho or nan");
+      assert((rho_vtx[k] <= 1) && "rho > 1 or nan");
       rho_sum += rho_vtx[k];
     }
     //assert( (rho_sum <= 1) && "rho_sum > 1");
-
   };
 
   // track information
@@ -92,7 +89,7 @@ protected:
   std::vector<unsigned int> tkfirstv;  // parallel to the vertex list
   std::vector<unsigned int> tkmap;     // parallel to tkweight
   std::vector<double> tkweight;        // parallel to tkmap
-  std::vector<double> tkw_c; // parallel to the track list, may not be needed
+  std::vector<double> tkw_c;           // parallel to the track list, may not be needed
   // configuration
   double chi_cutoff_;
   double z_cutoff_;

@@ -40,7 +40,8 @@ public:
 
   DAClusterizerInZ(const edm::ParameterSet &conf);
 
-  std::vector<std::vector<reco::TransientTrack> > clusterize(const std::vector<reco::TransientTrack> &tracks) const override;
+  std::vector<std::vector<reco::TransientTrack> > clusterize(
+      const std::vector<reco::TransientTrack> &tracks) const override;
 
   std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack> &tracks) const override;
 
