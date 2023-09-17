@@ -533,8 +533,7 @@ void DAClusterizerInZ::dump(const double beta,
   }
 }
 
-vector<TransientVertex> DAClusterizerInZ::vertices(const vector<reco::TransientTrack>& tracks,
-                                                   const int verbosity) const {
+vector<TransientVertex> DAClusterizerInZ::vertices(const vector<reco::TransientTrack>& tracks) const {
   vector<track_t> tks = fill(tracks);
   unsigned int nt = tracks.size();
   double rho0 = 0.0;  // start with no outlier rejection
