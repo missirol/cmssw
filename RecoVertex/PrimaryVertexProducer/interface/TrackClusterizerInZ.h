@@ -1,5 +1,5 @@
-#ifndef TrackClusterizerInZ_h
-#define TrackClusterizerInZ_h
+#ifndef RecoVertex_PrimaryVerterProducer_TrackClusterizerInZ_h
+#define RecoVertex_PrimaryVerterProducer_TrackClusterizerInZ_h
 
 /**\class TrackClusterizerInZ 
  
@@ -7,19 +7,27 @@
 
 */
 
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include <vector>
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+
+namespace edm {
+  class ParameterSet;
+}
+
+namespace reco {
+  class TransientTrack;
+}
+
+class TransientVertex;
 
 class TrackClusterizerInZ {
 public:
-  TrackClusterizerInZ(){};
-  TrackClusterizerInZ(const edm::ParameterSet& conf){};
+  TrackClusterizerInZ() {}
+  TrackClusterizerInZ(const edm::ParameterSet& conf) {}
+  virtual ~TrackClusterizerInZ() = default;
 
   virtual std::vector<std::vector<reco::TransientTrack> > clusterize(
       const std::vector<reco::TransientTrack>& tracks) const = 0;
-
-  virtual ~TrackClusterizerInZ(){};
+  virtual std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack>& tracks) const = 0;
 };
 
 #endif

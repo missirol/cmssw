@@ -2,11 +2,10 @@
 #define RecoVertex_PrimaryVertexProducer_WeightedMeanFitter_h
 
 #include <vector>
-
-#include "DataFormats/BeamSpot/interface/BeamSpot.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
 namespace WeightedMeanFitter {
 
@@ -53,14 +52,13 @@ namespace WeightedMeanFitter {
     err(1, 1) = startError / 10 * startError / 10;
     err(2, 2) = startError * startError;  // error is 20 cm, so cov -> is 20 ^ 2
     for (const auto& p : points) {
-      //p.second = errror
       wx = p.second.x() <= precision ? 1. / std::pow(precision, 2) : 1. / std::pow(p.second.x(), 2);
 
       wz = p.second.z() <= precision ? 1. / std::pow(precision, 2) : 1. / std::pow(p.second.z(), 2);
 
-      x += p.first.x() * wx;  // sum nearest point, weight by 1/xyerror**2
+      x += p.first.x() * wx;
       y += p.first.y() * wx;
-      z += p.first.z() * wz;  // sum nearest point, weight by 1/zerror**2
+      z += p.first.z() * wz;
 
       s_wx += wx;
       s_wz += wz;
@@ -109,9 +107,9 @@ namespace WeightedMeanFitter {
         if (std::pow(p.first.x() - old_x, 2) / (wx + err_x) < muSquare &&
             std::pow(p.first.y() - old_y, 2) / (wx + err_x) < muSquare &&
             std::pow(p.first.z() - old_z, 2) / (wz + err_z) < muSquare)
-          xpull = 1.;  // really binary adaptive weight, not a pull
+          xpull = 1.;
 
-        ndof_x += xpull;  // really counts tracks that are not rejected
+        ndof_x += xpull;
 
         wx = xpull / wx;
         wz = xpull / wz;
@@ -136,7 +134,7 @@ namespace WeightedMeanFitter {
       y /= s_wx;
       z /= s_wz;
 
-      err_x = (s2_wx / std::pow(s_wx, 2));  // = 1/s_wx
+      err_x = (s2_wx / std::pow(s_wx, 2));
       err_z = (s2_wz / std::pow(s_wz, 2));
 
       if (std::abs(x - old_x) < (precision / 1.) && std::abs(y - old_y) < (precision / 1.) &&
@@ -162,11 +160,10 @@ namespace WeightedMeanFitter {
       dist += std::pow(p.first.z() - z, 2) / (std::pow(wz, 2) + err(2, 2));
       chi2 += dist;
     }
-
-    // ndof_x is actually the number of tracks with non-zero weight
-    float const ndof = ndof_x > 1 ? (2 * ndof_x - 3) : 0.00001;
-
-    return TransientVertex(GlobalPoint(x, y, z), err, iclus, chi2, ndof);
+    //TransientVertex v(GlobalPoint(x, y, z), err, iclus, chi2, (int)ndof_x);
+    float ndof = ndof_x > 1 ? (2 * ndof_x -3) : 0.00001; // ndof_x is actually the number of tracks with non-zero weight
+    TransientVertex v(GlobalPoint(x, y, z), err, iclus, chi2, ndof);
+    return v;
   }
 
   inline TransientVertex weightedMeanOutlierRejectionBeamSpot(
@@ -229,7 +226,7 @@ namespace WeightedMeanFitter {
     err_y = 1. / s_wy;
     err_z = 1. / s_wz;
 
-    while ((niter++) < 200) {
+    while ((niter++) < 2) {
       old_x = x;
       old_y = y;
       old_z = z;
@@ -323,11 +320,8 @@ namespace WeightedMeanFitter {
       dist += std::pow(p.first.z() - z, 2) / (std::pow(wz, 2) + err(2, 2));
       chi2 += dist;
     }
-
-    // ndof_x is actually the number of tracks with non-zero weight
-    float const ndof = ndof_x > 1 ? (2 * ndof_x - 3) : 0.00001;
-
-    return TransientVertex(GlobalPoint(x, y, z), err, iclus, chi2, ndof);
+    TransientVertex v(GlobalPoint(x, y, z), err, iclus, chi2, (int)ndof_x);
+    return v;
   }
 
   inline TransientVertex weightedMeanOutlierRejectionVarianceAsError(

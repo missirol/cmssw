@@ -43,7 +43,7 @@ public:
   std::vector<std::vector<reco::TransientTrack> > clusterize(
       const std::vector<reco::TransientTrack> &tracks) const override;
 
-  std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack> &tracks, const int verbosity = 0) const;
+  std::vector<TransientVertex> vertices(const std::vector<reco::TransientTrack> &tracks) const override;
 
   std::vector<track_t> fill(const std::vector<reco::TransientTrack> &tracks) const;
 
