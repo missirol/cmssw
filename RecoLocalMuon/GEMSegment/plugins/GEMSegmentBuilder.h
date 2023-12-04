@@ -17,6 +17,7 @@
 #include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 
 class GEMSegmentAlgorithmBase;
 
@@ -39,7 +40,11 @@ public:
      */
   void setGeometry(const GEMGeometry* g);
 
+  void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
 private:
+  bool enableGE0;
+  bool enableGE12;
   std::string segAlgoName;
   std::string ge0AlgoName;
   edm::ParameterSet segAlgoPSet;
