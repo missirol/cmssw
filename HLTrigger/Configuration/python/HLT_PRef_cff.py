@@ -1,10 +1,11 @@
-# hltGetConfiguration /dev/CMSSW_13_3_0/PRef --cff --data --type PRef
+# hltGetConfiguration v3-test/run3:/dev/CMSSW_13_3_0/PRef --cff --data --type PRef
 
 # /dev/CMSSW_13_3_0/PRef/V11 (CMSSW_13_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
 from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+
 from HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA import ProcessAcceleratorCUDA
 
 fragment = cms.ProcessFragment( "HLT" )
@@ -12,7 +13,7 @@ fragment = cms.ProcessFragment( "HLT" )
 fragment.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA()
 
 fragment.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_13_3_0/PRef/V11')
+  tableName = cms.string("/dev/CMSSW_13_3_0/PRef/V11")
 )
 
 fragment.HLTIter0PSetTrajectoryBuilderIT = cms.PSet( 

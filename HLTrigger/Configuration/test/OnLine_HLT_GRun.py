@@ -1,10 +1,11 @@
-# hltGetConfiguration /dev/CMSSW_13_3_0/GRun --full --data --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
+# hltGetConfiguration v3-test/run3:/dev/CMSSW_13_3_0/GRun --full --data --type GRun --unprescale --process HLTGRun --globaltag auto:run3_hlt_GRun --input file:RelVal_Raw_GRun_DATA.root
 
 # /dev/CMSSW_13_3_0/GRun/V11 (CMSSW_13_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
 from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+
 from HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA import ProcessAcceleratorCUDA
 
 process = cms.Process( "HLTGRun" )
@@ -12,7 +13,7 @@ process = cms.Process( "HLTGRun" )
 process.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA()
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_13_3_0/GRun/V11')
+  tableName = cms.string("/dev/CMSSW_13_3_0/GRun/V11")
 )
 
 process.HLTIter0PSetTrajectoryBuilderIT = cms.PSet( 

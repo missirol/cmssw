@@ -1,10 +1,11 @@
-# hltGetConfiguration /dev/CMSSW_13_3_0/HLT --full --data --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
+# hltGetConfiguration v3-test/run3:/dev/CMSSW_13_3_0/HLT --full --data --type FULL --unprescale --process HLTFULL --globaltag auto:run3_hlt_FULL --input file:RelVal_Raw_FULL_DATA.root
 
 # /dev/CMSSW_13_3_0/HLT/V19 (CMSSW_13_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
 from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+
 from HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA import ProcessAcceleratorCUDA
 
 process = cms.Process( "HLTFULL" )
@@ -12,7 +13,7 @@ process = cms.Process( "HLTFULL" )
 process.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA()
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/dev/CMSSW_13_3_0/HLT/V19')
+  tableName = cms.string("/dev/CMSSW_13_3_0/HLT/V19")
 )
 
 process.HLTIter0PSetTrajectoryBuilderIT = cms.PSet( 

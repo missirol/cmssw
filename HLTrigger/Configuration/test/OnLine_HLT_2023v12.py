@@ -1,10 +1,11 @@
-# hltGetConfiguration /frozen/2023/2e34/v1.2/CMSSW_13_3_X/HLT --full --data --type 2023v12 --unprescale --process HLT2023v12 --globaltag auto:run3_hlt_2023v12 --input file:RelVal_Raw_2023v12_DATA.root
+# hltGetConfiguration v3-test/run3:/frozen/2023/2e34/v1.2/CMSSW_13_3_X/HLT --full --data --type 2023v12 --unprescale --process HLT2023v12 --globaltag auto:run3_hlt_2023v12 --input file:RelVal_Raw_2023v12_DATA.root
 
 # /frozen/2023/2e34/v1.2/CMSSW_13_3_X/HLT/V3 (CMSSW_13_3_0)
 
 import FWCore.ParameterSet.Config as cms
 
 from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+
 from HeterogeneousCore.CUDACore.ProcessAcceleratorCUDA import ProcessAcceleratorCUDA
 
 process = cms.Process( "HLT2023v12" )
@@ -12,7 +13,7 @@ process = cms.Process( "HLT2023v12" )
 process.ProcessAcceleratorCUDA = ProcessAcceleratorCUDA()
 
 process.HLTConfigVersion = cms.PSet(
-  tableName = cms.string('/frozen/2023/2e34/v1.2/CMSSW_13_3_X/HLT/V3')
+  tableName = cms.string("/frozen/2023/2e34/v1.2/CMSSW_13_3_X/HLT/V3")
 )
 
 process.transferSystem = cms.PSet( 
