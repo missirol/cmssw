@@ -1,20 +1,24 @@
-#include <string>
-
-#include "HLTrigger/JetMET/interface/HLTJetL1TMatchProducer.h"
 #include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include "FWCore/Framework/interface/ESHandle.h"
-#include "DataFormats/Math/interface/deltaPhi.h"
-
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "HLTrigger/HLTcore/interface/defaultModuleLabel.h"
+#include "HLTrigger/JetMET/interface/HLTJetL1TMatchProducer.h"
 
 template <typename T>
 HLTJetL1TMatchProducer<T>::HLTJetL1TMatchProducer(const edm::ParameterSet& iConfig) {
   jetsInput_ = iConfig.template getParameter<edm::InputTag>("jetsInput");
   L1Jets_ = iConfig.template getParameter<edm::InputTag>("L1Jets");
-  DeltaR_ = iConfig.template getParameter<double>("DeltaR");
+
+  auto const DeltaR = iConfig.template getParameter<double>("DeltaR");
+  if (DeltaR <= 0) {
+    throw cms::Exception("InvalidParameterValue")
+        << "Invalid value for \"DeltaR\" (" << DeltaR << "): it must be greater than zero.";
+  }
+  DeltaR2_ = DeltaR * DeltaR;
 
   typedef std::vector<T> TCollection;
   m_theJetToken = consumes<TCollection>(jetsInput_);
@@ -60,18 +64,16 @@ void HLTJetL1TMatchProducer<T>::produce(edm::Event& iEvent, const edm::EventSetu
         for (auto it = l1Jets->begin(ibx); it != l1Jets->end(ibx); it++) {
           if (it->et() == 0)
             continue;  // if you don't care about L1T candidates with zero ET.
-          const double deltaeta = jet_iter->eta() - it->eta();
-          const double deltaphi = deltaPhi(jet_iter->phi(), it->phi());
-          if (sqrt(deltaeta * deltaeta + deltaphi * deltaphi) < DeltaR_)
+          auto const dr2 = reco::deltaR2(jet_iter->eta(), jet_iter->phi(), it->eta(), it->phi());
+          if (dr2 < DeltaR2_)
             isMatched = true;
-          //cout << "bx:  " << ibx << "  et:  "  << it->et() << "  eta:  "  << it->eta() << "  phi:  "  << it->phi() << "\n";
         }
       }
       if (isMatched == true)
         result->push_back(*jet_iter);
-    }  // jet_iter
+    }
   } else {
-    edm::LogWarning("MissingProduct") << "L1Upgrade l1Jets bx collection not found." << std::endl;
+    edm::LogWarning("MissingProduct") << "L1Upgrade l1Jets bx collection not found.";
   }
 
   iEvent.put(std::move(result));

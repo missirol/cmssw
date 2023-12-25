@@ -34,7 +34,7 @@ private:
   unsigned int m_allowedTypeMask;
   unsigned int m_requiredTypeMask;
   double m_maxNormalizedChi2;
-  double m_minDR;
+  double m_minDR2;
   double m_minPtMuon1;
   double m_minPtMuon2;
   double m_maxEtaMuon;

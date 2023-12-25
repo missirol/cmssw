@@ -78,12 +78,12 @@ void HLTJetHbbFilter<T>::fillDescriptions(edm::ConfigurationDescriptions& descri
 template <typename T>
 float HLTJetHbbFilter<T>::findCSV(const typename std::vector<T>::const_iterator& jet,
                                   const reco::JetTagCollection& jetTags) {
-  float minDr = 0.1;  //matching jet tag with jet
+  float minDr2 = 0.01f;  //matching jet tag with jet
   float tmpCSV = -20;
   for (auto jetb = jetTags.begin(); (jetb != jetTags.end()); ++jetb) {
-    float tmpDr = reco::deltaR(*jet, *(jetb->first));
-    if (tmpDr < minDr) {
-      minDr = tmpDr;
+    float tmpDr2 = reco::deltaR2(*jet, *(jetb->first));
+    if (tmpDr2 < minDr2) {
+      minDr2 = tmpDr2;
       tmpCSV = jetb->second;
     }
   }

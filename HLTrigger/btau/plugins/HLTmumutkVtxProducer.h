@@ -74,7 +74,7 @@ private:
   const double minInvMass_;
   const double maxInvMass_;
   const double minD0Significance_;
-  const double overlapDR_;
+  const double overlapDR2_;
 
   const edm::InputTag beamSpotTag_;
   const edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;

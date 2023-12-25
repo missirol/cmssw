@@ -89,7 +89,7 @@ void HLTMuonTrackSelector::produce(edm::StreamID, edm::Event& iEvent, const edm:
       double trackEta = track.eta();
       double trackPhi = track.phi();
 
-      if (deltaR(trackEta, trackPhi, muonEta, muonPhi) < 0.1) {
+      if (reco::deltaR2(trackEta, trackPhi, muonEta, muonPhi) < 0.01) {
         double dPt = fabs(trackPt - muonPt);
 
         if (dPt < smallestDPt) {

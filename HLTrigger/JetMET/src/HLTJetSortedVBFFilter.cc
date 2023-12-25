@@ -74,13 +74,13 @@ void HLTJetSortedVBFFilter<T>::fillDescriptions(edm::ConfigurationDescriptions& 
 template <typename T>
 float HLTJetSortedVBFFilter<T>::findCSV(const typename std::vector<T>::const_iterator& jet,
                                         const reco::JetTagCollection& jetTags) {
-  float minDr = 0.1;
+  float minDr2 = 0.01f;
   float tmpCSV = -20;
   for (auto jetb = jetTags.begin(); (jetb != jetTags.end()); ++jetb) {
-    float tmpDr = reco::deltaR(*jet, *(jetb->first));
+    float tmpDr2 = reco::deltaR2(*jet, *(jetb->first));
 
-    if (tmpDr < minDr) {
-      minDr = tmpDr;
+    if (tmpDr2 < minDr2) {
+      minDr2 = tmpDr2;
       tmpCSV = jetb->second;
     }
   }

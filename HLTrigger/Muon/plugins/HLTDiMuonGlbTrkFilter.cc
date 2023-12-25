@@ -17,6 +17,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Utilities/interface/EDMException.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 
 HLTDiMuonGlbTrkFilter::HLTDiMuonGlbTrkFilter(const edm::ParameterSet& iConfig)
@@ -28,7 +29,6 @@ HLTDiMuonGlbTrkFilter::HLTDiMuonGlbTrkFilter(const edm::ParameterSet& iConfig)
   m_minTrkHits = iConfig.getParameter<int>("minTrkHits");
   m_minMuonHits = iConfig.getParameter<int>("minMuonHits");
   m_maxNormalizedChi2 = iConfig.getParameter<double>("maxNormalizedChi2");
-  m_minDR = iConfig.getParameter<double>("minDR");
   m_allowedTypeMask = iConfig.getParameter<unsigned int>("allowedTypeMask");
   m_requiredTypeMask = iConfig.getParameter<unsigned int>("requiredTypeMask");
   m_trkMuonId = muon::SelectionType(iConfig.getParameter<unsigned int>("trkMuonId"));
@@ -41,6 +41,13 @@ HLTDiMuonGlbTrkFilter::HLTDiMuonGlbTrkFilter(const edm::ParameterSet& iConfig)
   m_chargeOpt = iConfig.getParameter<int>("ChargeOpt");
   m_maxDCAMuMu = iConfig.getParameter<double>("maxDCAMuMu");
   m_maxdEtaMuMu = iConfig.getParameter<double>("maxdEtaMuMu");
+
+  auto const minDR = iConfig.getParameter<double>("minDR");
+  if (minDR <= 0) {
+    throw cms::Exception("InvalidParameterValue")
+        << "Invalid value for \"minDR\" (" << minDR << "): it must be greater than zero.";
+  }
+  m_minDR2 = minDR * minDR;
 }
 
 void HLTDiMuonGlbTrkFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -117,7 +124,7 @@ bool HLTDiMuonGlbTrkFilter::hltFilter(edm::Event& iEvent,
         const reco::Muon& mu1(muons->at(filteredMuons.at(i)));
         const reco::Muon& mu2(muons->at(filteredMuons.at(j)));
         if (std::max(mu1.pt(), mu2.pt()) > std::max(m_minPtMuon1, m_minPtMuon2) &&
-            std::abs(mu2.eta() - mu1.eta()) < m_maxdEtaMuMu && deltaR(mu1, mu2) > m_minDR &&
+            std::abs(mu2.eta() - mu1.eta()) < m_maxdEtaMuMu && reco::deltaR2(mu1, mu2) > m_minDR2 &&
             (mu1.p4() + mu2.p4()).mass() > m_minMass && (mu1.p4() + mu2.p4()).mass() < m_maxMass &&
             std::abs((mu1.p4() + mu2.p4()).Rapidity()) < m_maxYDimuon) {
           if (m_chargeOpt < 0) {

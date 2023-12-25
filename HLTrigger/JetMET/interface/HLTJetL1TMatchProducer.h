@@ -32,7 +32,7 @@ private:
   edm::InputTag jetsInput_;
   edm::InputTag L1Jets_;
   //  std::string jetType_;
-  double DeltaR_;  // DeltaR(HLT,L1)
+  double DeltaR2_;  // DeltaR2(HLT,L1)
 };
 
 #endif

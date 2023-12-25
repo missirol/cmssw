@@ -5,6 +5,7 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
@@ -44,9 +45,15 @@ HLTmumutktkVtxProducer::HLTmumutktkVtxProducer(const edm::ParameterSet& iConfig)
       maxTrkTrkMass_(iConfig.getParameter<double>("MaxTrkTrkMass")),
       minD0Significance_(iConfig.getParameter<double>("MinD0Significance")),
       oppositeSign_(iConfig.getParameter<bool>("OppositeSign")),
-      overlapDR_(iConfig.getParameter<double>("OverlapDR")),
+      overlapDR2_(iConfig.getParameter<double>("OverlapDR") * iConfig.getParameter<double>("OverlapDR")),
       beamSpotTag_(iConfig.getParameter<edm::InputTag>("BeamSpotTag")),
       beamSpotToken_(consumes<reco::BeamSpot>(beamSpotTag_)) {
+  auto const overlapDR = iConfig.getParameter<double>("OverlapDR");
+  if (overlapDR <= 0) {
+    throw cms::Exception("InvalidParameterValue")
+        << "Invalid value for \"OverlapDR\" (" << overlapDR << "): it must be greater than zero.";
+  }
+
   produces<VertexCollection>();
 }
 
@@ -278,9 +285,7 @@ FreeTrajectoryState HLTmumutktkVtxProducer::initialFreeState(const reco::Track& 
 }
 
 bool HLTmumutktkVtxProducer::overlap(const TrackRef& trackref1, const TrackRef& trackref2) {
-  if (deltaR(trackref1->eta(), trackref1->phi(), trackref2->eta(), trackref2->phi()) < overlapDR_)
-    return true;
-  return false;
+  return (reco::deltaR2(trackref1->eta(), trackref1->phi(), trackref2->eta(), trackref2->phi()) < overlapDR2_);
 }
 
 bool HLTmumutktkVtxProducer::checkPreviousCand(const TrackRef& trackref,
