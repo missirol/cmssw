@@ -8,35 +8,45 @@ from HLTrigger.Configuration.common import producers_by_type
 def customizeHLTforAlpakaParticleFlowClustering(process):
     '''Customization to introduce Particle Flow Reconstruction in Alpaka
     '''
-    process.hltPFRecHitHCALParamsRecordSource = cms.ESSource('EmptyESSource',
-            recordName = cms.string('PFRecHitHCALParamsRecord'),
-            iovIsRunNotTime = cms.bool(True),
-            firstValid = cms.vuint32(1)
-            )
+    ## failsafe for fake menus
+    if(not hasattr(process,'hltParticleFlowClusterHBHE')):
+        return process
 
-    process.hltPFRecHitHCALTopologyRecordSource = cms.ESSource('EmptyESSource',
-            recordName = cms.string('PFRecHitHCALTopologyRecord'),
-            iovIsRunNotTime = cms.bool(True),
-            firstValid = cms.vuint32(1)
-            )
-
-    process.hltPFClusterParamsRecordSource = cms.ESSource('EmptyESSource',
-            recordName = cms.string('JobConfigurationGPURecord'),
-            iovIsRunNotTime = cms.bool(True),
-            firstValid = cms.vuint32(1)
-            )
-
-    process.hltHBHERecHitToSoA = cms.EDProducer("HCALRecHitSoAProducer@alpaka",
-            src = cms.InputTag("hltHbhereco"),
-            synchronise = cms.untracked.bool(False)
-            )
-
-    process.hltPFRecHitHCALTopologyESProducer = cms.ESProducer('PFRecHitHCALTopologyESProducer@alpaka',
-      usePFThresholdsFromDB = cms.bool(True),
-      appendToDataLabel = cms.string(''),
+    process.hltESSPFRecHitHCALParamsRecord = cms.ESSource('EmptyESSource',
+        recordName = cms.string('PFRecHitHCALParamsRecord'),
+        iovIsRunNotTime = cms.bool(True),
+        firstValid = cms.vuint32(1)
     )
 
-    process.hltPFRecHitHCALParamsESProducer = cms.ESProducer('PFRecHitHCALParamsESProducer@alpaka',
+    process.hltESSPFRecHitHCALTopologyRecord = cms.ESSource('EmptyESSource',
+        recordName = cms.string('PFRecHitHCALTopologyRecord'),
+        iovIsRunNotTime = cms.bool(True),
+        firstValid = cms.vuint32(1)
+    )
+
+    process.hltESSJobConfigurationGPURecord = cms.ESSource('EmptyESSource',
+        recordName = cms.string('JobConfigurationGPURecord'),
+        iovIsRunNotTime = cms.bool(True),
+        firstValid = cms.vuint32(1)
+    )
+
+    process.hltHbheRecHitSoA = cms.EDProducer("HCALRecHitSoAProducer@alpaka",
+        src = cms.InputTag("hltHbhereco"),
+        synchronise = cms.untracked.bool(False),
+        alpaka = cms.untracked.PSet(
+            backend = cms.untracked.string('')
+        )
+    )
+
+    process.hltESPPFRecHitHCALTopology = cms.ESProducer('PFRecHitHCALTopologyESProducer@alpaka',
+        usePFThresholdsFromDB = cms.bool(True),
+        appendToDataLabel = cms.string(''),
+        alpaka = cms.untracked.PSet(
+            backend = cms.untracked.string('')
+        )
+    )
+
+    process.hltESPPFRecHitHCALParams = cms.ESProducer('PFRecHitHCALParamsESProducer@alpaka',
       energyThresholdsHB = cms.vdouble(
         0.1,
         0.2,
@@ -53,26 +63,33 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
         0.2
       ),
       appendToDataLabel = cms.string(''),
+      alpaka = cms.untracked.PSet(
+          backend = cms.untracked.string('')
+      )
     )
 
-    process.hltPFRecHitSoAProducerHCAL = cms.EDProducer("PFRecHitSoAProducerHCAL@alpaka",
-            producers = cms.VPSet(
-                cms.PSet(
-                    src = cms.InputTag("hltHBHERecHitToSoA"),
-                    params = cms.ESInputTag("hltPFRecHitHCALParamsESProducer:"),
-                    )
-                ),
-            topology = cms.ESInputTag("hltPFRecHitHCALTopologyESProducer:"),
-            synchronise = cms.untracked.bool(False)
+    process.hltParticleFlowRecHitHBHESoA = cms.EDProducer("PFRecHitSoAProducerHCAL@alpaka",
+        producers = cms.VPSet(
+            cms.PSet(
+                src = cms.InputTag("hltHbheRecHitSoA"),
+                params = cms.ESInputTag("hltESPPFRecHitHCALParams:"),
             )
+        ),
+        topology = cms.ESInputTag("hltESPPFRecHitHCALTopology:"),
+        synchronise = cms.untracked.bool(False),
+        alpaka = cms.untracked.PSet(
+            backend = cms.untracked.string('')
+        )
+    )
 
-    process.hltPFRecHitSoAProducerHCALCPUSerial = makeSerialClone(process.hltPFRecHitSoAProducerHCAL)
+    process.hltParticleFlowRecHitHBHE = cms.EDProducer("LegacyPFRecHitProducer",
+        src = cms.InputTag("hltParticleFlowRecHitHBHESoA")
+    )
 
-    process.hltLegacyPFRecHitProducer = cms.EDProducer("LegacyPFRecHitProducer",
-            src = cms.InputTag("hltPFRecHitSoAProducerHCAL")
-            )
-
-    process.hltPFClusterParamsESProducer = cms.ESProducer("PFClusterParamsESProducer@alpaka",
+    process.hltESPPFClusterParams = cms.ESProducer("PFClusterParamsESProducer@alpaka",
+        alpaka = cms.untracked.PSet(
+            backend = cms.untracked.string('')
+        ),
             seedFinder = cms.PSet(
               nNeighbours = cms.int32(4),
               thresholdsByDetector = cms.VPSet(
@@ -179,82 +196,100 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
                 constantTerm = cms.double(2.82)
               )
             ),
-            )
+    )
 
-    process.hltPFClusterSoAProducer = cms.EDProducer("PFClusterSoAProducer@alpaka",
-            pfRecHits = cms.InputTag("hltPFRecHitSoAProducerHCAL"),
-            topology = cms.ESInputTag("hltPFRecHitHCALTopologyESProducer:"),
-            pfClusterParams = cms.ESInputTag("hltPFClusterParamsESProducer:"),
-            synchronise = cms.bool(False)
-            )
+    process.hltParticleFlowClusterHBHESoA = cms.EDProducer("PFClusterSoAProducer@alpaka",
+        pfRecHits = cms.InputTag("hltParticleFlowRecHitHBHESoA"),
+        topology = cms.ESInputTag("hltESPPFRecHitHCALTopology:"),
+        pfClusterParams = cms.ESInputTag("hltESPPFClusterParams:"),
+        synchronise = cms.bool(False),
+        alpaka = cms.untracked.PSet(
+            backend = cms.untracked.string('')
+        )
+    )
 
-    process.hltPFClusterSoAProducerCPUSerial = makeSerialClone(process.hltPFClusterSoAProducer,
-            pfRecHits = cms.InputTag("hltPFRecHitSoAProducerHCALCPUSerial"),
-            )
-
-    ## failsafe for fake menus
-    if(not hasattr(process,'hltParticleFlowClusterHBHE')):
-        return process
-
-    process.hltLegacyPFClusterProducer = cms.EDProducer("LegacyPFClusterProducer",
-            src = cms.InputTag("hltPFClusterSoAProducer"),
-            pfClusterBuilder = process.hltParticleFlowClusterHBHE.pfClusterBuilder,
-            usePFThresholdsFromDB = cms.bool(True),
-            recHitsSource = cms.InputTag("hltLegacyPFRecHitProducer"),
-            PFRecHitsLabelIn = cms.InputTag("hltPFRecHitSoAProducerHCAL")
-            )
-
-
-    #Same as default except change the clusterSource
-    process.hltParticleFlowClusterHCAL = cms.EDProducer("PFMultiDepthClusterProducer",
-            clustersSource = cms.InputTag("hltLegacyPFClusterProducer"),
-            usePFThresholdsFromDB = cms.bool(True),
-            energyCorrector = process.hltParticleFlowClusterHCAL.energyCorrector,
-            pfClusterBuilder = process.hltParticleFlowClusterHCAL.pfClusterBuilder,
-            positionReCalc = process.hltParticleFlowClusterHCAL.positionReCalc
-            )
-
-    #Define the task (I assume the name has to be the same as the default task)
-    process.HLTPFHcalRecHits = cms.Sequence(
-            process.hltHBHERecHitToSoA+
-            process.hltPFRecHitSoAProducerHCAL+
-            process.hltLegacyPFRecHitProducer
-            )
+    process.hltParticleFlowClusterHBHE = cms.EDProducer("LegacyPFClusterProducer",
+        src = cms.InputTag("hltParticleFlowClusterHBHESoA"),
+        pfClusterBuilder = process.hltParticleFlowClusterHBHE.pfClusterBuilder,
+        usePFThresholdsFromDB = cms.bool(True),
+        recHitsSource = cms.InputTag("hltParticleFlowRecHitHBHE"),
+        PFRecHitsLabelIn = cms.InputTag("hltParticleFlowRecHitHBHESoA")
+    )
 
     process.HLTPFHcalClustering = cms.Sequence(
-            process.HLTPFHcalRecHits+
-            process.hltPFClusterSoAProducer+
-            process.hltLegacyPFClusterProducer+
-            process.hltParticleFlowClusterHCAL
-            )
-
+        process.hltHbheRecHitSoA +
+        process.hltParticleFlowRecHitHBHESoA +
+        process.hltParticleFlowRecHitHBHE +
+        process.hltParticleFlowClusterHBHESoA +
+        process.hltParticleFlowClusterHBHE +
+        process.hltParticleFlowClusterHCAL
+    )
 
     #Some Sequences contain all the modules of process.HLTPFHcalClustering Sequence instead of the Sequence itself
     #find these Sequences and replace all the modules with the Sequence
-    def replaceItemsInSequence(process, itemsToReplace, replacingSequence):
-        for sequence, items in process.sequences.items():
-            #Find Sequences containing all the items in itemsToReplace
-            containsAll = all(items.contains(item) for item in itemsToReplace)
-            if(containsAll):
-                for item in itemsToReplace:
-                    #remove items that will be replaced by replacingSequence
-                    if(item != itemsToReplace[-1]):
-                        items.remove(item)
-                    else:
-                        #if last item, replace it with the Sequence
-                        items.replace(item, replacingSequence)
+    def replaceItemsInSequence(process, seqNames, itemsToReplace, replacingSequence):
+        for seqName in seqNames:
+            if not hasattr(process, seqName):
+                continue
+            seq = getattr(process, seqName)
+            for item in itemsToReplace:
+                #remove items that will be replaced by replacingSequence
+                if(item != itemsToReplace[-1]):
+                    seq.remove(item)
+                else:
+                    #if last item, replace it with the Sequence
+                    seq.replace(item, replacingSequence)
         return process
 
-    itemsList = [process.hltParticleFlowRecHitHBHE, process.hltParticleFlowClusterHBHE,process.hltParticleFlowClusterHCAL]
-    process = replaceItemsInSequence(process, itemsList, process.HLTPFHcalClustering)
+    process = replaceItemsInSequence(process, [
+            'HLTParticleFlowSequence',
+            'HLTParticleFlowSequenceForTaus',
+            'HLTParticleFlowSequenceForDisplTaus',
+            'HLTParticleFlowSequencePPOnAA',
+        ],
+        [process.hltParticleFlowRecHitHBHE, process.hltParticleFlowClusterHBHE,process.hltParticleFlowClusterHCAL],
+        process.HLTPFHcalClustering)
 
-    process.HLTPFClusterHBHECPUSerial = cms.Sequence(process.hltHBHERecHitToSoA+process.hltPFRecHitSoAProducerHCALCPUSerial+process.hltPFClusterSoAProducerCPUSerial)
+    process.hltHbheRecHitSoACPUSerial = process.hltHbheRecHitSoA.clone(
+        alpaka = dict(backend = 'serial_sync'),
+    )
+
+    process.hltParticleFlowRecHitHBHESoACPUSerial = process.hltParticleFlowRecHitHBHESoA.clone(alpaka = dict(backend = 'serial_sync'))
+    process.hltParticleFlowRecHitHBHESoACPUSerial.producers[0].src = 'hltHbheRecHitSoACPUSerial'
+
+    process.hltParticleFlowRecHitHBHECPUOnly = process.hltParticleFlowRecHitHBHE.clone(
+        src = 'hltParticleFlowRecHitHBHESoACPUSerial',
+    )
+
+    process.hltParticleFlowClusterHBHESoACPUSerial = process.hltParticleFlowClusterHBHESoA.clone(
+        pfRecHits = 'hltParticleFlowRecHitHBHESoACPUSerial',
+        alpaka = dict(backend = 'serial_sync'),
+    )
+
+    process.hltParticleFlowClusterHBHECPUOnly = process.hltParticleFlowClusterHBHE.clone(
+        src = 'hltParticleFlowClusterHBHESoACPUSerial',
+        recHitsSource = 'hltParticleFlowRecHitHBHECPUOnly',
+        PFRecHitsLabelIn = 'hltParticleFlowRecHitHBHESoACPUSerial',
+    )
+
+    process.HLTPFHcalClusteringCPUOnly = cms.Sequence(
+        process.hltHbheRecHitSoACPUSerial +
+        process.hltParticleFlowRecHitHBHESoACPUSerial +
+        process.hltParticleFlowRecHitHBHECPUOnly +
+        process.hltParticleFlowClusterHBHESoACPUSerial +
+        process.hltParticleFlowClusterHBHECPUOnly +
+        process.hltParticleFlowClusterHCALCPUOnly
+    )
+
+    process = replaceItemsInSequence(process, ['HLTParticleFlowCPUOnlySequence'],
+        [process.hltParticleFlowRecHitHBHECPUOnly, process.hltParticleFlowClusterHBHECPUOnly, process.hltParticleFlowClusterHCALCPUOnly],
+        process.HLTPFHcalClusteringCPUOnly)
 
     # modify EventContent of DQMGPUvsCPU stream
     if hasattr(process, 'hltOutputDQMGPUvsCPU'):
         process.hltOutputDQMGPUvsCPU.outputCommands.extend([
-            'keep *_hltPFClusterSoAProducer_*_*',
-            'keep *_hltPFClusterSoAProducerCPUSerial_*_*',
+            'keep *_hltParticleFlowClusterHBHESoA_*_*',
+            'keep *_hltParticleFlowClusterHBHESoACPUSerial_*_*',
         ])
 
     # Add CPUSerial sequences to DQM_HcalReconstruction_v Path
@@ -269,7 +304,7 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
 
     dqmHcalPath = getattr(process, dqmHcalRecoPathName)
     dqmHcalRecoPathIndex = dqmHcalPath.index(process.hltHcalConsumerGPU) + 1
-    dqmHcalPath.insert(dqmHcalRecoPathIndex , process.HLTPFClusterHBHECPUSerial)
+    dqmHcalPath.insert(dqmHcalRecoPathIndex , process.HLTPFHcalClusteringCPUOnly)
 
     return process
 
@@ -964,7 +999,7 @@ def customizeHLTforAlpaka(process):
     process.load('Configuration.StandardSequences.Accelerators_cff')
 
     process = customizeHLTforAlpakaPixelReco(process)
-#    process = customizeHLTforAlpakaEcalLocalReco(process)
-#    process = customizeHLTforAlpakaParticleFlowClustering(process)
+    process = customizeHLTforAlpakaEcalLocalReco(process)
+    process = customizeHLTforAlpakaParticleFlowClustering(process)
 
     return process
