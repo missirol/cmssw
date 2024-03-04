@@ -250,20 +250,17 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
         [process.hltParticleFlowRecHitHBHE, process.hltParticleFlowClusterHBHE,process.hltParticleFlowClusterHCAL],
         process.HLTPFHcalClustering)
 
-    process.hltHbheRecHitSoACPUSerial = process.hltHbheRecHitSoA.clone(
-        alpaka = dict(backend = 'serial_sync'),
-    )
+    process.hltHbheRecHitSoACPUSerial = makeSerialClone(process.hltHbheRecHitSoA)
 
-    process.hltParticleFlowRecHitHBHESoACPUSerial = process.hltParticleFlowRecHitHBHESoA.clone(alpaka = dict(backend = 'serial_sync'))
+    process.hltParticleFlowRecHitHBHESoACPUSerial = makeSerialClone(process.hltParticleFlowRecHitHBHESoA)
     process.hltParticleFlowRecHitHBHESoACPUSerial.producers[0].src = 'hltHbheRecHitSoACPUSerial'
 
     process.hltParticleFlowRecHitHBHECPUOnly = process.hltParticleFlowRecHitHBHE.clone(
         src = 'hltParticleFlowRecHitHBHESoACPUSerial',
     )
 
-    process.hltParticleFlowClusterHBHESoACPUSerial = process.hltParticleFlowClusterHBHESoA.clone(
+    process.hltParticleFlowClusterHBHESoACPUSerial = makeSerialClone(process.hltParticleFlowClusterHBHESoA,
         pfRecHits = 'hltParticleFlowRecHitHBHESoACPUSerial',
-        alpaka = dict(backend = 'serial_sync'),
     )
 
     process.hltParticleFlowClusterHBHECPUOnly = process.hltParticleFlowClusterHBHE.clone(
@@ -570,13 +567,9 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
     ###
     ### CPUSerial version of Pixel Local Reconstruction
     ###
-    process.hltOnlineBeamSpotDeviceCPUSerial = process.hltOnlineBeamSpotDevice.clone(
-        alpaka = dict( backend = 'serial_sync' )
-    )
+    process.hltOnlineBeamSpotDeviceCPUSerial = makeSerialClone(process.hltOnlineBeamSpotDevice)
 
-    process.hltSiPixelClustersSoACPUSerial = process.hltSiPixelClustersSoA.clone(
-        alpaka = dict( backend = 'serial_sync' )
-    )
+    process.hltSiPixelClustersSoACPUSerial = makeSerialClone(process.hltSiPixelClustersSoA)
 
     process.hltSiPixelClustersLegacyFormatCPUSerial = process.hltSiPixelClusters.clone(
         src = 'hltSiPixelClustersSoACPUSerial'
@@ -587,10 +580,9 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
         fmtErrorsSoASrc = 'hltSiPixelClustersSoACPUSerial',
     )
 
-    process.hltSiPixelRecHitsSoACPUSerial = process.hltSiPixelRecHitsSoA.clone(
+    process.hltSiPixelRecHitsSoACPUSerial = makeSerialClone(process.hltSiPixelRecHitsSoA,
         beamSpot = 'hltOnlineBeamSpotDeviceCPUSerial',
         src = 'hltSiPixelClustersSoACPUSerial',
-        alpaka = dict( backend = 'serial_sync' )
     )
 
     process.hltSiPixelRecHitsLegacyFormatCPUSerial = process.hltSiPixelRecHits.clone(
@@ -685,9 +677,8 @@ def customizeHLTforAlpakaPixelRecoTracking(process):
 
     process.hltL2TauTagNNProducer = cms.EDProducer("L2TauNNProducerAlpaka", **process.hltL2TauTagNNProducer.parameters_())
 
-    process.hltPixelTracksSoACPUSerial = process.hltPixelTracksSoA.clone(
-        pixelRecHitSrc = 'hltSiPixelRecHitsSoACPUSerial',
-        alpaka = dict( backend = 'serial_sync' )
+    process.hltPixelTracksSoACPUSerial = makeSerialClone(process.hltPixelTracksSoA,
+        pixelRecHitSrc = 'hltSiPixelRecHitsSoACPUSerial'
     )
 
     process.hltPixelTracks = cms.EDProducer("PixelTrackProducerFromSoAAlpakaPhase1",
@@ -748,9 +739,8 @@ def customizeHLTforAlpakaPixelRecoVertexing(process):
         )
     )
 
-    process.hltPixelVerticesSoACPUSerial = process.hltPixelVerticesSoA.clone(
-        pixelTrackSrc = 'hltPixelTracksSoACPUSerial',
-        alpaka = dict( backend = 'serial_sync' )
+    process.hltPixelVerticesSoACPUSerial = makeSerialClone(process.hltPixelVerticesSoA,
+        pixelTrackSrc = 'hltPixelTracksSoACPUSerial'
     )
 
     process.hltPixelVertices = cms.EDProducer("PixelVertexProducerFromSoAAlpaka",
@@ -929,17 +919,14 @@ def customizeHLTforAlpakaEcalLocalReco(process):
         process.HLTPreshowerSequence
     )
 
-    process.hltEcalDigisCPUSerialSoA = process.hltEcalDigisPortableSoA.clone(
-        alpaka = dict(backend = 'serial_sync')
-    )
+    process.hltEcalDigisCPUSerialSoA = makeSerialClone(process.hltEcalDigisPortableSoA)
 
     process.hltEcalDigisCPUSerial = process.hltEcalDigis.clone(
         digisInLabelEB = 'hltEcalDigisCPUSerialSoA:ebDigis',
         digisInLabelEE = 'hltEcalDigisCPUSerialSoA:eeDigis',
     )
 
-    process.hltEcalUncalibRecHitCPUSerialSoA = process.hltEcalUncalibRecHitPortableSoA.clone(
-        alpaka = dict(backend = 'serial_sync'),
+    process.hltEcalUncalibRecHitCPUSerialSoA = makeSerialClone(process.hltEcalUncalibRecHitPortableSoA,
         digisLabelEB = "hltEcalDigisCPUSerialSoA:ebDigis",
         digisLabelEE = "hltEcalDigisCPUSerialSoA:eeDigis",
     )
