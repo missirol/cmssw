@@ -282,26 +282,28 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
         [process.hltParticleFlowRecHitHBHECPUOnly, process.hltParticleFlowClusterHBHECPUOnly, process.hltParticleFlowClusterHCALCPUOnly],
         process.HLTPFHcalClusteringCPUOnly)
 
-    # modify EventContent of DQMGPUvsCPU stream
-    if hasattr(process, 'hltOutputDQMGPUvsCPU'):
-        process.hltOutputDQMGPUvsCPU.outputCommands.extend([
-            'keep *_hltParticleFlowClusterHBHESoA_*_*',
-            'keep *_hltParticleFlowClusterHBHESoACPUSerial_*_*',
-        ])
+    # modify EventContent of *DQMGPUvsCPU streams
+    for hltOutModMatch in ['hltOutputDQMGPUvsCPU', 'hltOutputHIDQMGPUvsCPU']:
+        if hasattr(process, hltOutModMatch):
+            outMod = getattr(process, hltOutModMatch)
+            outMod.outputCommands.extend([
+                'keep *_hltParticleFlowClusterHBHESoA_*_*',
+                'keep *_hltParticleFlowClusterHBHESoACPUSerial_*_*',
+            ])
 
-    # Add CPUSerial sequences to DQM_HcalReconstruction_v Path
-    dqmHcalRecoPathName = None
-    for pathName in process.paths_():
-        if pathName.startswith('DQM_HcalReconstruction_v'):
-            dqmHcalRecoPathName = pathName
-            break
-
-    if dqmHcalRecoPathName == None:
-        return process
-
-    dqmHcalPath = getattr(process, dqmHcalRecoPathName)
-    dqmHcalRecoPathIndex = dqmHcalPath.index(process.hltHcalConsumerGPU) + 1
-    dqmHcalPath.insert(dqmHcalRecoPathIndex , process.HLTPFHcalClusteringCPUOnly)
+    # Add PF sequences to DQM_*HcalReconstruction_v Path
+    for pathNameMatch in ['DQM_HcalReconstruction_v', 'DQM_HIHcalReconstruction_v']:
+        dqmHcalRecoPathName = None
+        for pathName in process.paths_():
+            if pathName.startswith(pathNameMatch):
+                dqmHcalRecoPathName = pathName
+                break
+        if dqmHcalRecoPathName == None:
+            continue
+        dqmHcalPath = getattr(process, dqmHcalRecoPathName)
+        dqmHcalRecoPathIndex = dqmHcalPath.index(process.hltHcalConsumerGPU) + 1
+        dqmHcalPath.insert(dqmHcalRecoPathIndex , process.HLTPFHcalClusteringCPUOnly)
+        dqmHcalPath.insert(dqmHcalRecoPathIndex , process.HLTPFHcalClustering)
 
     return process
 
