@@ -453,7 +453,6 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
     )
 
     del process.hltESPPixelCPEFast
-    del process.siPixelGainCalibrationForHLTGPU
 
     ###
 
@@ -815,7 +814,7 @@ def customizeHLTforAlpakaEcalLocalReco(process):
     )
 
     from EventFilter.EcalRawToDigi.ecalElectronicsMappingHostESProducer_cfi import ecalElectronicsMappingHostESProducer as _ecalElectronicsMappingHostESProducer
-    process.hltESPEcalElectronicsMappingHost = _ecalElectronicsMappingHostESProducer.clone()
+    process.ecalElectronicsMappingHostESProducer = _ecalElectronicsMappingHostESProducer.clone()
 
     process.hltEcalDigis = cms.EDProducer( "EcalDigisFromPortableProducer",
         digisInLabelEB = cms.InputTag( 'hltEcalDigisPortableSoA','ebDigis' ),
@@ -856,17 +855,17 @@ def customizeHLTforAlpakaEcalLocalReco(process):
     )
     del process.hltEcalUncalibRecHitGPU
 
-    process.hltESSEcalMultifitParameters = cms.ESSource("EmptyESSource",
+    process.ecalMultifitParametersSource = cms.ESSource("EmptyESSource",
         firstValid = cms.vuint32(1),
         iovIsRunNotTime = cms.bool(True),
         recordName = cms.string('EcalMultifitParametersRcd')
     )
 
     from RecoLocalCalo.EcalRecProducers.ecalMultifitConditionsHostESProducer_cfi import ecalMultifitConditionsHostESProducer as _ecalMultifitConditionsHostESProducer
-    process.hltESPEcalMultifitConditionsHost = _ecalMultifitConditionsHostESProducer.clone()
+    process.ecalMultifitConditionsHostESProducer = _ecalMultifitConditionsHostESProducer.clone()
 
     from RecoLocalCalo.EcalRecProducers.ecalMultifitParametersHostESProducer_cfi import ecalMultifitParametersHostESProducer as _ecalMultifitParametersHostESProducer
-    process.hltESPEcalMultifitParametersHost = _ecalMultifitParametersHostESProducer.clone()
+    process.ecalMultifitParametersHostESProducer = _ecalMultifitParametersHostESProducer.clone()
 
     process.hltEcalUncalibRecHit = cms.EDProducer("EcalUncalibRecHitSoAToLegacy",
         isPhase2 = process.hltEcalUncalibRecHitFromSoA.isPhase2,
