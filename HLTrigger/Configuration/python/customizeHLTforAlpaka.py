@@ -602,6 +602,8 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
 
     try:
       process.hltMeasurementTrackerEventCPUOnly.pixelClusterProducer = "hltSiPixelClustersLegacyFormatCPUSerial"
+      process.hltMeasurementTrackerEventCPUOnly.inactivePixelDetectorLabels = ["hltSiPixelDigiErrorsLegacyFormatCPUSerial"]
+      process.hltMeasurementTrackerEventCPUOnly.badPixelFEDChannelCollectionLabels = ["hltSiPixelDigiErrorsLegacyFormatCPUSerial"]
       process.hltDoubletRecoveryClustersRefRemovalCPUOnly.pixelClusters = "hltSiPixelClustersLegacyFormatCPUSerial"
       process.hltDoubletRecoveryPFlowPixelClusterCheckCPUOnly.PixelClusterCollectionLabel = "hltSiPixelClustersLegacyFormatCPUSerial"
       process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.inactivePixelDetectorLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
