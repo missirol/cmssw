@@ -9,7 +9,10 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
     '''Customization to introduce Particle Flow Reconstruction in Alpaka
     '''
     ## failsafe for fake menus
-    if(not hasattr(process,'hltParticleFlowClusterHBHE')):
+    if not hasattr(process,'hltParticleFlowClusterHBHE'):
+        return process
+
+    for prod in producers_by_type(process, 'HCALRecHitSoAProducer@alpaka'):
         return process
 
     process.hltESSPFRecHitHCALParamsRecord = cms.ESSource('EmptyESSource',
@@ -225,8 +228,8 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
         process.hltParticleFlowClusterHCAL
     )
 
-    #Some Sequences contain all the modules of process.HLTPFHcalClustering Sequence instead of the Sequence itself
-    #find these Sequences and replace all the modules with the Sequence
+    # Some Sequences contain all the modules of process.HLTPFHcalClustering Sequence instead of the Sequence itself
+    # find these Sequences and replace all the modules with the Sequence
     def replaceItemsInSequence(process, seqNames, itemsToReplace, replacingSequence):
         for seqName in seqNames:
             if not hasattr(process, seqName):
@@ -241,14 +244,19 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
                     seq.replace(item, replacingSequence)
         return process
 
-    process = replaceItemsInSequence(process, [
+    process = replaceItemsInSequence(
+        process, [
             'HLTParticleFlowSequence',
             'HLTParticleFlowSequenceForTaus',
             'HLTParticleFlowSequenceForDisplTaus',
-            'HLTParticleFlowSequencePPOnAA',
+            'HLTParticleFlowSequencePPOnAA'
+        ], [
+            process.hltParticleFlowRecHitHBHE,
+            process.hltParticleFlowClusterHBHE,
+            process.hltParticleFlowClusterHCAL
         ],
-        [process.hltParticleFlowRecHitHBHE, process.hltParticleFlowClusterHBHE,process.hltParticleFlowClusterHCAL],
-        process.HLTPFHcalClustering)
+        process.HLTPFHcalClustering
+    )
 
     process.hltHbheRecHitSoACPUSerial = makeSerialClone(process.hltHbheRecHitSoA)
 
@@ -319,6 +327,9 @@ def customizeHLTforDQMGPUvsCPUPixel(process):
             break
 
     if dqmPixelRecoPathName == None:
+        return process
+
+    for prod in producers_by_type(process, 'SiPixelPhase1MonitorRecHitsSoAAlpaka'):
         return process
 
     # modify EventContent of DQMGPUvsCPU stream
@@ -421,14 +432,22 @@ def customizeHLTforDQMGPUvsCPUPixel(process):
       + process.hltPixelVertexSoACompareGPUvsCPU
     )
 
-    del process.hltPixelConsumerCPU
-    del process.hltPixelConsumerGPU
+    for delMod in ['hltPixelConsumerCPU', 'hltPixelConsumerGPU']:
+        if hasattr(process, delMod):
+            process.__delattr__(delMod)
 
     return process
 
 def customizeHLTforAlpakaPixelRecoLocal(process):
     '''Customisation to introduce the Local Pixel Reconstruction in Alpaka
     '''
+
+    if not hasattr(process, 'HLTDoLocalPixelSequence'):
+        return process
+
+    for prod in producers_by_type(process, 'SiPixelRawToClusterPhase1@alpaka'):
+        return process
+
     process.hltESPSiPixelCablingSoA = cms.ESProducer('SiPixelCablingSoAESProducer@alpaka',
         CablingMapLabel = cms.string(''),
         UseQualityInfo = cms.bool(False),
@@ -452,9 +471,8 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
         )
     )
 
-    del process.hltESPPixelCPEFast
-
-    ###
+    if hasattr(process, 'hltESPPixelCPEFast'):
+        del process.hltESPPixelCPEFast
 
     # alpaka EDProducer
     # consumes
@@ -486,12 +504,7 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
         VCaltoElectronOffset    = cms.double(0),
         VCaltoElectronOffset_L1 = cms.double(0),
         InputLabel = cms.InputTag('rawDataCollector'),
-        Regions = cms.PSet(
-            inputs = cms.optional.VInputTag,
-            deltaPhi = cms.optional.vdouble,
-            maxZ = cms.optional.vdouble,
-            beamSpot = cms.optional.InputTag
-        ),
+        Regions = cms.PSet( ),
         CablingMapLabel = cms.string(''),
         # autoselect the alpaka backend
         alpaka = cms.untracked.PSet(
@@ -636,6 +649,12 @@ def customizeHLTforAlpakaPixelRecoTracking(process):
     '''Customisation to introduce the Pixel-Track Reconstruction in Alpaka
     '''
 
+    if not hasattr(process, 'HLTRecoPixelTracksSequence'):
+        return process
+
+    for prod in producers_by_type(process, 'CAHitNtupletAlpakaPhase1@alpaka'):
+        return process
+
     # alpaka EDProducer
     # consumes
     #  - TrackingRecHitsSoACollection<TrackerTraits>
@@ -689,7 +708,8 @@ def customizeHLTforAlpakaPixelRecoTracking(process):
         )
     )
 
-    process.hltL2TauTagNNProducer = cms.EDProducer("L2TauNNProducerAlpaka", **process.hltL2TauTagNNProducer.parameters_())
+    if hasattr(process, 'hltL2TauTagNNProducer'):
+        process.hltL2TauTagNNProducer = cms.EDProducer("L2TauNNProducerAlpaka", **process.hltL2TauTagNNProducer.parameters_())
 
     process.hltPixelTracksSoACPUSerial = makeSerialClone(process.hltPixelTracksSoA,
         pixelRecHitSrc = 'hltSiPixelRecHitsSoACPUSerial'
@@ -730,6 +750,12 @@ def customizeHLTforAlpakaPixelRecoVertexing(process):
     '''Customisation to introduce the Pixel-Vertex Reconstruction in Alpaka
     '''
 
+    if not hasattr(process, 'HLTRecopixelvertexingSequence'):
+        return process
+
+    for prod in producers_by_type(process, 'PixelVertexProducerAlpakaPhase1@alpaka'):
+        return process
+
     # alpaka EDProducer
     # consumes
     #  - TkSoADevice
@@ -769,7 +795,7 @@ def customizeHLTforAlpakaPixelRecoVertexing(process):
     )
 
     ## failsafe for fake menus
-    if(not hasattr(process,'hltTrimmedPixelVertices')):
+    if not hasattr(process,'hltTrimmedPixelVertices'):
         return process
 
     process.HLTRecopixelvertexingSequence = cms.Sequence(
@@ -788,7 +814,7 @@ def customizeHLTforAlpakaPixelRecoVertexing(process):
 
     process.hltTrimmedPixelVerticesCPUOnly.src = 'hltPixelVerticesLegacyFormatCPUSerial'
     process.hltParticleFlowCPUOnly.vertexCollection = 'hltPixelVerticesLegacyFormatCPUSerial'
-    process.hltAK4PFJetsCPUOnly.srcPVs = 'hltPixelVerticesFromSoACPUOnly'
+    process.hltAK4PFJetsCPUOnly.srcPVs = 'hltPixelVerticesLegacyFormatCPUSerial'
 
     return process
 
@@ -808,12 +834,17 @@ def customizeHLTforAlpakaEcalLocalReco(process):
     if not hasattr(process, 'hltEcalDigisGPU'):
         return process
 
+    for prod in producers_by_type(process, 'EcalRawToDigiPortable@alpaka'):
+        return process
+
+    # remove existing ECAL GPU-related ES modules
     for foo in [foo for foo in process.es_producers_() if ('ecal' in foo and 'GPU' in foo)]:
         process.__delattr__(foo)
 
     for foo in [foo for foo in process.es_sources_() if ('ecal' in foo and 'GPU' in foo)]:
         process.__delattr__(foo)
 
+    # redefine ECAL local reconstruction sequence
     process.hltEcalDigisPortableSoA = cms.EDProducer("EcalRawToDigiPortable@alpaka",
         FEDs = process.hltEcalDigisGPU.FEDs,
         InputLabel = process.hltEcalDigisGPU.InputLabel,
@@ -933,6 +964,8 @@ def customizeHLTforAlpakaEcalLocalReco(process):
         process.HLTPreshowerSequence
     )
 
+    process.HLTDoFullUnpackingEgammaEcalMFSequence = cms.Sequence( process.HLTDoFullUnpackingEgammaEcalSequence )
+
     process.hltEcalDigisCPUSerialSoA = makeSerialClone(process.hltEcalDigisPortableSoA)
 
     process.hltEcalDigisCPUSerial = process.hltEcalDigis.clone(
@@ -964,8 +997,6 @@ def customizeHLTforAlpakaEcalLocalReco(process):
         process.hltEcalDetIdToBeRecovered +
         process.hltEcalRecHitCPUOnly
     )
-
-    process.HLTDoFullUnpackingEgammaEcalMFSequence = cms.Sequence( process.HLTDoFullUnpackingEgammaEcalSequence )
 
     for prod in producers_by_type(process, 'HLTRechitsToDigis'):
         prod.srFlagsIn = 'hltEcalDigisLegacy'
