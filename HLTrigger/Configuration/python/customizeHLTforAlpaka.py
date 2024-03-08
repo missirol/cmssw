@@ -327,7 +327,7 @@ def customizeHLTforDQMGPUvsCPUPixel(process):
         outCmds_new += [
             'keep *Cluster*_hltSiPixelClusters_*_*',
             'keep *Cluster*_hltSiPixelClustersLegacyFormatCPUSerial_*_*',
-            'keep *_hltSiPixelDigis_*_*',
+            'keep *_hltSiPixelDigiErrors_*_*',
             'keep *_hltSiPixelDigiErrorsLegacyFormatCPUSerial_*_*',
             'keep *RecHit*_hltSiPixelRecHits_*_*',
             'keep *RecHit*_hltSiPixelRecHitsLegacyFormatCPUSerial_*_*',
@@ -521,7 +521,7 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
     #  - DetIdCollection
     #  - DetIdCollection, 'UserErrorModules'
     #  - edmNew::DetSetVector<PixelFEDChannel>
-    process.hltSiPixelDigis = cms.EDProducer('SiPixelDigiErrorsFromSoAAlpaka',
+    process.hltSiPixelDigiErrors = cms.EDProducer('SiPixelDigiErrorsFromSoAAlpaka',
         digiErrorSoASrc = cms.InputTag('hltSiPixelClustersSoA'),
         fmtErrorsSoASrc = cms.InputTag('hltSiPixelClustersSoA'),
         CablingMapLabel = cms.string(''),
@@ -560,7 +560,7 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
         process.hltSiPixelClustersSoA +
         process.hltSiPixelClusters +      # was: hltSiPixelClusters
         process.hltSiPixelClustersCache + # really needed ??
-        process.hltSiPixelDigis +         # was: hltSiPixelDigis
+        process.hltSiPixelDigiErrors +    # was: hltSiPixelDigis
         process.hltSiPixelRecHitsSoA +
         process.hltSiPixelRecHits         # was: hltSiPixelRecHits
     )
@@ -576,7 +576,7 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
         src = 'hltSiPixelClustersSoACPUSerial'
     )
 
-    process.hltSiPixelDigiErrorsLegacyFormatCPUSerial = process.hltSiPixelDigis.clone(
+    process.hltSiPixelDigiErrorsLegacyFormatCPUSerial = process.hltSiPixelDigiErrors.clone(
         digiErrorSoASrc = 'hltSiPixelClustersSoACPUSerial',
         fmtErrorsSoASrc = 'hltSiPixelClustersSoACPUSerial',
     )
@@ -618,6 +618,17 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
       process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.FPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
     except:
       pass
+
+    for modLabel in [
+        'hltDoubletRecoveryPixelLayersAndRegions',
+        'hltFullIter6PixelTrackingRegionSeedLayersBPPRef',
+        'hltIter3IterL3FromL1MuonPixelLayersAndRegions',
+        'hltMeasurementTrackerEvent',
+    ]:
+        if hasattr(process, modLabel):
+            mod = getattr(process, modLabel)
+            mod.inactivePixelDetectorLabels = 'hltSiPixelDigiErrors'
+            mod.badPixelFEDChannelCollectionLabels = 'hltSiPixelDigiErrors'
 
     return process
 
