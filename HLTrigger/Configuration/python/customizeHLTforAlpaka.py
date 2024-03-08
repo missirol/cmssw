@@ -627,8 +627,8 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
     ]:
         if hasattr(process, modLabel):
             mod = getattr(process, modLabel)
-            mod.inactivePixelDetectorLabels = 'hltSiPixelDigiErrors'
-            mod.badPixelFEDChannelCollectionLabels = 'hltSiPixelDigiErrors'
+            mod.inactivePixelDetectorLabels = ['hltSiPixelDigiErrors']
+            mod.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigiErrors']
 
     return process
 
@@ -967,31 +967,37 @@ def customizeHLTforAlpakaEcalLocalReco(process):
 
     process.HLTDoFullUnpackingEgammaEcalMFSequence = cms.Sequence( process.HLTDoFullUnpackingEgammaEcalSequence )
 
-    try:
-        outCmds_new = [foo for foo in process.hltOutputDQMGPUvsCPU.outputCommands if 'Ecal' not in foo]
-        outCmds_new += [
-            'keep *_hltEcalDigis_*_*',
-            'keep *_hltEcalDigisCPUSerial_*_*',
-            'keep *_hltEcalUncalibRecHit_*_*',
-            'keep *_hltEcalUncalibRecHitCPUSerial_*_*',
-        ]
-        process.hltOutputDQMGPUvsCPU.outputCommands = outCmds_new[:]
-    except:
-        pass
-
     for prod in producers_by_type(process, 'HLTRechitsToDigis'):
         prod.srFlagsIn = 'hltEcalDigisLegacy'
 
-    try:
+    for prod in producers_by_type(process, 'CorrectedECALPFClusterProducer'):
+        try:
+            prod.energyCorrector.ebSrFlagLabel = 'hltEcalDigisLegacy'
+            prod.energyCorrector.eeSrFlagLabel = 'hltEcalDigisLegacy'
+        except:
+            pass
+
+    for pathNameMatch in ['DQM_EcalReconstruction_v', 'DQM_HIEcalReconstruction_v']:
+        dqmEcalRecoPathName = None
         for pathName in process.paths_():
-            if pathName.startswith('DQM_EcalReconstruction_v'):
+            if pathName.startswith(pathNameMatch):
                 dqmEcalRecoPath = getattr(process, pathName)
                 dqmEcalRecoPath.insert(dqmEcalRecoPath.index(process.HLTEndSequence), getattr(process, 'HLTDoFullUnpackingEgammaEcalWithoutPreshowerCPUOnlySequence'))
-                del process.hltEcalConsumerCPU
-                del process.hltEcalConsumerGPU
-                break
-    except:
-        pass
+                for delmod in ['hltEcalConsumerCPU', 'hltEcalConsumerGPU']:
+                    if hasattr(process, delmod):
+                        process.__delattr__(delmod)
+
+    for hltOutModMatch in ['hltOutputDQMGPUvsCPU', 'hltOutputHIDQMGPUvsCPU']:
+        if hasattr(process, hltOutModMatch):
+            outMod = getattr(process, hltOutModMatch)
+            outCmds_new = [foo for foo in outMod.outputCommands if 'Ecal' not in foo]
+            outCmds_new += [
+                'keep *_hltEcalDigis_*_*',
+                'keep *_hltEcalDigisCPUSerial_*_*',
+                'keep *_hltEcalUncalibRecHit_*_*',
+                'keep *_hltEcalUncalibRecHitCPUSerial_*_*',
+            ]
+            outMod.outputCommands = outCmds_new[:]
 
     return process
 
