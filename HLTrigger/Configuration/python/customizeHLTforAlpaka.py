@@ -249,7 +249,8 @@ def customizeHLTforAlpakaParticleFlowClustering(process):
             'HLTParticleFlowSequence',
             'HLTParticleFlowSequenceForTaus',
             'HLTParticleFlowSequenceForDisplTaus',
-            'HLTParticleFlowSequencePPOnAA'
+            'HLTParticleFlowSequencePPOnAA',
+            'HLTPixelOnlyParticleFlowSequence',
         ], [
             process.hltParticleFlowRecHitHBHE,
             process.hltParticleFlowClusterHBHE,
@@ -613,24 +614,34 @@ def customizeHLTforAlpakaPixelRecoLocal(process):
         process.hltSiPixelRecHitsLegacyFormatCPUSerial
     )
 
-    try:
-      process.hltMeasurementTrackerEventCPUOnly.pixelClusterProducer = "hltSiPixelClustersLegacyFormatCPUSerial"
-      process.hltMeasurementTrackerEventCPUOnly.inactivePixelDetectorLabels = ["hltSiPixelDigiErrorsLegacyFormatCPUSerial"]
-      process.hltMeasurementTrackerEventCPUOnly.badPixelFEDChannelCollectionLabels = ["hltSiPixelDigiErrorsLegacyFormatCPUSerial"]
-      process.hltDoubletRecoveryClustersRefRemovalCPUOnly.pixelClusters = "hltSiPixelClustersLegacyFormatCPUSerial"
-      process.hltDoubletRecoveryPFlowPixelClusterCheckCPUOnly.PixelClusterCollectionLabel = "hltSiPixelClustersLegacyFormatCPUSerial"
-      process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.inactivePixelDetectorLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
-      process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
-      process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.BPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
-      process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.FPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
-      process.hltIter3IterL3FromL1MuonClustersRefRemovalCPUOnly.pixelClusters = "hltSiPixelClustersLegacyFormatCPUSerial"
-      process.hltIter3IterL3FromL1MuonPixelClusterCheckCPUOnly.PixelClusterCollectionLabel = "hltSiPixelClustersLegacyFormatCPUSerial"
-      process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.inactivePixelDetectorLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
-      process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
-      process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.BPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
-      process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.FPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
-    except:
-      pass
+    if hasattr(process, 'hltMeasurementTrackerEventCPUOnly'):
+        process.hltMeasurementTrackerEventCPUOnly.pixelClusterProducer = "hltSiPixelClustersLegacyFormatCPUSerial"
+        process.hltMeasurementTrackerEventCPUOnly.inactivePixelDetectorLabels = ["hltSiPixelDigiErrorsLegacyFormatCPUSerial"]
+        process.hltMeasurementTrackerEventCPUOnly.badPixelFEDChannelCollectionLabels = ["hltSiPixelDigiErrorsLegacyFormatCPUSerial"]
+
+    if hasattr(process, 'hltDoubletRecoveryClustersRefRemovalCPUOnly'):
+        process.hltDoubletRecoveryClustersRefRemovalCPUOnly.pixelClusters = "hltSiPixelClustersLegacyFormatCPUSerial"
+
+    if hasattr(process, 'hltDoubletRecoveryPFlowPixelClusterCheckCPUOnly'):
+        process.hltDoubletRecoveryPFlowPixelClusterCheckCPUOnly.PixelClusterCollectionLabel = "hltSiPixelClustersLegacyFormatCPUSerial"
+
+    if hasattr(process, 'hltDoubletRecoveryPixelLayersAndRegionsCPUOnly'):
+        process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.inactivePixelDetectorLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
+        process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
+        process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.BPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
+        process.hltDoubletRecoveryPixelLayersAndRegionsCPUOnly.FPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
+
+    if hasattr(process, 'hltIter3IterL3FromL1MuonClustersRefRemovalCPUOnly'):
+        process.hltIter3IterL3FromL1MuonClustersRefRemovalCPUOnly.pixelClusters = "hltSiPixelClustersLegacyFormatCPUSerial"
+
+    if hasattr(process, 'hltIter3IterL3FromL1MuonPixelClusterCheckCPUOnly'):
+        process.hltIter3IterL3FromL1MuonPixelClusterCheckCPUOnly.PixelClusterCollectionLabel = "hltSiPixelClustersLegacyFormatCPUSerial"
+
+    if hasattr(process, 'hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly'):
+        process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.inactivePixelDetectorLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
+        process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.badPixelFEDChannelCollectionLabels = ['hltSiPixelDigiErrorsLegacyFormatCPUSerial']
+        process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.BPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
+        process.hltIter3IterL3FromL1MuonPixelLayersAndRegionsCPUOnly.FPix.HitProducer = "hltSiPixelRecHitsLegacyFormatCPUSerial"
 
     for modLabel in [
         'hltDoubletRecoveryPixelLayersAndRegions',
