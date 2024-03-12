@@ -1,11 +1,11 @@
-#ifndef L1Trigger_L1TGlobal_AXOL1TLTemplate_h
-#define L1Trigger_L1TGlobal_AXOL1TLTemplate_h
+#ifndef L1Trigger_L1TGlobal_ADTTemplate_h
+#define L1Trigger_L1TGlobal_ADTTemplate_h
 
 /**
- * \class AXOL1TLTemplate
+ * \class ADTTemplate
  *
  *
- * Description: L1 Global Trigger AXOL1TL template.
+ * Description: L1 Global Trigger ADT template.
  *
  * \author: Melissa Quinnan (UC San Diego)
  *
@@ -23,57 +23,50 @@
 // forward declarations
 
 // class declaration
-class AXOL1TLTemplate : public GlobalCondition {
+class ADTTemplate : public GlobalCondition {
 public:
   // constructor
-  AXOL1TLTemplate();
+  ADTTemplate();
 
   // constructor
-  AXOL1TLTemplate(const std::string&);
+  ADTTemplate(const std::string&);
 
   // constructor
-  AXOL1TLTemplate(const std::string&, const l1t::GtConditionType&);
+  ADTTemplate(const std::string&, const l1t::GtConditionType&);
 
   // copy constructor
-  AXOL1TLTemplate(const AXOL1TLTemplate&);
+  ADTTemplate(const ADTTemplate&);
 
   // destructor
-  ~AXOL1TLTemplate() override;
+  ~ADTTemplate() override;
 
   // assign operator
-  AXOL1TLTemplate& operator=(const AXOL1TLTemplate&);
+  ADTTemplate& operator=(const ADTTemplate&);
 
   // typedef for a single object template
   struct ObjectParameter {
-    int minAXOL1TLThreshold;
-    int maxAXOL1TLThreshold;
+    int minADTThreshold;
+    int maxADTThreshold;
   };
 
 public:
   inline const std::vector<ObjectParameter>* objectParameter() const { return &m_objectParameter; }
 
-  inline const std::string& modelVersion() const { return m_modelVersion; }
-
   /// set functions
   void setConditionParameter(const std::vector<ObjectParameter>& objParameter);
-
-  void setModelVersion(const std::string& modelversion);
 
   /// print the condition
   void print(std::ostream& myCout) const override;
 
   /// output stream operator
-  friend std::ostream& operator<<(std::ostream&, const AXOL1TLTemplate&);
+  friend std::ostream& operator<<(std::ostream&, const ADTTemplate&);
 
 private:
   /// copy function for copy constructor and operator=
-  void copy(const AXOL1TLTemplate& cp);
+  void copy(const ADTTemplate& cp);
 
   /// variables containing the parameters
   std::vector<ObjectParameter> m_objectParameter;
-
-  /// model version
-  std::string m_modelVersion;
 };
 
 #endif

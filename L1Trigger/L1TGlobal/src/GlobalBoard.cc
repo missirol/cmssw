@@ -37,6 +37,7 @@
 #include "L1Trigger/L1TGlobal/interface/CaloTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/EnergySumTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/EnergySumZdcTemplate.h"
+#include "L1Trigger/L1TGlobal/interface/ADTTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/AXOL1TLTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/ExternalTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/CorrelationTemplate.h"
@@ -54,6 +55,7 @@
 #include "L1Trigger/L1TGlobal/interface/CaloCondition.h"
 #include "L1Trigger/L1TGlobal/interface/EnergySumCondition.h"
 #include "L1Trigger/L1TGlobal/interface/EnergySumZdcCondition.h"
+#include "L1Trigger/L1TGlobal/interface/ADTCondition.h"
 #include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
 #include "L1Trigger/L1TGlobal/interface/ExternalCondition.h"
 #include "L1Trigger/L1TGlobal/interface/CorrCondition.h"
@@ -112,10 +114,8 @@ void l1t::GlobalBoard::setBxFirst(int bx) { m_bxFirst_ = bx; }
 
 void l1t::GlobalBoard::setBxLast(int bx) { m_bxLast_ = bx; }
 
-// temporary class for getting axol1tl version from config to condition class until it can be got from the utm menu
-void l1t::GlobalBoard::setAXOL1TLModelVersion(std::string axol1tlModelVersion) {
-  m_axol1tlModelVersion = axol1tlModelVersion;
-}
+// for getting adt version from menu->GlobalProducer->GlobalBoard->condition class
+void l1t::GlobalBoard::setADTModelVersion(std::string adtModelVersion) { m_adtModelVersion = adtModelVersion; }
 
 void l1t::GlobalBoard::init(const int numberPhysTriggers,
                             const int nrL1Mu,
@@ -651,12 +651,31 @@ void l1t::GlobalBoard::runGTL(const edm::Event&,
           //                    delete eSumZdcCondition;
 
         } break;
+        case CondADT: {
+          ADTCondition* adtCondition = new ADTCondition(itCond->second, this);
+
+          adtCondition->setVerbosity(m_verbosity);
+
+          adtCondition->setModelVersion(m_adtModelVersion);
+
+          adtCondition->evaluateConditionStoreResult(iBxInEvent);
+
+          cMapResults[itCond->first] = adtCondition;
+
+          if (m_verbosity && m_isDebugEnabled) {
+            std::ostringstream myCout;
+            adtCondition->print(myCout);
+
+            edm::LogWarning("L1TGlobal") << "adtCondition " << myCout.str();
+          }
+          //delete adtCCondition;
+
+        } break;
+
         case CondAXOL1TL: {
           AXOL1TLCondition* axol1tlCondition = new AXOL1TLCondition(itCond->second, this);
 
           axol1tlCondition->setVerbosity(m_verbosity);
-
-          axol1tlCondition->setModelVersion(m_axol1tlModelVersion);
 
           axol1tlCondition->evaluateConditionStoreResult(iBxInEvent);
 

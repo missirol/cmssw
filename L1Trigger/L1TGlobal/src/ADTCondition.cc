@@ -1,8 +1,8 @@
 /**
- * \class AXOL1TLCondition
+ * \class ADTCondition
  *
  *
- * Description: evaluation of a condition for axol1tl anomaly detection algorithm
+ * Description: evaluation of a condition for adt anomaly detection algorithm
  *
  * Author: Melissa Quinnan
  *
@@ -23,11 +23,11 @@
 
 // user include files
 //   base classes
-#include "L1Trigger/L1TGlobal/interface/AXOL1TLTemplate.h"
+#include "L1Trigger/L1TGlobal/interface/ADTTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
 
 #include "L1Trigger/L1TGlobal/interface/MuCondition.h"
-#include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
+#include "L1Trigger/L1TGlobal/interface/ADTCondition.h"
 #include "L1Trigger/L1TGlobal/interface/CaloCondition.h"
 #include "L1Trigger/L1TGlobal/interface/EnergySumCondition.h"
 #include "L1Trigger/L1TGlobal/interface/MuonTemplate.h"
@@ -44,19 +44,17 @@
 
 // constructors
 //     default
-l1t::AXOL1TLCondition::AXOL1TLCondition() : ConditionEvaluation() {
+l1t::ADTCondition::ADTCondition() : ConditionEvaluation() {
   // empty
 }
 
 //     from base template condition (from event setup usually)
-l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB)
-    : ConditionEvaluation(),
-      m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
-      m_gtGTB(ptrGTB) {}
+l1t::ADTCondition::ADTCondition(const GlobalCondition* adtTemplate, const GlobalBoard* ptrGTB)
+    : ConditionEvaluation(), m_gtADTTemplate(static_cast<const ADTTemplate*>(adtTemplate)), m_gtGTB(ptrGTB) {}
 
 // copy constructor
-void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
-  m_gtAXOL1TLTemplate = cp.gtAXOL1TLTemplate();
+void l1t::ADTCondition::copy(const l1t::ADTCondition& cp) {
+  m_gtADTTemplate = cp.gtADTTemplate();
   m_gtGTB = cp.gtGTB();
 
   m_condMaxNumberObjects = cp.condMaxNumberObjects();
@@ -66,38 +64,36 @@ void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
   m_verbosity = cp.m_verbosity;
 }
 
-l1t::AXOL1TLCondition::AXOL1TLCondition(const l1t::AXOL1TLCondition& cp) : ConditionEvaluation() { copy(cp); }
+l1t::ADTCondition::ADTCondition(const l1t::ADTCondition& cp) : ConditionEvaluation() { copy(cp); }
 
 // destructor
-l1t::AXOL1TLCondition::~AXOL1TLCondition() {
+l1t::ADTCondition::~ADTCondition() {
   // empty
 }
 
 // equal operator
-l1t::AXOL1TLCondition& l1t::AXOL1TLCondition::operator=(const l1t::AXOL1TLCondition& cp) {
+l1t::ADTCondition& l1t::ADTCondition::operator=(const l1t::ADTCondition& cp) {
   copy(cp);
   return *this;
 }
 
 // methods
-void l1t::AXOL1TLCondition::setGtAXOL1TLTemplate(const AXOL1TLTemplate* caloTempl) { m_gtAXOL1TLTemplate = caloTempl; }
+void l1t::ADTCondition::setGtADTTemplate(const ADTTemplate* caloTempl) { m_gtADTTemplate = caloTempl; }
 
 ///   set the pointer to uGT GlobalBoard
-void l1t::AXOL1TLCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
+void l1t::ADTCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
 
-const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
+const bool l1t::ADTCondition::evaluateCondition(const int bxEval) const {
   bool condResult = false;
-  int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
+  int useBx = bxEval + m_gtADTTemplate->condRelativeBx();
 
-  // load model (if possible) and run inference
-  hls4mlEmulator::ModelLoader loader(m_gtAXOL1TLTemplate->modelVersion());
+  hls4mlEmulator::ModelLoader loader(m_ADTmodelversion);
   std::shared_ptr<hls4mlEmulator::Model> model;
 
   try {
     model = loader.load_model();
   } catch (std::runtime_error& e) {
-    throw cms::Exception("AXOL1TLCondition")
-        << "ERROR: failed to load model version " << m_gtAXOL1TLTemplate->modelVersion();
+    throw cms::Exception("ADTCondition") << "ERROR: failed to load model version " << m_ADTmodelversion;
   }
 
   // //pointers to objects
@@ -234,19 +230,19 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one
-  int nObjInCond = m_gtAXOL1TLTemplate->nrObjects();
+  int nObjInCond = m_gtADTTemplate->nrObjects();
 
   if (iCondition >= nObjInCond || iCondition < 0) {
     return false;
   }
 
-  const AXOL1TLTemplate::ObjectParameter objPar = (*(m_gtAXOL1TLTemplate->objectParameter()))[iCondition];
+  const ADTTemplate::ObjectParameter objPar = (*(m_gtADTTemplate->objectParameter()))[iCondition];
 
   // condGEqVal indicates the operator used for the condition (>=, =): true for >=
-  bool condGEqVal = m_gtAXOL1TLTemplate->condGEq();
+  bool condGEqVal = m_gtADTTemplate->condGEq();
   bool passCondition = false;
 
-  passCondition = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
+  passCondition = checkCut(objPar.minADTThreshold, score, condGEqVal);
 
   condResult |= passCondition;  //condresult true if passCondition true else it is false
 
@@ -254,9 +250,12 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   return condResult;
 }
 
-void l1t::AXOL1TLCondition::print(std::ostream& myCout) const {
-  myCout << "Dummy Print for AXOL1TLCondition" << std::endl;
-  m_gtAXOL1TLTemplate->print(myCout);
+//in order to set model version from config
+void l1t::ADTCondition::setModelVersion(const std::string modelversionname) { m_ADTmodelversion = modelversionname; }
+
+void l1t::ADTCondition::print(std::ostream& myCout) const {
+  myCout << "Dummy Print for ADTCondition" << std::endl;
+  m_gtADTTemplate->print(myCout);
 
   ConditionEvaluation::print(myCout);
 }

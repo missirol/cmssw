@@ -143,6 +143,10 @@ void l1t::TriggerMenuParser::setVecEnergySumZdcTemplate(
   m_vecEnergySumZdcTemplate = vecEnergySumZdcTempl;
 }
 
+void l1t::TriggerMenuParser::setVecADTTemplate(const std::vector<std::vector<ADTTemplate> >& vecADTTempl) {
+  m_vecADTTemplate = vecADTTempl;
+}
+
 void l1t::TriggerMenuParser::setVecAXOL1TLTemplate(const std::vector<std::vector<AXOL1TLTemplate> >& vecAXOL1TLTempl) {
   m_vecAXOL1TLTemplate = vecAXOL1TLTempl;
 }
@@ -226,6 +230,7 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
   m_vecCaloTemplate.resize(m_numberConditionChips);
   m_vecEnergySumTemplate.resize(m_numberConditionChips);
   m_vecEnergySumZdcTemplate.resize(m_numberConditionChips);
+  m_vecADTTemplate.resize(m_numberConditionChips);
   m_vecAXOL1TLTemplate.resize(m_numberConditionChips);
   m_vecExternalTemplate.resize(m_numberConditionChips);
 
@@ -321,8 +326,12 @@ void l1t::TriggerMenuParser::parseCondFormats(const L1TUtmTriggerMenu* utmMenu) 
                    condition.getType() == esConditionType::ZDCMinus) {
           parseEnergySumZdc(condition, chipNr, false);
 
-          //parse AXOL1TL
+          //parse ADT
         } else if (condition.getType() == esConditionType::AnomalyDetectionTrigger) {
+          parseADT(condition, chipNr);
+
+          //parse AXOL1TL
+        } else if (condition.getType() == esConditionType::Axol1tlTrigger) {
           parseAXOL1TL(condition, chipNr);
 
           //parse Muons
@@ -2706,16 +2715,82 @@ bool l1t::TriggerMenuParser::parseEnergySumCorr(const L1TUtmObject* corrESum, un
   return true;
 }
 
-/**                                                                                                                                                            
- * parseEnergySumCorr Parse an "energy sum" correlation condition and insert an entry to the conditions map                                                    
- *                                                                                                                                                             
- * @param node The corresponding node.                                                                                                                        
- * @param name The name of the condition.                                                                                                                      
- * @param chipNr The number of the chip this condition is located.                                                                                             
- *                                                                                                                                                             
- * @return "true" if succeeded, "false" if an error occurred.                                                                                                  
- *                                                                                                                                                             
- */
+bool l1t::TriggerMenuParser::parseADT(L1TUtmCondition condADT, unsigned int chipNr) {
+  using namespace tmeventsetup;
+
+  // get condition, particle name and particle type
+  std::string condition = "adt";
+  std::string type = l1t2string(condADT.getType());
+  std::string name = l1t2string(condADT.getName());
+
+  LogDebug("TriggerMenuParser") << " ****************************************** " << std::endl
+                                << "     (in parseADT) " << std::endl
+                                << " condition = " << condition << std::endl
+                                << " type      = " << type << std::endl
+                                << " name      = " << name << std::endl;
+
+  const int nrObj = 1;
+  GtConditionType cType = TypeADT;
+
+  std::vector<ADTTemplate::ObjectParameter> objParameter(nrObj);
+
+  if (int(condADT.getObjects().size()) != nrObj) {
+    edm::LogError("TriggerMenuParser") << " condADT objects: nrObj = " << nrObj
+                                       << "condADT.getObjects().size() = " << condADT.getObjects().size() << std::endl;
+    return false;
+  }
+
+  // Get the adt object
+  L1TUtmObject object = condADT.getObjects().at(0);
+  int relativeBx = object.getBxOffset();
+  bool gEq = (object.getComparisonOperator() == esComparisonOperator::GE);
+
+  //Loop over cuts for this  object
+  int lowerThresholdInd = 0;
+  int upperThresholdInd = -1;
+
+  const std::vector<L1TUtmCut>& cuts = object.getCuts();
+  for (size_t kk = 0; kk < cuts.size(); kk++) {
+    const L1TUtmCut& cut = cuts.at(kk);
+
+    switch (cut.getCutType()) {
+      case esCutType::AnomalyScore:
+        lowerThresholdInd = cut.getMinimum().value;
+        upperThresholdInd = cut.getMaximum().value;
+        break;
+      default:
+        break;
+    }  //end switch
+  }    //end cut loop
+
+  //fill object params
+  objParameter[0].minADTThreshold = lowerThresholdInd;
+  objParameter[0].maxADTThreshold = upperThresholdInd;
+
+  // create a new ADT  condition
+  ADTTemplate adtCond(name);
+  adtCond.setCondType(cType);
+  adtCond.setCondGEq(gEq);
+  adtCond.setCondChipNr(chipNr);
+  adtCond.setCondRelativeBx(relativeBx);
+  adtCond.setConditionParameter(objParameter);
+
+  if (edm::isDebugEnabled()) {
+    std::ostringstream myCoutStream;
+    adtCond.print(myCoutStream);
+    LogTrace("TriggerMenuParser") << myCoutStream.str() << "\n" << std::endl;
+  }
+
+  // check that the condition does not exist already in the map
+  if (!insertConditionIntoMap(adtCond, chipNr)) {
+    edm::LogError("TriggerMenuParser") << "    Error: duplicate ADT condition (" << name << ")" << std::endl;
+    return false;
+  }
+
+  (m_vecADTTemplate[chipNr]).push_back(adtCond);
+
+  return true;
+}
 
 bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned int chipNr) {
   using namespace tmeventsetup;
@@ -2752,19 +2827,25 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   int lowerThresholdInd = 0;
   int upperThresholdInd = -1;
 
-  const std::vector<L1TUtmCut>& cuts = object.getCuts();
-  for (size_t kk = 0; kk < cuts.size(); kk++) {
-    const L1TUtmCut& cut = cuts.at(kk);
+  //save model and threshold
+  std::string model = "";
 
-    switch (cut.getCutType()) {
-      case esCutType::AnomalyScore:
+  if (object.getType() == tmeventsetup::Axol1tl) {
+    const std::vector<L1TUtmCut>& cuts = object.getCuts();
+    for (size_t kk = 0; kk < cuts.size(); kk++) {
+      const L1TUtmCut& cut = cuts.at(kk);
+
+      //save model
+      if (cut.getCutType() == tmeventsetup::Model) {
+        model = cut.getData();
+      }
+      //save score
+      else if (cut.getCutType() == esCutType::Score) {
         lowerThresholdInd = cut.getMinimum().value;
         upperThresholdInd = cut.getMaximum().value;
-        break;
-      default:
-        break;
-    }  //end switch
-  }    //end cut loop
+      }  //end else if
+    }    //end cut loop
+  }      //end if getType
 
   //fill object params
   objParameter[0].minAXOL1TLThreshold = lowerThresholdInd;
@@ -2777,6 +2858,7 @@ bool l1t::TriggerMenuParser::parseAXOL1TL(L1TUtmCondition condAXOL1TL, unsigned 
   axol1tlCond.setCondChipNr(chipNr);
   axol1tlCond.setCondRelativeBx(relativeBx);
   axol1tlCond.setConditionParameter(objParameter);
+  axol1tlCond.setModelVersion("GTADModel_" + model);
 
   if (edm::isDebugEnabled()) {
     std::ostringstream myCoutStream;

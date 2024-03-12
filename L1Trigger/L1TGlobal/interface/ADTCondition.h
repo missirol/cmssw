@@ -1,10 +1,10 @@
-#ifndef L1Trigger_L1TGlobal_AXOL1TLCondition_h
-#define L1Trigger_L1TGlobal_AXOL1TLCondition_h
+#ifndef L1Trigger_L1TGlobal_ADTCondition_h
+#define L1Trigger_L1TGlobal_ADTCondition_h
 
 /**
- * \class AXOL1TLCondition
+ * \class ADTCondition
  *
- * Description: evaluation of a CondAXOL1TL condition.
+ * Description: evaluation of a CondADT condition.
  */
 
 // system include files
@@ -18,7 +18,7 @@
 
 // forward declarations
 class GlobalCondition;
-class AXOL1TLTemplate;
+class ADTTemplate;
 
 namespace l1t {
 
@@ -26,22 +26,22 @@ namespace l1t {
   class GlobalBoard;
 
   // class declaration
-  class AXOL1TLCondition : public ConditionEvaluation {
+  class ADTCondition : public ConditionEvaluation {
   public:
     /// constructors
     ///     default
-    AXOL1TLCondition();
+    ADTCondition();
 
     ///     from base template condition (from event setup usually)
-    AXOL1TLCondition(const GlobalCondition*, const GlobalBoard*);
+    ADTCondition(const GlobalCondition*, const GlobalBoard*);
 
     // copy constructor
-    AXOL1TLCondition(const AXOL1TLCondition&);
+    ADTCondition(const ADTCondition&);
     // destructor
-    ~AXOL1TLCondition() override;
+    ~ADTCondition() override;
 
     // assign operator
-    AXOL1TLCondition& operator=(const AXOL1TLCondition&);
+    ADTCondition& operator=(const ADTCondition&);
 
     /// the core function to check if the condition matches
     const bool evaluateCondition(const int bxEval) const override;
@@ -50,24 +50,32 @@ namespace l1t {
     void print(std::ostream& myCout) const override;
 
     ///   get / set the pointer to a Condition
-    inline const AXOL1TLTemplate* gtAXOL1TLTemplate() const { return m_gtAXOL1TLTemplate; }
+    inline const ADTTemplate* gtADTTemplate() const { return m_gtADTTemplate; }
 
-    void setGtAXOL1TLTemplate(const AXOL1TLTemplate*);
+    void setGtADTTemplate(const ADTTemplate*);
 
     ///   get / set the pointer to GTL
     inline const GlobalBoard* gtGTB() const { return m_gtGTB; }
 
     void setuGtB(const GlobalBoard*);
 
+    //get / set ADT model version
+    inline const std::string gtModelVerion() const { return m_ADTmodelversion; }
+
+    void setModelVersion(const std::string modelversionname);
+
   private:
     /// copy function for copy constructor and operator=
-    void copy(const AXOL1TLCondition& cp);
+    void copy(const ADTCondition& cp);
 
-    /// pointer to a AXOL1TLTemplate
-    const AXOL1TLTemplate* m_gtAXOL1TLTemplate;
+    /// pointer to a ADTTemplate
+    const ADTTemplate* m_gtADTTemplate;
 
     /// pointer to uGt GlobalBoard, to be able to get the trigger objects
     const GlobalBoard* m_gtGTB;
+
+    //to set modelversion from globalboard<-globalproducer<-config
+    std::string m_ADTmodelversion = "NONE";
   };
 
 }  // namespace l1t

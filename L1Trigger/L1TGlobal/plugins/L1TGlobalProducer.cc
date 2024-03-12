@@ -68,9 +68,6 @@ void L1TGlobalProducer::fillDescriptions(edm::ConfigurationDescriptions& descrip
   desc.add<bool>("AlgorithmTriggersUnmasked", false)
       ->setComment("not required, but recommend to specify explicitly in config");
 
-  //AXOl1TL model version:
-  desc.add<std::string>("AXOL1TLModelVersion", "");
-
   // switch for muon showers in Run-3
   desc.add<bool>("useMuonShowers", false);
 
@@ -133,7 +130,6 @@ L1TGlobalProducer::L1TGlobalProducer(const edm::ParameterSet& parSet)
       m_algoblkInputTag(parSet.getParameter<edm::InputTag>("AlgoBlkInputTag")),
       m_resetPSCountersEachLumiSec(parSet.getParameter<bool>("resetPSCountersEachLumiSec")),
       m_semiRandomInitialPSCounters(parSet.getParameter<bool>("semiRandomInitialPSCounters")),
-      m_AXOL1TLModelVersion(parSet.getParameter<std::string>("AXOL1TLModelVersion")),
       m_useMuonShowers(parSet.getParameter<bool>("useMuonShowers")) {
   m_egInputToken = consumes<BXVector<EGamma>>(m_egInputTag);
   m_tauInputToken = consumes<BXVector<Tau>>(m_tauInputTag);
@@ -223,6 +219,8 @@ L1TGlobalProducer::L1TGlobalProducer(const edm::ParameterSet& parSet)
   //
   m_l1GtParCacheID = 0ULL;
   m_l1GtMenuCacheID = 0ULL;
+
+  m_ADTModelVersion = "GTADModel_v3";
 
   m_numberPhysTriggers = 0;
   m_numberDaqPartitions = 0;
@@ -378,6 +376,7 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
                                                gtParser.vecCaloTemplate(),
                                                gtParser.vecEnergySumTemplate(),
                                                gtParser.vecEnergySumZdcTemplate(),
+                                               gtParser.vecADTTemplate(),
                                                gtParser.vecAXOL1TLTemplate(),
                                                gtParser.vecExternalTemplate(),
                                                gtParser.vecCorrelationTemplate(),
@@ -625,9 +624,8 @@ void L1TGlobalProducer::produce(edm::Event& iEvent, const edm::EventSetup& evSet
 
   m_uGtBrd->receiveMuonObjectData(iEvent, m_muInputToken, receiveMu, m_nrL1Mu);
 
-  //for getting model version to the condition class, later will come from the menu
-  //used in runGTL
-  m_uGtBrd->setAXOL1TLModelVersion(m_AXOL1TLModelVersion);
+  //set axo model version in global board from version in menu
+  m_uGtBrd->setADTModelVersion(m_ADTModelVersion);
 
   if (m_useMuonShowers)
     m_uGtBrd->receiveMuonShowerObjectData(iEvent, m_muShowerInputToken, receiveMuShower, m_nrL1MuShower);
