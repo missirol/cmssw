@@ -1047,7 +1047,7 @@ def customizeHLTforAlpaka(process):
 
     process.load('Configuration.StandardSequences.Accelerators_cff')
 
-    process = customizeHLTforAlpakaPixelReco(process)
+#    process = customizeHLTforAlpakaPixelReco(process)
     process = customizeHLTforAlpakaEcalLocalReco(process)
     process = customizeHLTforAlpakaParticleFlowClustering(process)
 
