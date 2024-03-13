@@ -244,6 +244,13 @@ def checkHLTfor43774(process):
 
     return process
 
+def customizeHLTfor00000(process):
+    for prod in producers_by_type(process, 'L1TGlobalProducer'):
+        if hasattr(prod, 'AXOL1TLModelVersion'):
+            del prod.AXOL1TLModelVersion
+
+    return process
+
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
 
@@ -259,5 +266,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
     # process = customiseFor12718(process)
 
     process = checkHLTfor43774(process)
+    process = customizeHLTfor00000(process)
 
     return process
