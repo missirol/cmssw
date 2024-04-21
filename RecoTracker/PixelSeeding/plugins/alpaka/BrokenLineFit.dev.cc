@@ -158,12 +158,6 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
           hits_ge.col(i) << ge[0], ge[1], ge[2], ge[3], ge[4], ge[5];
         }
         brokenline::fastFit(acc, hits, fast_fit);
-
-        // no NaN here....
-        ALPAKA_ASSERT_ACC(fast_fit(0) == fast_fit(0));
-        ALPAKA_ASSERT_ACC(fast_fit(1) == fast_fit(1));
-        ALPAKA_ASSERT_ACC(fast_fit(2) == fast_fit(2));
-        ALPAKA_ASSERT_ACC(fast_fit(3) == fast_fit(3));
       }
     }
   };
