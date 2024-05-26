@@ -60,7 +60,7 @@ HLTL1TSeed::HLTL1TSeed(const edm::ParameterSet& parSet)
       m_l1EtSumZdcTag(m_l1EtSumZdcCollectionsTag),
       m_l1EtSumZdcToken(consumes<l1t::EtSumBxCollection>(m_l1EtSumZdcTag)),
       m_l1GlobalDecision(false),
-      m_isDebugEnabled(edm::isDebugEnabled()) {
+      m_isDebugEnabled(true or edm::isDebugEnabled()) {
   if (m_l1SeedsLogicalExpression.empty()) {
     throw cms::Exception("FailModule") << "\nTrying to seed with an empty L1SeedsLogicalExpression.\n" << std::endl;
 
@@ -153,7 +153,7 @@ bool HLTL1TSeed::hltFilter(edm::Event& iEvent,
 
 // detailed print of filter content
 void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWithRefs& filterproduct) const {
-  LogTrace("HLTL1TSeed") << "\nHLTL1TSeed::hltFilter "
+  edm::LogPrint("HLTL1TSeed") << "\nHLTL1TSeed::hltFilter "
                          << "\n  Dump TriggerFilterObjectWithRefs\n"
                          << endl;
 
@@ -161,14 +161,14 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   filterproduct.getObjects(trigger::TriggerL1Mu, seedsL1Mu);
   const size_t sizeSeedsL1Mu = seedsL1Mu.size();
 
-  LogTrace("HLTL1TSeed") << "\n  HLTL1TSeed: seed logical expression = " << m_l1SeedsLogicalExpression << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  HLTL1TSeed: seed logical expression = " << m_l1SeedsLogicalExpression << endl;
 
-  LogTrace("HLTL1TSeed") << "\n  L1Mu seeds:      " << sizeSeedsL1Mu << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1Mu seeds:      " << sizeSeedsL1Mu << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1Mu; i++) {
     l1t::MuonRef obj = l1t::MuonRef(seedsL1Mu[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1Mu     "
+    edm::LogPrint("HLTL1TSeed") << "\tL1Mu     "
                            << "\t"
                            << "q = "
                            << obj->hwCharge()  // TEMP get hwCharge insead of charge which is not yet set NEED FIX.
@@ -182,14 +182,14 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   filterproduct.getObjects(trigger::TriggerL1MuShower, seedsL1MuShower);
   const size_t sizeSeedsL1MuShower = seedsL1MuShower.size();
 
-  LogTrace("HLTL1TSeed") << "\n  HLTL1TSeed: seed logical expression = " << m_l1SeedsLogicalExpression << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  HLTL1TSeed: seed logical expression = " << m_l1SeedsLogicalExpression << endl;
 
-  LogTrace("HLTL1TSeed") << "\n  L1MuShower seeds:      " << sizeSeedsL1MuShower << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1MuShower seeds:      " << sizeSeedsL1MuShower << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1MuShower; i++) {
     l1t::MuonShowerRef obj = l1t::MuonShowerRef(seedsL1MuShower[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1MuShower     "
+    edm::LogPrint("HLTL1TSeed") << "\tL1MuShower     "
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -200,12 +200,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   filterproduct.getObjects(trigger::TriggerL1EG, seedsL1EG);
   const size_t sizeSeedsL1EG = seedsL1EG.size();
 
-  LogTrace("HLTL1TSeed") << "\n  L1EG seeds:      " << sizeSeedsL1EG << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EG seeds:      " << sizeSeedsL1EG << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EG; i++) {
     l1t::EGammaRef obj = l1t::EGammaRef(seedsL1EG[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EG     "
+    edm::LogPrint("HLTL1TSeed") << "\tL1EG     "
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -216,12 +216,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   filterproduct.getObjects(trigger::TriggerL1Jet, seedsL1Jet);
   const size_t sizeSeedsL1Jet = seedsL1Jet.size();
 
-  LogTrace("HLTL1TSeed") << "\n  L1Jet seeds:      " << sizeSeedsL1Jet << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1Jet seeds:      " << sizeSeedsL1Jet << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1Jet; i++) {
     l1t::JetRef obj = l1t::JetRef(seedsL1Jet[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1Jet     "
+    edm::LogPrint("HLTL1TSeed") << "\tL1Jet     "
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -232,12 +232,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   filterproduct.getObjects(trigger::TriggerL1Tau, seedsL1Tau);
   const size_t sizeSeedsL1Tau = seedsL1Tau.size();
 
-  LogTrace("HLTL1TSeed") << "\n  L1Tau seeds:      " << sizeSeedsL1Tau << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1Tau seeds:      " << sizeSeedsL1Tau << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1Tau; i++) {
     l1t::TauRef obj = l1t::TauRef(seedsL1Tau[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1Tau     "
+    edm::LogPrint("HLTL1TSeed") << "\tL1Tau     "
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -247,12 +247,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumETT;
   filterproduct.getObjects(trigger::TriggerL1ETT, seedsL1EtSumETT);
   const size_t sizeSeedsL1EtSumETT = seedsL1EtSumETT.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum ETT seeds:      " << sizeSeedsL1EtSumETT << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum ETT seeds:      " << sizeSeedsL1EtSumETT << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumETT; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumETT[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  ETT"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  ETT"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -262,12 +262,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumHTT;
   filterproduct.getObjects(trigger::TriggerL1HTT, seedsL1EtSumHTT);
   const size_t sizeSeedsL1EtSumHTT = seedsL1EtSumHTT.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum HTT seeds:      " << sizeSeedsL1EtSumHTT << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum HTT seeds:      " << sizeSeedsL1EtSumHTT << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumHTT; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumHTT[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  HTT"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  HTT"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -277,12 +277,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumETM;
   filterproduct.getObjects(trigger::TriggerL1ETM, seedsL1EtSumETM);
   const size_t sizeSeedsL1EtSumETM = seedsL1EtSumETM.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum ETM seeds:      " << sizeSeedsL1EtSumETM << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum ETM seeds:      " << sizeSeedsL1EtSumETM << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumETM; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumETM[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  ETM"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  ETM"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -292,12 +292,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumETMHF;
   filterproduct.getObjects(trigger::TriggerL1ETMHF, seedsL1EtSumETMHF);
   const size_t sizeSeedsL1EtSumETMHF = seedsL1EtSumETMHF.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum ETMHF seeds:      " << sizeSeedsL1EtSumETMHF << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum ETMHF seeds:      " << sizeSeedsL1EtSumETMHF << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumETMHF; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumETMHF[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  ETMHF"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  ETMHF"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -307,12 +307,12 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumHTM;
   filterproduct.getObjects(trigger::TriggerL1HTM, seedsL1EtSumHTM);
   const size_t sizeSeedsL1EtSumHTM = seedsL1EtSumHTM.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum HTM seeds:      " << sizeSeedsL1EtSumHTM << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum HTM seeds:      " << sizeSeedsL1EtSumHTM << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumHTM; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumHTM[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  HTM"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  HTM"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -322,123 +322,123 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumCentrality;
   filterproduct.getObjects(trigger::TriggerL1Centrality, seedsL1EtSumCentrality);
   const size_t sizeSeedsL1EtSumCentrality = seedsL1EtSumCentrality.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum Centrality seeds:      " << sizeSeedsL1EtSumCentrality << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum Centrality seeds:      " << sizeSeedsL1EtSumCentrality << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumCentrality; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumCentrality[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  Centrality Bits: " << std::bitset<8>(obj->hwPt())
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  Centrality Bits: " << std::bitset<8>(obj->hwPt())
                            << " (hwPt = " << obj->hwPt() << ")";
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumMinBiasHFP0;
   filterproduct.getObjects(trigger::TriggerL1MinBiasHFP0, seedsL1EtSumMinBiasHFP0);
   const size_t sizeSeedsL1EtSumMinBiasHFP0 = seedsL1EtSumMinBiasHFP0.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum MinBiasHFP0 seeds:      " << sizeSeedsL1EtSumMinBiasHFP0 << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum MinBiasHFP0 seeds:      " << sizeSeedsL1EtSumMinBiasHFP0 << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumMinBiasHFP0; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumMinBiasHFP0[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  MinBiasHFP0: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  MinBiasHFP0: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumMinBiasHFM0;
   filterproduct.getObjects(trigger::TriggerL1MinBiasHFM0, seedsL1EtSumMinBiasHFM0);
   const size_t sizeSeedsL1EtSumMinBiasHFM0 = seedsL1EtSumMinBiasHFM0.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum MinBiasHFM0 seeds:      " << sizeSeedsL1EtSumMinBiasHFM0 << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum MinBiasHFM0 seeds:      " << sizeSeedsL1EtSumMinBiasHFM0 << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumMinBiasHFM0; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumMinBiasHFM0[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  MinBiasHFM0: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  MinBiasHFM0: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumMinBiasHFP1;
   filterproduct.getObjects(trigger::TriggerL1MinBiasHFP1, seedsL1EtSumMinBiasHFP1);
   const size_t sizeSeedsL1EtSumMinBiasHFP1 = seedsL1EtSumMinBiasHFP1.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum MinBiasHFP1 seeds:      " << sizeSeedsL1EtSumMinBiasHFP1 << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum MinBiasHFP1 seeds:      " << sizeSeedsL1EtSumMinBiasHFP1 << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumMinBiasHFP1; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumMinBiasHFP1[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  MinBiasHFP1: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  MinBiasHFP1: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumMinBiasHFM1;
   filterproduct.getObjects(trigger::TriggerL1MinBiasHFM1, seedsL1EtSumMinBiasHFM1);
   const size_t sizeSeedsL1EtSumMinBiasHFM1 = seedsL1EtSumMinBiasHFM1.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum MinBiasHFM1 seeds:      " << sizeSeedsL1EtSumMinBiasHFM1 << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum MinBiasHFM1 seeds:      " << sizeSeedsL1EtSumMinBiasHFM1 << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumMinBiasHFM1; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumMinBiasHFM1[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  MinBiasHFM1: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  MinBiasHFM1: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumTowerCount;
   filterproduct.getObjects(trigger::TriggerL1TowerCount, seedsL1EtSumTowerCount);
   const size_t sizeSeedsL1EtSumTowerCount = seedsL1EtSumTowerCount.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum TowerCount seeds:      " << sizeSeedsL1EtSumTowerCount << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum TowerCount seeds:      " << sizeSeedsL1EtSumTowerCount << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumTowerCount; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumTowerCount[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  TowerCount: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  TowerCount: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumAsymEt;
   filterproduct.getObjects(trigger::TriggerL1AsymEt, seedsL1EtSumAsymEt);
   const size_t sizeSeedsL1EtSumAsymEt = seedsL1EtSumAsymEt.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum AsymEt seeds:      " << sizeSeedsL1EtSumAsymEt << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum AsymEt seeds:      " << sizeSeedsL1EtSumAsymEt << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumAsymEt; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumAsymEt[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  AsymEt: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  AsymEt: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumAsymHt;
   filterproduct.getObjects(trigger::TriggerL1AsymHt, seedsL1EtSumAsymHt);
   const size_t sizeSeedsL1EtSumAsymHt = seedsL1EtSumAsymHt.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum AsymHt seeds:      " << sizeSeedsL1EtSumAsymHt << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum AsymHt seeds:      " << sizeSeedsL1EtSumAsymHt << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumAsymHt; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumAsymHt[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  AsymHt: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  AsymHt: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumAsymEtHF;
   filterproduct.getObjects(trigger::TriggerL1AsymEtHF, seedsL1EtSumAsymEtHF);
   const size_t sizeSeedsL1EtSumAsymEtHF = seedsL1EtSumAsymEtHF.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum AsymEtHF seeds:      " << sizeSeedsL1EtSumAsymEtHF << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum AsymEtHF seeds:      " << sizeSeedsL1EtSumAsymEtHF << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumAsymEtHF; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumAsymEtHF[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  AsymEtHF: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  AsymEtHF: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumAsymHtHF;
   filterproduct.getObjects(trigger::TriggerL1AsymHtHF, seedsL1EtSumAsymHtHF);
   const size_t sizeSeedsL1EtSumAsymHtHF = seedsL1EtSumAsymHtHF.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum AsymHtHF seeds:      " << sizeSeedsL1EtSumAsymHtHF << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum AsymHtHF seeds:      " << sizeSeedsL1EtSumAsymHtHF << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumAsymHtHF; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumAsymHtHF[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  AsymHtHF: hwPt = " << obj->hwPt();
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  AsymHtHF: hwPt = " << obj->hwPt();
   }
 
   vector<l1t::EtSumRef> seedsL1EtSumZDCP;
   filterproduct.getObjects(trigger::TriggerL1ZDCP, seedsL1EtSumZDCP);
   const size_t sizeSeedsL1EtSumZDCP = seedsL1EtSumZDCP.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum ZDCP seeds:      " << sizeSeedsL1EtSumZDCP << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum ZDCP seeds:      " << sizeSeedsL1EtSumZDCP << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumZDCP; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumZDCP[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  ZDCP"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  ZDCP"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
@@ -448,19 +448,19 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
   vector<l1t::EtSumRef> seedsL1EtSumZDCM;
   filterproduct.getObjects(trigger::TriggerL1ZDCM, seedsL1EtSumZDCM);
   const size_t sizeSeedsL1EtSumZDCM = seedsL1EtSumZDCM.size();
-  LogTrace("HLTL1TSeed") << "\n  L1EtSum ZDCM seeds:      " << sizeSeedsL1EtSumZDCM << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\n  L1EtSum ZDCM seeds:      " << sizeSeedsL1EtSumZDCM << endl << endl;
 
   for (size_t i = 0; i != sizeSeedsL1EtSumZDCM; i++) {
     l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumZDCM[i]);
 
-    LogTrace("HLTL1TSeed") << "\tL1EtSum  ZDCM"
+    edm::LogPrint("HLTL1TSeed") << "\tL1EtSum  ZDCM"
                            << "\t"
                            << "pt = " << obj->pt() << "\t"
                            << "eta =  " << obj->eta() << "\t"
                            << "phi =  " << obj->phi();  //<< "\t" << "BX = " << obj->bx();
   }
 
-  LogTrace("HLTL1TSeed") << " \n\n" << endl;
+  edm::LogPrint("HLTL1TSeed") << " \n\n" << endl;
 }
 
 // seeding is done via L1 trigger object maps, considering the objects which fired in L1
@@ -542,19 +542,19 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
   if (m_isDebugEnabled) {
     const std::vector<GlobalObjectMap>& objMaps = gtObjectMapRecord->gtObjectMap();
 
-    LogTrace("HLTL1TSeed") << "\nHLTL1Seed"
+    edm::LogPrint("HLTL1TSeed") << "\nHLTL1Seed"
                            << "\n--------------------------------------------------------------------------------------"
                               "-------------------------------";
 
-    LogTrace("HLTL1TSeed")
+    edm::LogPrint("HLTL1TSeed")
         << "\n\tAlgorithms in L1TriggerObjectMapRecord and GT results ( emulated | initial | prescaled | final ) "
         << endl;
 
-    LogTrace("HLTL1TSeed") << "\n\tmap"
+    edm::LogPrint("HLTL1TSeed") << "\n\tmap"
                            << "\tAlgoBit" << std::setw(40) << "algoName"
                            << "\t (emul|ini|pre|fin)" << endl;
 
-    LogTrace("HLTL1TSeed") << "----------------------------------------------------------------------------------------"
+    edm::LogPrint("HLTL1TSeed") << "----------------------------------------------------------------------------------------"
                               "-----------------------------";
 
     for (size_t imap = 0; imap < objMaps.size(); imap++) {
@@ -568,7 +568,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
       int finlDecision = (uGtAlgoBlocks->at(0, 0)).getAlgoDecisionFinal(bit);
 
       if (emulDecision != initDecision) {
-        LogTrace("HLTL1TSeed") << "L1T decision (emulated vs. unpacked initial) is not the same:"
+        edm::LogPrint("HLTL1TSeed") << "L1T decision (emulated vs. unpacked initial) is not the same:"
                                << "\n\tbit = " << std::setw(3) << bit << std::setw(40) << objMaps[imap].algoName()
                                << "\t emulated decision = " << emulDecision
                                << "\t unpacked initial decision = " << initDecision
@@ -576,11 +576,11 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
                                << endl;
       }
 
-      LogTrace("HLTL1TSeed") << "\t" << std::setw(3) << imap << "\tbit = " << std::setw(3) << bit << std::setw(40)
+      edm::LogPrint("HLTL1TSeed") << "\t" << std::setw(3) << imap << "\tbit = " << std::setw(3) << bit << std::setw(40)
                              << objMaps[imap].algoName() << "\t (  " << emulDecision << " | " << initDecision << " | "
                              << presDecision << " | " << finlDecision << " ) ";
     }
-    LogTrace("HLTL1TSeed") << endl;
+    edm::LogPrint("HLTL1TSeed") << endl;
   }
 
   // Filter decision in case of "L1GlobalDecision" logical expression.
@@ -629,7 +629,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
   bool seedsResult = m_l1AlgoLogicParser.expressionResult();
 
   if (m_isDebugEnabled) {
-    LogTrace("HLTL1TSeed") << "\nHLTL1TSeed: l1SeedsLogicalExpression (names) = '" << m_l1SeedsLogicalExpression << "'"
+    edm::LogPrint("HLTL1TSeed") << "\nHLTL1TSeed: l1SeedsLogicalExpression (names) = '" << m_l1SeedsLogicalExpression << "'"
                            << "\n  Result for logical expression after update of algOpTokens: " << seedsResult << "\n"
                            << std::endl;
   }
@@ -642,7 +642,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
        ++itSeed) {
     std::string algoSeedName = (*itSeed).tokenName;
 
-    LogTrace("HLTL1TSeed") << "\n ----------------  algo seed name = " << algoSeedName << endl;
+    edm::LogPrint("HLTL1TSeed") << "\n ----------------  algo seed name = " << algoSeedName << endl;
 
     const GlobalObjectMap* objMap = gtObjectMapRecord->getObjectMap(algoSeedName);
 
@@ -662,7 +662,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
     // unpacked GT results: uGtAlgoBlock has decisions initial, prescaled, and final after masks
     bool algoSeedResultMaskAndPresc = uGtAlgoBlocks->at(0, 0).getAlgoDecisionFinal(algoSeedBitNumber);
 
-    LogTrace("HLTL1TSeed") << "\n\tAlgo seed " << algoSeedName << " result emulated | final = " << algoSeedResult
+    edm::LogPrint("HLTL1TSeed") << "\n\tAlgo seed " << algoSeedName << " result emulated | final = " << algoSeedResult
                            << " | " << algoSeedResultMaskAndPresc << endl;
 
     /// Unpacked GT result of algorithm is false after masks and prescales  - no seeds
@@ -680,7 +680,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
     const std::vector<L1TObjectTypeInCond>& condObjTypeVec = objMap->objectTypeVector();
     const std::vector<CombinationsInCond>& condCombinations = objMap->combinationVector();
 
-    LogTrace("HLTL1TSeed") << "\n\talgoName =" << objMap->algoName() << "\talgoBitNumber = " << algoSeedBitNumber
+    edm::LogPrint("HLTL1TSeed") << "\n\talgoName =" << objMap->algoName() << "\talgoBitNumber = " << algoSeedBitNumber
                            << "\talgoGtlResult = " << algoSeedResult << endl
                            << endl;
 
@@ -709,7 +709,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
       std::vector<l1t::GlobalObject> condObjType = condObjTypeVec[condNumber];
 
       for (auto& jOb : condObjType) {
-        LogTrace("HLTL1TSeed") << setw(15) << "\tcondObjType = " << jOb << endl;
+        edm::LogPrint("HLTL1TSeed") << setw(15) << "\tcondObjType = " << jOb << endl;
       }
 
       const std::string condName = opTokenVecObjMap[condNumber].tokenName;
@@ -725,10 +725,10 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
       //
       const CombinationsInCond* condComb = objMap->getCombinationsInCond(condNumber);
 
-      LogTrace("HLTL1TSeed") << setw(15) << "\tcondCombinations = " << condComb->size() << endl;
+      edm::LogPrint("HLTL1TSeed") << setw(15) << "\tcondCombinations = " << condComb->size() << endl;
 
       for (auto const& itComb : (*condComb)) {
-        LogTrace("HLTL1TSeed") << setw(15) << "\tnew combination" << endl;
+        edm::LogPrint("HLTL1TSeed") << setw(15) << "\tnew combination" << endl;
 
         // loop over objects in a combination for a given condition
         //
@@ -736,7 +736,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
           // in case of object-less triggers (e.g. L1_ZeroBias) condObjType vector is empty, so don't seed!
           //
           if (condObjType.empty()) {
-            LogTrace("HLTL1TSeed")
+            edm::LogPrint("HLTL1TSeed")
                 << "\talgoName = " << objMap->algoName()
                 << " is object-less L1 algorithm, so do not attempt to store any objects to the list of seeds.\n"
                 << std::endl;
@@ -750,8 +750,8 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
           //
           const l1t::GlobalObject objTypeVal = condObjType.at(iType);
 
-          LogTrace("HLTL1TSeed") << "\tAdd object of type " << objTypeVal << " and index " << (*itObject)
-                                 << " to the seed list." << std::endl;
+          edm::LogPrint("HLTL1TSeed") << "\tAdd object of type " << objTypeVal << " and index " << (*itObject)
+                                 << " to the seed list." << endl;
 
           // THESE OBJECT CASES ARE CURRENTLY MISSING:
           //gtMinBias,
@@ -844,7 +844,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
             default: {
               // should not arrive here
 
-              LogTrace("HLTL1TSeed") << "\n    HLTL1TSeed::hltFilter "
+              edm::LogPrint("HLTL1TSeed") << "\n    HLTL1TSeed::hltFilter "
                                      << "\n      Unknown object of type " << objTypeVal << " and index " << (*itObject)
                                      << " in the seed list." << std::endl;
             } break;
@@ -944,12 +944,27 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
     edm::Handle<l1t::MuonBxCollection> muons;
     iEvent.getByToken(m_l1MuonToken, muons);
 
+      for (int ibx = muons->getFirstBX(); ibx <= muons->getLastBX(); ++ibx) {
+        for (auto it = muons->begin(ibx); it != muons->end(ibx); it++) {
+          edm::LogPrint("HLTL1TSeed") << "XXX bx=" << ibx << "  pt=" << it->pt() << " eta=" << it->eta() << " phi=" << it->phi()
+                                      << " hwPt=" << it->hwPt() << " hwEtaAtVtx=" << it->hwEtaAtVtx() << " hwPhiAtVtx=" << it->hwPhiAtVtx() << " hwQual=" << it->hwQual();
+        }
+      }
+
+
     if (!muons.isValid()) {
       edm::LogWarning("HLTL1TSeed") << "\nWarning: L1MuonBxCollection with input tag " << m_l1MuonTag
                                     << "\nrequested in configuration, but not found in the event."
                                     << "\nNo muons added to filterproduct." << endl;
     } else {
       for (std::list<int>::const_iterator itObj = listMuon.begin(); itObj != listMuon.end(); ++itObj) {
+        if (*itObj < 0 or unsigned(*itObj) >= muons->size(0)) {
+          edm::LogWarning("HLTL1TSeed")
+              << "Invalid index from the L1ObjectMap (L1uGT emulator), will be ignored (l1t::MuonBxCollection):"
+              << " index=" << *itObj << " (size of unpacked L1T objects in BX0 = " << muons->size(0) << ")";
+          continue;
+        }
+
         // Transform to index for Bx = 0 to begin of BxVector
         unsigned int index = muons->begin(0) - muons->begin() + *itObj;
 
@@ -1117,7 +1132,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
             filterproduct.addObject(trigger::TriggerL1AsymHtHF, myref);
           break;
         default:
-          LogTrace("HLTL1TSeed") << "  L1EtSum seed of currently unsuported HLT TriggerType. l1t::EtSum type:      "
+          edm::LogPrint("HLTL1TSeed") << "  L1EtSum seed of currently unsuported HLT TriggerType. l1t::EtSum type:      "
                                  << iter->getType() << "\n";
 
       }  // end switch
@@ -1152,7 +1167,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
             filterproduct.addObject(trigger::TriggerL1ZDCM, myref);
           break;
         default:
-          LogTrace("HLTL1TSeed")
+          edm::LogPrint("HLTL1TSeed")
               << "  L1EtSum (ZDC) seed of currently unsuported HLT TriggerType. l1t::EtSum type:      "
               << iter->getType() << "\n";
 
@@ -1179,7 +1194,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
   //
   //    }
 
-  LogTrace("HLTL1TSeed") << "\nHLTL1Seed:seedsL1TriggerObjectMaps returning " << seedsResult << endl << endl;
+  edm::LogPrint("HLTL1TSeed") << "\nHLTL1Seed:seedsL1TriggerObjectMaps returning " << seedsResult << endl << endl;
 
   return seedsResult;
 }
