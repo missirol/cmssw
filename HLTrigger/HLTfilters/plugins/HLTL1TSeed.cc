@@ -319,6 +319,21 @@ void HLTL1TSeed::dumpTriggerFilterObjectWithRefs(trigger::TriggerFilterObjectWit
                            << "phi =  " << obj->phi();  //<< "\t" << "BX = " << obj->bx();
   }
 
+  vector<l1t::EtSumRef> seedsL1EtSumHTMHF;
+  filterproduct.getObjects(trigger::TriggerL1MissingHtHF, seedsL1EtSumHTMHF);
+  const size_t sizeSeedsL1EtSumHTMHF = seedsL1EtSumHTMHF.size();
+  LogTrace("HLTL1TSeed") << "\n  L1EtSum HTMHF seeds:      " << sizeSeedsL1EtSumHTMHF << endl << endl;
+
+  for (size_t i = 0; i != sizeSeedsL1EtSumHTMHF; i++) {
+    l1t::EtSumRef obj = l1t::EtSumRef(seedsL1EtSumHTMHF[i]);
+
+    LogTrace("HLTL1TSeed") << "\tL1EtSum  HTMHF"
+                           << "\t"
+                           << "pt = " << obj->pt() << "\t"
+                           << "eta =  " << obj->eta() << "\t"
+                           << "phi =  " << obj->phi();  //<< "\t" << "BX = " << obj->bx();
+  }
+
   vector<l1t::EtSumRef> seedsL1EtSumCentrality;
   filterproduct.getObjects(trigger::TriggerL1Centrality, seedsL1EtSumCentrality);
   const size_t sizeSeedsL1EtSumCentrality = seedsL1EtSumCentrality.size();
@@ -485,6 +500,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
   std::list<int> listHTT;
   std::list<int> listHTM;
   std::list<int> listETMHF;
+  std::list<int> listHTMHF;
 
   std::list<int> listJetCounts;
 
@@ -789,6 +805,9 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
             case l1t::gtETMHF: {
               listETMHF.push_back(*itObject);
             } break;
+            case l1t::gtHTMHF: {
+              listHTMHF.push_back(*itObject);
+            } break;
             case l1t::gtTowerCount: {
               listTowerCount.push_back(*itObject);
             } break;
@@ -890,6 +909,9 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
 
   listETMHF.sort();
   listETMHF.unique();
+
+  listHTMHF.sort();
+  listHTMHF.unique();
 
   listJetCounts.sort();
   listJetCounts.unique();
@@ -1078,7 +1100,7 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
     }
   }
 
-  // ETT, HTT, ETM, HTM
+  // ETT, HTT, ETM, HTM, HTMHF
   edm::Handle<l1t::EtSumBxCollection> etsums;
   iEvent.getByToken(m_l1EtSumToken, etsums);
   if (!etsums.isValid()) {
@@ -1111,6 +1133,10 @@ bool HLTL1TSeed::seedsL1TriggerObjectMaps(edm::Event& iEvent, trigger::TriggerFi
         case l1t::EtSum::kMissingEtHF:
           if (!listETMHF.empty())
             filterproduct.addObject(trigger::TriggerL1ETMHF, myref);
+          break;
+        case l1t::EtSum::kMissingHtHF:
+          if (!listHTMHF.empty())
+            filterproduct.addObject(trigger::TriggerL1MissingHtHF, myref);
           break;
         case l1t::EtSum::kCentrality:
           if (!listCentrality.empty())
