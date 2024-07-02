@@ -6776,7 +6776,8 @@
   "HLT_TrkMu12_DoubleTrkMu5NoFiltersNoVtx_v": {
     "online?": true,
     "owners": [
-      "EXO"
+      "EXO",
+      "SUS"
     ]
   },
   "HLT_UncorrectedJetE30_NoBPTX3BX_v": {
