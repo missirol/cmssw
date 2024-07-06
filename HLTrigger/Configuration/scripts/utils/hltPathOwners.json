@@ -1397,7 +1397,7 @@
   "HLT_DoubleEle10_eta1p22_mMax6_v": {
     "online?": true,
     "owners": [
-      "BPH"
+      "EXO"
     ]
   },
   "HLT_DoubleEle24_eta2p1_WPTight_Gsf_v": {
@@ -1433,7 +1433,7 @@
   "HLT_DoubleEle6p5_eta1p22_mMax6_v": {
     "online?": true,
     "owners": [
-      "BPH"
+      "EXO"
     ]
   },
   "HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_DZ_PFHT350_v": {
@@ -1451,7 +1451,7 @@
   "HLT_DoubleEle8_eta1p22_mMax6_v": {
     "online?": true,
     "owners": [
-      "BPH"
+      "EXO"
     ]
   },
   "HLT_DoubleIsoMu20_eta2p1_v": {
@@ -4992,7 +4992,6 @@
     "online?": true,
     "owners": [
       "B2G",
-      "BPH",
       "SUS",
       "TOP"
     ]
@@ -6699,13 +6698,13 @@
   "HLT_SingleEle8_SingleEGL1_v": {
     "online?": true,
     "owners": [
-      "BPH"
+      "EXO"
     ]
   },
   "HLT_SingleEle8_v": {
     "online?": true,
     "owners": [
-      "BPH"
+      "EXO"
     ]
   },
   "HLT_SinglePNetTauhPFJet130_Loose_L2NN_eta2p3_v": {
