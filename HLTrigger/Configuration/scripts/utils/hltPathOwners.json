@@ -999,6 +999,7 @@
   "HLT_DiPFJetAve180_PPSMatch_Xi0p3_QuadJet_Max2ProtPerRP_v": {
     "online?": true,
     "owners": [
+      "PRO",
       "SMP"
     ]
   },
