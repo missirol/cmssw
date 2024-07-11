@@ -1640,36 +1640,42 @@
   "HLT_DoubleMu3_DCA_PFMET50_PFMHT60_Mass2p0_noDCA_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_DoubleMu3_DCA_PFMET50_PFMHT60_Mass2p0_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_DoubleMu3_DCA_PFMET50_PFMHT60_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_DoubleMu3_DZ_PFMET50_PFMHT60_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_DoubleMu3_DZ_PFMET70_PFMHT70_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_DoubleMu3_DZ_PFMET90_PFMHT90_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
@@ -1778,6 +1784,7 @@
   "HLT_DoubleMu4_Mass3p8_DZ_PFHT350_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
@@ -5056,36 +5063,42 @@
   "HLT_Mu3er1p5_PFJet100er2p5_PFMET100_PFMHT100_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_Mu3er1p5_PFJet100er2p5_PFMET80_PFMHT80_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_Mu3er1p5_PFJet100er2p5_PFMET90_PFMHT90_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_Mu3er1p5_PFJet100er2p5_PFMETNoMu100_PFMHTNoMu100_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_Mu3er1p5_PFJet100er2p5_PFMETNoMu80_PFMHTNoMu80_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
   "HLT_Mu3er1p5_PFJet100er2p5_PFMETNoMu90_PFMHTNoMu90_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
@@ -6822,6 +6835,7 @@
   "HLT_TripleMu_5_3_3_Mass3p8_DCA_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "SUS"
     ]
   },
