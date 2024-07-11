@@ -642,15 +642,15 @@
   "HLT_AK8PFJet380_SoftDropMass30_v": {
     "online?": true,
     "owners": [
-      "HIG",
-      "B2G"
+      "B2G",
+      "HIG"
     ]
   },
   "HLT_AK8PFJet400_SoftDropMass30_v": {
     "online?": true,
     "owners": [
-      "HIG",
-      "B2G"
+      "B2G",
+      "HIG"
     ]
   },
   "HLT_AK8PFJet400_v": {
@@ -668,15 +668,15 @@
   "HLT_AK8PFJet425_SoftDropMass30_v": {
     "online?": true,
     "owners": [
-      "HIG",
-      "B2G"
+      "B2G",
+      "HIG"
     ]
   },
   "HLT_AK8PFJet450_SoftDropMass30_v": {
     "online?": true,
     "owners": [
-      "HIG",
-      "B2G"
+      "B2G",
+      "HIG"
     ]
   },
   "HLT_AK8PFJet450_v": {
@@ -2204,8 +2204,8 @@
   "HLT_HICsAK4PFJet100Eta1p5_Beamspot_v": {
     "online?": true,
     "owners": [
-      "HIN",
       "AlCa",
+      "HIN",
       "TRK"
     ]
   },
@@ -2740,8 +2740,8 @@
   "HLT_HIMinimumBiasHF1ANDZDC1nOR_Beamspot_v": {
     "online?": true,
     "owners": [
-      "HIN",
       "AlCa",
+      "HIN",
       "TRK"
     ]
   },
@@ -2760,8 +2760,8 @@
   "HLT_HIMinimumBiasHF1ANDZDC2nOR_Beamspot_v": {
     "online?": true,
     "owners": [
-      "HIN",
       "AlCa",
+      "HIN",
       "TRK"
     ]
   },
@@ -2780,8 +2780,8 @@
   "HLT_HIMinimumBiasHF1AND_Beamspot_v": {
     "online?": true,
     "owners": [
-      "HIN",
       "AlCa",
+      "HIN",
       "TRK"
     ]
   },
