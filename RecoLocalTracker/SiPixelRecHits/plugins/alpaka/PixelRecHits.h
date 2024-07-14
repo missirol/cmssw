@@ -213,6 +213,22 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
               hits[h].zGlobal() = zg;
               hits[h].rGlobal() = alpaka::math::sqrt(acc, xg * xg + yg * yg);
               hits[h].iphi() = unsafe_atan2s<7>(yg, xg);
+
+//              printf("PPP3: id=%d lx=%f ly=%f lxe=%f lye=%f gx=%f gy=%f gz=%f gr=%f iphi=%d clSiX=%d clSiY=%d off2=%d\n",
+//                hits[h].detectorIndex(),
+//                hits[h].xLocal(),
+//                hits[h].yLocal(),
+//                hits[h].xerrLocal(),
+//                hits[h].yerrLocal(),
+//                hits[h].xGlobal(),
+//                hits[h].yGlobal(),
+//                hits[h].zGlobal(),
+//                hits[h].rGlobal(),
+//                hits[h].iphi(),
+//                hits[h].clusterSizeX(),
+//                hits[h].clusterSizeY(),
+//                hits[h].offsetBPIX2()
+//              );
             }
             alpaka::syncBlockThreads(acc);
           }  // end loop on batches

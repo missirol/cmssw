@@ -96,6 +96,25 @@ void SiPixelRecHitFromSoAAlpaka<TrackerTraits>::produce(edm::StreamID streamID,
   auto xe = hits.view().xerrLocal();
   auto ye = hits.view().yerrLocal();
 
+  for (int idx=0; idx<nHits; ++idx) {
+
+              printf("PPP3: id=%d lx=%f ly=%f lxe=%f lye=%f gx=%f gy=%f gz=%f gr=%f iphi=%d clSiX=%d clSiY=%d\n",
+                hits.view().detectorIndex()[idx],
+                hits.view().xLocal()[idx],
+                hits.view().yLocal()[idx],
+                hits.view().xerrLocal()[idx],
+                hits.view().yerrLocal()[idx],
+                hits.view().xGlobal()[idx],
+                hits.view().yGlobal()[idx],
+                hits.view().zGlobal()[idx],
+                hits.view().rGlobal()[idx],
+                hits.view().iphi()[idx],
+                hits.view().clusterSizeX()[idx],
+                hits.view().clusterSizeY()[idx]
+//                hits.view().offsetBPIX2()[idx]
+              );
+  }
+
   TrackerGeometry const& geom = iSetup.getData(geomToken_);
 
   auto const hclusters = iEvent.getHandle(clusterToken_);
@@ -161,6 +180,20 @@ void SiPixelRecHitFromSoAAlpaka<TrackerTraits>::produce(edm::StreamID streamID,
       // Create a persistent edm::Ref to the cluster
       edm::Ref<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster> cluster = edmNew::makeRefTo(hclusters, &clust);
       // Make a RecHit and add it to the DetSet
+
+      edm::LogPrint("AAA") << "PPP1"
+<< " id=" << detid
+//<< " ij=" << ij
+<< " xl=" << xl[ij]
+<< " yl=" << yl[ij]
+<< " xe=" << xe[ij]
+<< " ye=" << ye[ij]
+//<< " c.originalId=" << cluster->originalId()
+<< " c.sX=" << cluster->sizeX()
+<< " c.sY=" << cluster->sizeY()
+//<< " c.q=" << cluster->charge()
+;
+
       recHitsOnDetUnit.emplace_back(lp, le, rqw, *genericDet, cluster);
       // =============================
 
@@ -175,6 +208,24 @@ void SiPixelRecHitFromSoAAlpaka<TrackerTraits>::produce(edm::StreamID streamID,
 
   LogDebug("SiPixelRecHitFromSoAAlpaka") << "found " << numberOfDetUnits << " dets, " << numberOfClusters
                                          << " clusters";
+
+
+  for (auto const& ds : output) {
+    for (auto const& rh : ds) {
+      edm::LogPrint("AAA") << "PPP2"
+<< " id=" << rh.geographicalId().rawId()
+//<< " ij=" << ij
+<< " xl=" << rh.localPosition().x()
+<< " yl=" << rh.localPosition().y()
+<< " xe=" << rh.localPositionError().xx()
+<< " ye=" << rh.localPositionError().yy()
+//<< " c.originalId=" << cluster->originalId()
+<< " c.sX=" << rh.cluster()->sizeX()
+<< " c.sY=" << rh.cluster()->sizeY()
+//<< " c.q=" << rh.cluster()->charge()
+;
+    }
+  }
 
   iEvent.emplace(rechitsPutToken_, std::move(output));
 }
