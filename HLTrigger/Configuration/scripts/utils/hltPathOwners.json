@@ -1339,12 +1339,14 @@
   "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
@@ -1361,6 +1363,7 @@
   "HLT_Diphoton30_22_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass95_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "SUS"
     ]
@@ -1622,6 +1625,7 @@
   "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -1854,6 +1858,7 @@
   "HLT_DoublePNetTauhPFJet30_Medium_L2NN_eta2p3_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -1861,6 +1866,7 @@
   "HLT_DoublePNetTauhPFJet30_Tight_L2NN_eta2p3_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -2013,12 +2019,14 @@
   "HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "TAU"
     ]
   },
   "HLT_Ele24_eta2p1_WPTight_Gsf_PNetTauhPFJet30_Loose_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -2033,6 +2041,7 @@
   "HLT_Ele24_eta2p1_WPTight_Gsf_PNetTauhPFJet30_Tight_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3789,12 +3798,14 @@
   "HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "TAU"
     ]
   },
   "HLT_IsoMu20_eta2p1_PNetTauhPFJet27_Loose_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3802,6 +3813,7 @@
   "HLT_IsoMu20_eta2p1_PNetTauhPFJet27_Medium_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3809,6 +3821,7 @@
   "HLT_IsoMu20_eta2p1_PNetTauhPFJet27_Tight_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3935,6 +3948,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet20_eta2p2_SingleL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3956,6 +3970,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet26_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3970,6 +3985,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet30_Medium_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3984,6 +4000,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet30_Tight_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -3998,6 +4015,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet45_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -4642,6 +4660,7 @@
   "HLT_LooseDeepTauPFTauHPS180_L2NN_eta2p1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "EXO",
       "TAU"
     ]
@@ -5306,36 +5325,42 @@
   "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFHT250_QuadPFJet25_PNet2BTagMean0p55_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFHT250_QuadPFJet25_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFHT250_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFHT280_QuadPFJet30_PNet2BTagMean0p55_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFHT280_QuadPFJet30_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFHT280_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
@@ -5408,12 +5433,14 @@
   "HLT_PFHT250_QuadPFJet25_PNet2BTagMean0p55_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_PFHT250_QuadPFJet25_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
@@ -5426,6 +5453,7 @@
   "HLT_PFHT250_QuadPFJet30_PNet2BTagMean0p55_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
@@ -5445,24 +5473,28 @@
   "HLT_PFHT280_QuadPFJet30_PNet2BTagMean0p55_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_PFHT280_QuadPFJet30_PNet2BTagMean0p60_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_PFHT280_QuadPFJet30_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_PFHT280_QuadPFJet35_PNet2BTagMean0p60_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
@@ -6751,18 +6783,21 @@
   "HLT_SinglePNetTauhPFJet130_Loose_L2NN_eta2p3_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_SinglePNetTauhPFJet130_Medium_L2NN_eta2p3_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
   "HLT_SinglePNetTauhPFJet130_Tight_L2NN_eta2p3_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG"
     ]
   },
@@ -6996,6 +7031,7 @@
   "HLT_VBF_DoubleMediumDeepTauPFTauHPS20_eta2p1_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "HIG",
       "TAU"
     ]
@@ -7003,6 +7039,7 @@
   "HLT_VBF_DoublePNetTauhPFJet20_eta2p2_v": {
     "online?": true,
     "owners": [
+      "B2G",
       "EXO",
       "HIG",
       "TAU"
