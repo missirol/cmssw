@@ -5501,7 +5501,6 @@
   "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_PNet3BTag_2p0_v": {
     "online?": true,
     "owners": [
-      "BTV",
       "EXO",
       "TOP"
     ]
@@ -5509,7 +5508,6 @@
   "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_PNet3BTag_4p3_v": {
     "online?": true,
     "owners": [
-      "BTV",
       "EXO",
       "TOP"
     ]
@@ -5526,6 +5524,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "TOP"
     ]
   },
