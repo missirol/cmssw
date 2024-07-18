@@ -8,70 +8,60 @@
   "AlCa_EcalEtaEBonlyForHI_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalEtaEBonly_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalEtaEEonlyForHI_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalEtaEEonly_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPhiSymForHI_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPhiSym_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EBonlyForHI_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EBonly_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EEonlyForHI_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EEonly_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
@@ -122,21 +112,18 @@
   "AlCa_LumiPixelsCounts_ZeroBiasGated_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "LUM"
     ]
   },
   "AlCa_LumiPixelsCounts_ZeroBiasVdM_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "LUM"
     ]
   },
   "AlCa_LumiPixelsCounts_ZeroBias_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "LUM"
     ]
   },
@@ -155,51 +142,53 @@
   "AlCa_RPCMuonNormalisationForHI_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "RPC"
     ]
   },
   "AlCa_RPCMuonNormalisation_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "RPC"
     ]
   },
   "DQM_EcalReconstruction_v": {
     "online?": true,
     "owners": [
-      "TSG (DQM)"
+      "ECAL"
     ]
   },
   "DQM_HIEcalReconstruction_v": {
     "online?": true,
     "owners": [
-      "TSG (DQM)"
+      "ECAL"
     ]
   },
   "DQM_HIHcalReconstruction_v": {
     "online?": true,
     "owners": [
-      "TSG (DQM)"
+      "HCAL",
+      "PFlow"
     ]
   },
   "DQM_HIPixelReconstruction_v": {
     "online?": true,
     "owners": [
-      "TSG (DQM)"
+      "Tracker",
+      "TRK"
     ]
   },
   "DQM_HcalReconstruction_v": {
     "online?": true,
     "owners": [
-      "TSG (DQM)"
+      "HCAL",
+      "PFlow"
     ]
   },
   "DQM_PixelReconstruction_v": {
     "online?": true,
     "owners": [
-      "TSG (DQM)"
+      "Tracker",
+      "TRK"
     ]
   },
   "DST_PFScouting_AXOLoose_v": {
@@ -838,13 +827,13 @@
   "HLT_CDC_L2cosmic_10_er1p0_v": {
     "online?": true,
     "owners": [
-      "AlCa"
+      "Tracker"
     ]
   },
   "HLT_CDC_L2cosmic_5p5_er1p0_v": {
     "online?": true,
     "owners": [
-      "AlCa"
+      "Tracker"
     ]
   },
   "HLT_CaloJet500_NoJetID_v": {
@@ -1908,7 +1897,6 @@
   "HLT_EcalCalibration_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "ECAL"
     ]
   },
@@ -2003,7 +1991,6 @@
   "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "B2G",
       "EGM",
       "HIG",
@@ -2015,7 +2002,6 @@
   "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)",
       "B2G",
       "EGM",
       "EXO",
@@ -2225,7 +2211,6 @@
   "HLT_HICsAK4PFJet100Eta1p5_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "HIN",
       "TRK"
     ]
@@ -2761,7 +2746,6 @@
   "HLT_HIMinimumBiasHF1ANDZDC1nOR_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "HIN",
       "TRK"
     ]
@@ -2781,7 +2765,6 @@
   "HLT_HIMinimumBiasHF1ANDZDC2nOR_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "HIN",
       "TRK"
     ]
@@ -2801,7 +2784,6 @@
   "HLT_HIMinimumBiasHF1AND_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "HIN",
       "TRK"
     ]
@@ -3524,14 +3506,12 @@
   "HLT_HT300_Beamspot_PixelClusters_WP2_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "TRK"
     ]
   },
   "HLT_HT300_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "TRK"
     ]
   },
@@ -3772,7 +3752,6 @@
   "HLT_HT60_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "TRK"
     ]
   },
@@ -3785,20 +3764,19 @@
   "HLT_HcalCalibration_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "HCAL"
     ]
   },
   "HLT_HcalNZS_v": {
     "online?": true,
     "owners": [
-      "AlCa"
+      "HCAL"
     ]
   },
   "HLT_HcalPhiSym_v": {
     "online?": true,
     "owners": [
-      "AlCa"
+      "HCAL"
     ]
   },
   "HLT_HighPtTkMu100_v": {
@@ -3842,7 +3820,6 @@
   "HLT_IsoMu20_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)",
       "MUO",
       "SMP"
     ]
@@ -4051,7 +4028,6 @@
   "HLT_IsoMu24_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)",
       "B2G",
       "EXO",
       "HIG",
@@ -4070,7 +4046,6 @@
   "HLT_IsoMu27_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)",
       "B2G",
       "HIG",
       "MUO",
@@ -4449,7 +4424,7 @@
   "HLT_L1SingleMuCosmics_v": {
     "online?": true,
     "owners": [
-      "AlCa (TK DPG)"
+      "Tracker"
     ]
   },
   "HLT_L1SingleMuOpen_DT_v": {
@@ -4569,7 +4544,7 @@
   "HLT_L1_CDC_SingleMu_3_er1p2_TOP120_DPHI2p618_3p142_v": {
     "online?": true,
     "owners": [
-      "AlCa (TK DPG)"
+      "Tracker"
     ]
   },
   "HLT_L2Mu10NoVtx_2Cha_CosmicSeed_VetoL3Mu0DxyMax1cm_v": {
@@ -4914,7 +4889,6 @@
   "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)",
       "B2G",
       "HIG",
       "MUO",
@@ -6314,14 +6288,12 @@
   "HLT_PPSMaxTracksPerArm1_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "PPS"
     ]
   },
   "HLT_PPSMaxTracksPerRP4_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "PPS"
     ]
   },
@@ -6646,20 +6618,19 @@
   "HLT_Physics_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)"
+      "L1T",
+      "Tracker"
     ]
   },
   "HLT_PixelClusters_WP1_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "TRK"
     ]
   },
   "HLT_PixelClusters_WP2_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "TRK"
     ]
   },
@@ -6799,7 +6770,6 @@
   "HLT_Random_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)",
       "Tracker"
     ]
   },
@@ -7095,7 +7065,6 @@
   "HLT_ZeroBias_Beamspot_v": {
     "online?": true,
     "owners": [
-      "AlCa",
       "TRK"
     ]
   },
@@ -7133,7 +7102,7 @@
   "HLT_ZeroBias_IsolatedBunches_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)"
+      "HCAL"
     ]
   },
   "HLT_ZeroBias_LastCollisionInTrain_v": {
