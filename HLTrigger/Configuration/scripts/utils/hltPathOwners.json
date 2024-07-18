@@ -3439,7 +3439,8 @@
   "HLT_HIZeroBias_v": {
     "online?": true,
     "owners": [
-      "HIN"
+      "HIN",
+      "Tracker"
     ]
   },
   "HLT_HT170_L1SingleLLPJet_DisplacedDijet40_DisplacedTrack_v": {
@@ -6791,13 +6792,15 @@
   "HLT_Random_HighRate_v": {
     "online?": true,
     "owners": [
-      "TSG"
+      "TSG",
+      "Tracker"
     ]
   },
   "HLT_Random_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)"
+      "AlCa (Express)",
+      "Tracker"
     ]
   },
   "HLT_SingleEle8_SingleEGL1_v": {
@@ -7105,7 +7108,8 @@
   "HLT_ZeroBias_FirstCollisionAfterAbortGap_v": {
     "online?": true,
     "owners": [
-      "AlCa (Express)"
+      "AlCa (Express)",
+      "Tracker"
     ]
   },
   "HLT_ZeroBias_FirstCollisionInTrain_v": {
@@ -7149,7 +7153,8 @@
     "owners": [
       "AlCa (Express)",
       "BPH",
-      "SMP"
+      "SMP",
+      "Tracker"
     ]
   },
   "HLTriggerFinalPath": {
