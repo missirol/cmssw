@@ -699,6 +699,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG"
     ]
   },
@@ -855,7 +856,8 @@
   "HLT_CaloJet550_NoJetID_v": {
     "online?": true,
     "owners": [
-      "EGM"
+      "EGM",
+      "EXO"
     ]
   },
   "HLT_CaloMET350_NotCleaned_v": {
@@ -891,6 +893,7 @@
   "HLT_CascadeMu100_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "MUO"
     ]
   },
@@ -1414,6 +1417,7 @@
     "online?": true,
     "owners": [
       "EGM",
+      "EXO",
       "HIG",
       "SMP",
       "TOP"
@@ -1423,12 +1427,14 @@
     "online?": true,
     "owners": [
       "EGM",
+      "EXO",
       "HIG"
     ]
   },
   "HLT_DoubleEle33_CaloIdL_MW_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "HIG",
       "SMP",
       "SUS"
@@ -1911,6 +1917,7 @@
     "owners": [
       "B2G",
       "EGM",
+      "EXO",
       "HIG",
       "SMP",
       "SUS",
@@ -1928,7 +1935,8 @@
   "HLT_Ele135_CaloIdVT_GsfTrkIdT_v": {
     "online?": true,
     "owners": [
-      "EGM"
+      "EGM",
+      "EXO"
     ]
   },
   "HLT_Ele14_eta2p5_IsoVVVL_Gsf_PFHT200_PNetBTag0p53_v": {
@@ -2010,6 +2018,7 @@
       "AlCa (Express)",
       "B2G",
       "EGM",
+      "EXO",
       "HIG",
       "SMP",
       "SUS",
@@ -2090,6 +2099,7 @@
     "owners": [
       "B2G",
       "EGM",
+      "EXO",
       "HIG",
       "SMP",
       "SUS",
@@ -2166,6 +2176,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "TOP"
     ]
   },
@@ -3792,6 +3803,7 @@
   "HLT_HighPtTkMu100_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "MUO"
     ]
   },
@@ -3927,6 +3939,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet130_Loose_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "HIG",
       "TAU"
     ]
@@ -3934,6 +3947,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet130_Medium_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "HIG",
       "TAU"
     ]
@@ -3941,6 +3955,7 @@
   "HLT_IsoMu24_eta2p1_PNetTauhPFJet130_Tight_L2NN_eta2p3_CrossL1_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "HIG",
       "TAU"
     ]
@@ -4037,6 +4052,7 @@
     "owners": [
       "AlCa (Express)",
       "B2G",
+      "EXO",
       "HIG",
       "MUO",
       "SMP",
@@ -4910,6 +4926,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "MUO",
       "SMP",
@@ -4994,6 +5011,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "SMP",
       "SUS",
@@ -5164,6 +5182,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "MUO",
       "SMP",
@@ -5175,6 +5194,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "MUO"
     ]
   },
@@ -5368,6 +5388,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "SMP",
       "SUS",
@@ -5413,6 +5434,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "SUS",
       "TOP"
@@ -5474,6 +5496,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG"
     ]
   },
@@ -5481,6 +5504,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG"
     ]
   },
@@ -5605,6 +5629,7 @@
   "HLT_PFHT500_PFMET100_PFMHT100_IDTight_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "HIG",
       "SUS",
       "TOP"
@@ -5747,6 +5772,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "JME"
     ]
   },
@@ -5843,6 +5869,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "JME",
       "SUS",
@@ -5909,6 +5936,7 @@
   "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60_v": {
     "online?": true,
     "owners": [
+      "EXO",
       "HIG",
       "JME",
       "SUS",
@@ -5919,6 +5947,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "JME",
       "SMP",
@@ -6369,6 +6398,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "SMP"
     ]
   },
@@ -6376,6 +6406,7 @@
     "online?": true,
     "owners": [
       "B2G",
+      "EXO",
       "HIG",
       "SMP",
       "SUS"
