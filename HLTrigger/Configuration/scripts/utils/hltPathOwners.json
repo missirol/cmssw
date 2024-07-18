@@ -92,7 +92,8 @@
   "AlCa_HIRPCMuonNormalisation_v": {
     "online?": true,
     "owners": [
-      "HIN"
+      "GEM",
+      "RPC"
     ]
   },
   "AlCa_LumiPixelsCounts_RandomHighRate_v": {
@@ -142,12 +143,14 @@
   "AlCa_RPCMuonNormalisationForHI_v": {
     "online?": true,
     "owners": [
+      "GEM",
       "RPC"
     ]
   },
   "AlCa_RPCMuonNormalisation_v": {
     "online?": true,
     "owners": [
+      "GEM",
       "RPC"
     ]
   },
