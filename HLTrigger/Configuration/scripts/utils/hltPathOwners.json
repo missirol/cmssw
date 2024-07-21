@@ -2473,12 +2473,14 @@
   "HLT_HIHcalNZS_v": {
     "online?": true,
     "owners": [
+      "HCAL",
       "HIN"
     ]
   },
   "HLT_HIHcalPhiSym_v": {
     "online?": true,
     "owners": [
+      "HCAL",
       "HIN"
     ]
   },
