@@ -252,6 +252,41 @@
       "HLT-Scouting"
     ]
   },
+  "DST_PFScouting_CICADALoose_v": {
+    "online?": true,
+    "owners": [
+      "EXO",
+      "HLT-Scouting"
+    ]
+  },
+  "DST_PFScouting_CICADAMedium_v": {
+    "online?": true,
+    "owners": [
+      "EXO",
+      "HLT-Scouting"
+    ]
+  },
+  "DST_PFScouting_CICADATight_v": {
+    "online?": true,
+    "owners": [
+      "EXO",
+      "HLT-Scouting"
+    ]
+  },
+  "DST_PFScouting_CICADAVLoose_v": {
+    "online?": true,
+    "owners": [
+      "EXO",
+      "HLT-Scouting"
+    ]
+  },
+  "DST_PFScouting_CICADAVTight_v": {
+    "online?": true,
+    "owners": [
+      "EXO",
+      "HLT-Scouting"
+    ]
+  },
   "DST_PFScouting_DatasetMuon_v": {
     "online?": true,
     "owners": [
