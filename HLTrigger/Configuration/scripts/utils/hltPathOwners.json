@@ -174,8 +174,8 @@
   "DQM_HIPixelReconstruction_v": {
     "online?": true,
     "owners": [
-      "Tracker",
-      "Tracking"
+      "TRK",
+      "Tracker"
     ]
   },
   "DQM_HcalReconstruction_v": {
@@ -188,8 +188,8 @@
   "DQM_PixelReconstruction_v": {
     "online?": true,
     "owners": [
-      "Tracker",
-      "Tracking"
+      "TRK",
+      "Tracker"
     ]
   },
   "DST_PFScouting_AXOLoose_v": {
@@ -2091,7 +2091,7 @@
       "SMP",
       "SUS",
       "TOP",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_Ele35_WPTight_Gsf_v": {
@@ -2214,7 +2214,7 @@
     "online?": true,
     "owners": [
       "HIN",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HICsAK4PFJet100Eta1p5_v": {
@@ -2751,7 +2751,7 @@
     "online?": true,
     "owners": [
       "HIN",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HIMinimumBiasHF1ANDZDC1nOR_copy_v": {
@@ -2770,7 +2770,7 @@
     "online?": true,
     "owners": [
       "HIN",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HIMinimumBiasHF1ANDZDC2nOR_copy_v": {
@@ -2789,7 +2789,7 @@
     "online?": true,
     "owners": [
       "HIN",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HIMinimumBiasHF1AND_copy_v": {
@@ -3510,13 +3510,13 @@
   "HLT_HT300_Beamspot_PixelClusters_WP2_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HT300_Beamspot_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HT320_L1SingleLLPJet_DisplacedDijet60_Inclusive_v": {
@@ -3756,7 +3756,7 @@
   "HLT_HT60_Beamspot_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_HT650_DisplacedDijet60_Inclusive_v": {
@@ -4039,7 +4039,7 @@
       "SMP",
       "SUS",
       "TOP",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_IsoMu27_MediumChargedIsoDisplacedPFTauHPS24_eta2p1_SingleL1_v": {
@@ -5168,7 +5168,7 @@
       "SMP",
       "SUS",
       "TOP",
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_Mu55_v": {
@@ -6631,13 +6631,13 @@
   "HLT_PixelClusters_WP1_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_PixelClusters_WP2_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_QuadPFJet100_88_70_30_PNet1CvsAll0p5_VBF3Tight_v": {
@@ -7065,13 +7065,13 @@
   "HLT_ZeroBias_Alignment_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_ZeroBias_Beamspot_v": {
     "online?": true,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "HLT_ZeroBias_FirstBXAfterTrain_v": {
@@ -7121,8 +7121,8 @@
     "owners": [
       "BPH",
       "SMP",
-      "Tracker",
-      "Tracking"
+      "TRK",
+      "Tracker"
     ]
   },
   "HLTriggerFinalPath": {
@@ -7292,7 +7292,7 @@
   "MC_ReducedIterativeTracking_v": {
     "online?": false,
     "owners": [
-      "Tracking"
+      "TRK"
     ]
   },
   "Status_OnCPU": {
