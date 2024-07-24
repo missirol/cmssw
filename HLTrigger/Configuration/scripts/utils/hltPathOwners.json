@@ -2,96 +2,112 @@
   "AlCa_AK8PFJet40_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "JME"
     ]
   },
   "AlCa_EcalEtaEBonlyForHI_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalEtaEBonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalEtaEEonlyForHI_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalEtaEEonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPhiSymForHI_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPhiSym_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EBonlyForHI_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EBonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EEonlyForHI_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_EcalPi0EEonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
   "AlCa_HIEcalEtaEBonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HIN"
     ]
   },
   "AlCa_HIEcalEtaEEonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HIN"
     ]
   },
   "AlCa_HIEcalPi0EBonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HIN"
     ]
   },
   "AlCa_HIEcalPi0EEonly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HIN"
     ]
   },
   "AlCa_HIRPCMuonNormalisation_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "GEM",
       "RPC"
     ]
@@ -99,48 +115,56 @@
   "AlCa_LumiPixelsCounts_RandomHighRate_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "LUM"
     ]
   },
   "AlCa_LumiPixelsCounts_Random_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "LUM"
     ]
   },
   "AlCa_LumiPixelsCounts_ZeroBiasGated_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "LUM"
     ]
   },
   "AlCa_LumiPixelsCounts_ZeroBiasVdM_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "LUM"
     ]
   },
   "AlCa_LumiPixelsCounts_ZeroBias_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "LUM"
     ]
   },
   "AlCa_PFJet40_CPUOnly_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "TSG"
     ]
   },
   "AlCa_PFJet40_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "JME"
     ]
   },
   "AlCa_RPCMuonNormalisationForHI_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "GEM",
       "RPC"
     ]
@@ -148,6 +172,7 @@
   "AlCa_RPCMuonNormalisation_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "GEM",
       "RPC"
     ]
@@ -828,12 +853,14 @@
   "HLT_CDC_L2cosmic_10_er1p0_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "Tracker"
     ]
   },
   "HLT_CDC_L2cosmic_5p5_er1p0_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "Tracker"
     ]
   },
@@ -1127,6 +1154,7 @@
   "HLT_DiSC30_18_EIso_AND_HE_Mass70_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
@@ -1898,6 +1926,7 @@
   "HLT_EcalCalibration_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
@@ -2045,6 +2074,7 @@
   "HLT_Ele28_HighEta_SC20_Mass55_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "ECAL"
     ]
   },
@@ -2472,6 +2502,7 @@
   "HLT_HIHcalNZS_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL",
       "HIN"
     ]
@@ -2479,6 +2510,7 @@
   "HLT_HIHcalPhiSym_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL",
       "HIN"
     ]
@@ -3425,6 +3457,7 @@
   "HLT_HIZeroBias_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HIN",
       "Tracker"
     ]
@@ -3768,18 +3801,21 @@
   "HLT_HcalCalibration_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
   "HLT_HcalNZS_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
   "HLT_HcalPhiSym_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
@@ -4097,12 +4133,14 @@
   "HLT_IsoTrackHB_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
   "HLT_IsoTrackHE_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
@@ -4171,12 +4209,14 @@
   "HLT_L1EXT_HCAL_LaserMon1_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
   "HLT_L1EXT_HCAL_LaserMon4_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
@@ -4429,6 +4469,7 @@
   "HLT_L1SingleMuCosmics_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "Tracker"
     ]
   },
@@ -4549,6 +4590,7 @@
   "HLT_L1_CDC_SingleMu_3_er1p2_TOP120_DPHI2p618_3p142_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "Tracker"
     ]
   },
@@ -6294,12 +6336,14 @@
   "HLT_PPSMaxTracksPerArm1_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "PPS"
     ]
   },
   "HLT_PPSMaxTracksPerRP4_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "PPS"
     ]
   },
@@ -6624,6 +6668,7 @@
   "HLT_Physics_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "L1T",
       "Tracker"
     ]
@@ -6776,6 +6821,7 @@
   "HLT_Random_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "Tracker"
     ]
   },
@@ -7083,6 +7129,7 @@
   "HLT_ZeroBias_FirstCollisionAfterAbortGap_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "Tracker"
     ]
   },
@@ -7107,6 +7154,7 @@
   "HLT_ZeroBias_IsolatedBunches_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "HCAL"
     ]
   },
@@ -7119,6 +7167,7 @@
   "HLT_ZeroBias_v": {
     "online?": true,
     "owners": [
+      "AlCa",
       "BPH",
       "SMP",
       "TRK",
