@@ -127,6 +127,10 @@ simEmtfDigis.RPCInput            = 'unpackRPC'
 simCaloStage2Layer1Digis.ecalToken = 'unpackEcal:EcalTriggerPrimitives'
 simCaloStage2Layer1Digis.hcalToken = 'unpackHcal'
 
+# ZDC
+from L1Trigger.L1TZDC.etSumZdcProducer_cfi import etSumZdcProducer as _etSumZdcProducer
+l1tEtSumZDCProducer = _etSumZdcProducer.clone(hcalTPDigis = 'unpackHcal')
+simGtStage2Digis.EtSumZdcInputTag = 'l1tEtSumZDCProducer'
 
 ## GT
 stage2L1Trigger_2017.toModify(simGtExtFakeStage2Digis,
@@ -154,6 +158,8 @@ rawDataCollector = EventFilter.RawDataCollector.rawDataCollectorByLabel_cfi.rawD
         ]
     )
 
+SimL1EmulatorCoreTask.add(l1tEtSumZDCProducer)
+
 SimL1EmulatorTask = cms.Task()
 stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(unpackEcal,unpackHcal,unpackCSC,unpackDT,unpackRPC,unpackRPCTwinMux,unpackTwinMux,unpackOmtf,unpackEmtf,unpackCsctf,unpackBmtf
                                                           ,unpackTcds
@@ -165,3 +171,16 @@ _SimL1EmulatorTaskWithGEM.add(unpackGEM)
 (stage2L1Trigger & run3_GEM).toReplaceWith(SimL1EmulatorTask, _SimL1EmulatorTaskWithGEM)
 
 SimL1Emulator = cms.Sequence(SimL1EmulatorTask)
+
+
+
+#    AlgoBlkInputTag = cms.InputTag("gtStage2Digis"),
+#    AlgorithmTriggersUnmasked = cms.bool(True),
+#    AlgorithmTriggersUnprescaled = cms.bool(True),
+#    CICADAInputTag = cms.InputTag("simCaloStage2Layer1Summary","CICADAScore"),
+#    EGammaInputTag = cms.InputTag("simCaloStage2Digis"),
+#    EtSumInputTag = cms.InputTag("simCaloStage2Digis"),
+#    EtSumZdcInputTag = cms.InputTag("etSumZdcProducer"),
+#    ExtInputTag = cms.InputTag("simGtExtFakeStage2Digis"),
+#    GetPrescaleColumnFromData = cms.bool(False),
+#    JetInputTag = cms.InputTag("simCaloStage2Digis"),

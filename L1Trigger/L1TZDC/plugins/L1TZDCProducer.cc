@@ -160,8 +160,8 @@ void L1TZDCProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("hcalTPDigis", edm::InputTag("simHcalTriggerPrimitiveDigis"));
   desc.add<int>("bxFirst", -2);
-  desc.add<int>("bxLast", 2);
-  descriptions.add("l1tZDCProducer", desc);
+  desc.add<int>("bxLast", 3);
+  descriptions.add("l1tZDCEtSums", desc);
 }
 
 //define this as a plug-in
