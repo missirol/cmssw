@@ -1,18 +1,17 @@
 import FWCore.ParameterSet.Config as cms
 
-gtStage2Raw = cms.EDProducer(
-    "L1TDigiToRaw",
+gtStage2Raw = cms.EDProducer("L1TDigiToRaw",
     Setup = cms.string("stage2::GTSetup"),
 #    TowerInputLabel = cms.InputTag("simCaloStage2Digis"),
     GtInputTag = cms.InputTag("simGtStage2Digis"),
     ExtInputTag = cms.InputTag("simGtExtFakeStage2Digis"),
-    MuonInputTag   = cms.InputTag("simGmtStage2Digis"),
+    MuonInputTag = cms.InputTag("simGmtStage2Digis"),
     ShowerInputLabel = cms.InputTag("simGmtShowerDigis"),
     EGammaInputTag = cms.InputTag("simCaloStage2Digis"),
-    TauInputTag    = cms.InputTag("simCaloStage2Digis"),
-    JetInputTag    = cms.InputTag("simCaloStage2Digis"),
-    EtSumInputTag  = cms.InputTag("simCaloStage2Digis"),
-    EtSumZDCInputTag  = cms.InputTag("simCaloStage2Digis"),
+    TauInputTag = cms.InputTag("simCaloStage2Digis"),
+    JetInputTag = cms.InputTag("simCaloStage2Digis"),
+    EtSumInputTag = cms.InputTag("simCaloStage2Digis"),
+    EtSumZDCInputTag = cms.InputTag("l1tZDCEtSums"),
     FedId = cms.int32(1404),
     FWId = cms.uint32(0x1150), # FW w/ 2loose hadronic showers.
     lenSlinkHeader = cms.untracked.int32(8),
