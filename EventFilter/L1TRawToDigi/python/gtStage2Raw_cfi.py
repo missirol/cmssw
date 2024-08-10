@@ -18,11 +18,11 @@ gtStage2Raw = cms.EDProducer("L1TDigiToRaw",
     lenSlinkTrailer = cms.untracked.int32(8)
 )
 
-## Era: Run2_2016
+### Era: Run2_2016
 from Configuration.Eras.Modifier_stage2L1Trigger_cff import stage2L1Trigger
 stage2L1Trigger.toModify(gtStage2Raw, FWId = cms.uint32(0x1000))  # FW w/o coordinates at vtx.
 
-## Era: Run2_2017
+### Era: Run2_2017
 from Configuration.Eras.Modifier_stage2L1Trigger_2017_cff import stage2L1Trigger_2017
 stage2L1Trigger_2017.toModify(gtStage2Raw, FWId = cms.uint32(0x10A6)) # FW w/ vtx extrapolation.
 
