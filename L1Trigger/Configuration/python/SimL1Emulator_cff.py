@@ -48,7 +48,7 @@ SimL1EmulatorCore = cms.Sequence(SimL1EmulatorCoreTask)
 SimL1EmulatorTask = cms.Task(SimL1EmulatorCoreTask)
 SimL1Emulator = cms.Sequence( SimL1EmulatorTask )
 
-# include ZDC EtSums
+# include ZDC EtSums for 2023 and beyond
 from L1Trigger.L1TZDC.l1tZDCEmulation_cff import *
 _simL1EmulatorCoreTaskWithZDC = SimL1EmulatorCoreTask.copy()
 _simL1EmulatorCoreTaskWithZDC.add(l1tZDCEmulationTask)
