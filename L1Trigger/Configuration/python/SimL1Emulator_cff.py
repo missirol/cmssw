@@ -49,12 +49,13 @@ SimL1EmulatorTask = cms.Task(SimL1EmulatorCoreTask)
 SimL1Emulator = cms.Sequence( SimL1EmulatorTask )
 
 # include ZDC EtSums
-from Configuration.Eras.Modifier_stage2L1Trigger_cff import stage2L1Trigger
-from Configuration.Eras.Modifier_run3_common_cff import run3_common
 from L1Trigger.L1TZDC.l1tZDCEmulation_cff import *
 _simL1EmulatorCoreTaskWithZDC = SimL1EmulatorCoreTask.copy()
 _simL1EmulatorCoreTaskWithZDC.add(l1tZDCEmulationTask)
-(stage2L1Trigger & run3_common).toReplaceWith(SimL1EmulatorCoreTask, _simL1EmulatorCoreTaskWithZDC)
+
+from Configuration.Eras.Modifier_stage2L1Trigger_2023_cff import stage2L1Trigger_2023
+from Configuration.Eras.Modifier_stage2L1Trigger_2024_cff import stage2L1Trigger_2024
+(stage2L1Trigger_2023 | stage2L1Trigger_2024).toReplaceWith(SimL1EmulatorCoreTask, _simL1EmulatorCoreTaskWithZDC)
 
 # 
 # Emulators are configured from DB (GlobalTags)
