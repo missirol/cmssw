@@ -157,8 +157,6 @@ rawDataCollector = EventFilter.RawDataCollector.rawDataCollectorByLabel_cfi.rawD
         ]
     )
 
-SimL1EmulatorCoreTask.add(l1tEtSumZDCProducer)
-
 SimL1EmulatorTask = cms.Task()
 stage2L1Trigger.toReplaceWith(SimL1EmulatorTask, cms.Task(unpackEcal,unpackHcal,unpackCSC,unpackDT,unpackRPC,unpackRPCTwinMux,unpackTwinMux,unpackOmtf,unpackEmtf,unpackCsctf,unpackBmtf
                                                           ,unpackTcds
