@@ -173,8 +173,8 @@ def HLTDropPrevious(process):
 
 def L1REPACK(process, sequence="Full"):
 
-    from Configuration.Eras.Era_Run3_cff import Run3
-    l1repack = cms.Process('L1REPACK', Run3)
+    from Configuration.Eras.Era_Run3_2024_cff import Run3_2024
+    l1repack = cms.Process('L1REPACK', Run3_2024)
     l1repack.load('Configuration.StandardSequences.SimL1EmulatorRepack_'+sequence+'_cff')
 
     for module in l1repack.es_sources_():

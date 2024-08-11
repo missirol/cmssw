@@ -19,11 +19,11 @@ gtStage2Raw = cms.EDProducer(
     lenSlinkTrailer = cms.untracked.int32(8)
 )
 
-## Era: Run2_2016
+### Era: Run2_2016
 from Configuration.Eras.Modifier_stage2L1Trigger_cff import stage2L1Trigger
 stage2L1Trigger.toModify(gtStage2Raw, FWId = cms.uint32(0x1000))  # FW w/o coordinates at vtx.
 
-## Era: Run2_2017
+### Era: Run2_2017
 from Configuration.Eras.Modifier_stage2L1Trigger_2017_cff import stage2L1Trigger_2017
 stage2L1Trigger_2017.toModify(gtStage2Raw, FWId = cms.uint32(0x10A6)) # FW w/ vtx extrapolation.
 
@@ -34,3 +34,9 @@ stage2L1Trigger_2018.toModify(gtStage2Raw, FWId = cms.uint32(0x10F2)) # FW w/ ne
 ### Era: Run3_2021
 from Configuration.Eras.Modifier_stage2L1Trigger_2021_cff import stage2L1Trigger_2021
 stage2L1Trigger_2021.toModify(gtStage2Raw, FWId = cms.uint32(0x1150)) # FW w/ 2loose hadronic showers.
+
+### Era: Run3_2023, Run3_2024
+###  - correct inputs for ZDC EtSums
+from Configuration.Eras.Modifier_stage2L1Trigger_2023_cff import stage2L1Trigger_2023
+from Configuration.Eras.Modifier_stage2L1Trigger_2024_cff import stage2L1Trigger_2024
+(stage2L1Trigger_2023 | stage2L1Trigger_2024).toModify(gtStage2Raw, EtSumZDCInputTag = 'l1tZDCEtSums')
