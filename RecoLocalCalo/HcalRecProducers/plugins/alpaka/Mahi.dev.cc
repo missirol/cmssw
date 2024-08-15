@@ -14,9 +14,9 @@
 
 #include "Mahi.h"
 
-#ifdef HCAL_MAHI_GPUDEBUG
-#define DETID_TO_DEBUG 1125647428
-#endif
+//#ifdef HCAL_MAHI_GPUDEBUG
+#define DETID_TO_DEBUG 1165520907
+//#endif
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
@@ -341,7 +341,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
             sipmq += shrChargeMinusPedestal[lch * nsamplesForCompute + ts];
           auto const effectivePixelsFired = sipmq / fcByPE;
           auto const factor = compute_reco_correction_factor(parLin1, parLin2, parLin3, effectivePixelsFired);
-          rawCharge = (charge - pedestal) * factor + pedestal;
+          rawCharge = std::fmaf(charge - pedestal, factor, pedestal);
 
 #ifdef HCAL_MAHI_GPUDEBUG
           printf("first = %d last = %d sipmQ = %f factor = %f rawCharge = %f\n", first, last, sipmq, factor, rawCharge);
@@ -717,7 +717,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 auto const amplitude = rawCharge - pedestalToUseForMethod0;
                 auto const noiseADC = (1. / std::sqrt(12)) * dfc;
                 auto const noisePhotoSq = amplitude > pedestalWidth ? (amplitude * fcByPE) : 0.f;
-                auto const noiseTerm = noiseADC * noiseADC + noisePhotoSq + pedestalWidth * pedestalWidth;
+                auto const noiseTerm = std::fmaf(noiseADC, noiseADC, std::fmaf(pedestalWidth, pedestalWidth, noisePhotoSq));
 
                 // store to global memory
                 amplitudesForChannel[sampleWithinWindow] = amplitude;
@@ -986,7 +986,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                            ? compute_pulse_shape_value(pulseShape, t0p, idx, shift)
                                            : 0;
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
   compute_pulse_shape_value2(pulseShape, t0, idx, shift, id);
 }
 
@@ -1123,10 +1123,22 @@ if (id == 1165520941) {
                   useEffectivePedestals && (gch < f01HEDigis.size() || gch >= nchannelsf015)
                       ? mahi.effectivePedestalWidths()[hashedId].data()
                       : mahi.pedestals_width()[hashedId].data();
-              auto const averagePedestalWidth2 = 0.25 * (pedestalWidthsForChannel[0] * pedestalWidthsForChannel[0] +
-                                                         pedestalWidthsForChannel[1] * pedestalWidthsForChannel[1] +
-                                                         pedestalWidthsForChannel[2] * pedestalWidthsForChannel[2] +
-                                                         pedestalWidthsForChannel[3] * pedestalWidthsForChannel[3]);
+
+              auto const averagePedestalWidth2 = 0.25f * std::fmaf(pedestalWidthsForChannel[0], pedestalWidthsForChannel[0],
+                                                         std::fmaf(pedestalWidthsForChannel[1], pedestalWidthsForChannel[1],
+                                                         std::fmaf(pedestalWidthsForChannel[2], pedestalWidthsForChannel[2],
+                                                                   pedestalWidthsForChannel[3]* pedestalWidthsForChannel[3])));
+
+if (id == DETID_TO_DEBUG) {
+
+                printf("XXX pedestalWidthsForChannel ");
+                for (int icol = 0; icol < 4; icol++) {
+                  printf("%a ", pedestalWidthsForChannel[icol]);
+                }
+                printf("\n");
+                printf("XXX averagePedestalWidth2 = %a\n", averagePedestalWidth2);
+
+}
 
               // FIXME on cpu ts 0 capid was used - does it make any difference
               auto const gain = mahi.gains_value()[hashedId][0];
@@ -1183,7 +1195,7 @@ if (id == 1165520941) {
               }
 #endif
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
 
                 for (int counter = 0; counter < NSAMPLES; counter++) {
                   printf("XXX glbPulseMatrixView [%d] ", counter);
@@ -1214,6 +1226,18 @@ if (id == 1165520941) {
                     covarianceMatrix(counter, counter - 1) = std::fmaf(noisecorr, noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter), covarianceMatrix(counter, counter - 1));
                 }
 
+if (id == DETID_TO_DEBUG) {
+
+                for (int counter = 0; counter < NSAMPLES; counter++) {
+                  printf("XXX covarianceMatrix1 [%d] ", counter);
+                  for (int icol = 0; icol < NSAMPLES; icol++) {
+                    printf("%a ", covarianceMatrix(counter, icol));
+                  }
+                  printf("\n");
+                }
+
+}
+
                 // update covariance matrix
                 update_covariance(resultAmplitudesVector,
                                   covarianceMatrix,
@@ -1237,10 +1261,10 @@ if (id == 1165520941) {
                 calo::multifit::MapSymM<float, NSAMPLES> matrixL{matrixLStorage};
                 calo::multifit::compute_decomposition_unrolled(matrixL, covarianceMatrix);
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
 
                 for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX covarianceMatrix [%d] ", counter);
+                  printf("XXX covarianceMatrix2 [%d] ", counter);
                   for (int icol = 0; icol < NSAMPLES; icol++) {
                     printf("%a ", covarianceMatrix(counter, icol));
                   }
@@ -1275,7 +1299,7 @@ if (id == 1165520941) {
                 float reg_b[NSAMPLES];
                 calo::multifit::solve_forward_subst_vector(reg_b, inputAmplitudesView, matrixL);
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
 
                 for (int counter = 0; counter < NSAMPLES; counter++) {
                   printf("XXX glbPulseMatrixView [%d] ", counter);
@@ -1372,7 +1396,7 @@ if (id == 1165520941) {
                 printf("\n");
 #endif
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
 
                 for (int i = 0; i < 8; i++) {
                   printf("XXX AtA [%d] ", i);
@@ -1413,7 +1437,7 @@ if (id == 1165520941) {
                   printf("resultAmplitudes(%d) = %f\n", i, resultAmplitudesVector(i));
 #endif
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
                 printf("XXX result Amplitudes after  nnls ");
                 for (int i = 0; i < 8; i++)
                   printf("%a ", resultAmplitudesVector(i));
@@ -1450,7 +1474,7 @@ if (id == 1165520941) {
               auto const idx_for_energy = std::abs(pulseOffsetsView.offsets()[0]);
 
 
-if (id == 1165520941) {
+if (id == DETID_TO_DEBUG) {
   printf("XXX id=%d chi2=%a idx_for_energy=%d gain=%a resultAmplitude=%a respCorrection=%a\n", id, chi2, idx_for_energy, gain, resultAmplitudesVector(idx_for_energy), respCorrection);
 }
 
