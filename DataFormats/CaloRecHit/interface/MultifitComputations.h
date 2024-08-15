@@ -109,12 +109,12 @@ namespace calo {
           T sumsq2{0};
           auto const m_i_j = M(i, j);
           for (int k = 0; k < j; ++k)
-            sumsq2 += L(i, k) * L(j, k);
+            sumsq2 = std::fmaf(L(i, k), L(j, k), sumsq2);
 
           auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
           L(i, j) = value_i_j;
 
-          sumsq += value_i_j * value_i_j;
+          sumsq = std::fmaf(value_i_j, value_i_j, sumsq);
         }
 
         auto const l_i_i = std::sqrt(M(i, i) - sumsq);
@@ -179,13 +179,13 @@ namespace calo {
         T sumsq2{0};
         auto const m_i_j = M(std::max(i_real, j_real), std::min(i_real, j_real));
         for (int k = 0; k < j; ++k)
-          sumsq2 += L(i, k) * L(j, k);
+          sumsq2 = std::fmaf(L(i, k), L(j, k), sumsq2);
 
         auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
         L(i, j) = value_i_j;
-        sumsq += value_i_j * value_i_j;
+        sumsq = std::fmaf(value_i_j, value_i_j, sumsq);
 
-        total += value_i_j * b[j];
+        total = std::fmaf(value_i_j, b[j], total);
       }
 
       auto const l_i_i = std::sqrt(M(i_real, i_real) - sumsq);
@@ -328,7 +328,7 @@ namespace calo {
           // accum
           CMS_UNROLL_LOOP
           for (int counter = 0; counter < NSAMPLES; counter++)
-            accum[counter] += results[icol] * pm_col[counter];
+            accum[counter] = std::fmaf(results[icol], pm_col[counter], accum[counter]);
         }
       }
 
@@ -351,7 +351,7 @@ namespace calo {
 
         // compute x0 and store it
         auto x_prev = accum[0] / reg_L[0];
-        accumSum += x_prev * x_prev;
+        accumSum = std::fmaf(x_prev, x_prev, accumSum);
 
         // iterate
         CMS_UNROLL_LOOP
@@ -359,7 +359,7 @@ namespace calo {
           // update accum
           CMS_UNROLL_LOOP
           for (int counter = iL; counter < NSAMPLES; counter++)
-            accum[counter] -= x_prev * reg_L[counter];
+            accum[counter] = std::fmaf(-x_prev, reg_L[counter], accum[counter]);
 
           // load the next column of cholesky
           CMS_UNROLL_LOOP
@@ -370,7 +370,7 @@ namespace calo {
           x_prev = accum[iL] / reg_L[iL];
 
           // store the result value
-          accumSum += x_prev * x_prev;
+          accumSum = std::fmaf(x_prev, x_prev, accumSum);
         }
 
         chi2 = accumSum;

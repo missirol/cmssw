@@ -986,7 +986,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                            ? compute_pulse_shape_value(pulseShape, t0p, idx, shift)
                                            : 0;
 
-if (id == 1164472391) {
+if (id == 1165520941) {
   compute_pulse_shape_value2(pulseShape, t0, idx, shift, id);
 }
 
@@ -1183,7 +1183,7 @@ if (id == 1164472391) {
               }
 #endif
 
-if (id == 1164472391) {
+if (id == 1165520941) {
 
                 for (int counter = 0; counter < NSAMPLES; counter++) {
                   printf("XXX glbPulseMatrixView [%d] ", counter);
@@ -1237,7 +1237,7 @@ if (id == 1164472391) {
                 calo::multifit::MapSymM<float, NSAMPLES> matrixL{matrixLStorage};
                 calo::multifit::compute_decomposition_unrolled(matrixL, covarianceMatrix);
 
-if (id == 1164472391) {
+if (id == 1165520941) {
 
                 for (int counter = 0; counter < NSAMPLES; counter++) {
                   printf("XXX covarianceMatrix [%d] ", counter);
@@ -1275,7 +1275,7 @@ if (id == 1164472391) {
                 float reg_b[NSAMPLES];
                 calo::multifit::solve_forward_subst_vector(reg_b, inputAmplitudesView, matrixL);
 
-if (id == 1164472391) {
+if (id == 1165520941) {
 
                 for (int counter = 0; counter < NSAMPLES; counter++) {
                   printf("XXX glbPulseMatrixView [%d] ", counter);
@@ -1372,7 +1372,7 @@ if (id == 1164472391) {
                 printf("\n");
 #endif
 
-if (id == 1164472391) {
+if (id == 1165520941) {
 
                 for (int i = 0; i < 8; i++) {
                   printf("XXX AtA [%d] ", i);
@@ -1413,7 +1413,7 @@ if (id == 1164472391) {
                   printf("resultAmplitudes(%d) = %f\n", i, resultAmplitudesVector(i));
 #endif
 
-if (id == 1164472391) {
+if (id == 1165520941) {
                 printf("XXX result Amplitudes after  nnls ");
                 for (int i = 0; i < 8; i++)
                   printf("%a ", resultAmplitudesVector(i));
@@ -1450,7 +1450,7 @@ if (id == 1164472391) {
               auto const idx_for_energy = std::abs(pulseOffsetsView.offsets()[0]);
 
 
-if (id == 1164472391) {
+if (id == 1165520941) {
   printf("XXX id=%d chi2=%a idx_for_energy=%d gain=%a resultAmplitude=%a respCorrection=%a\n", id, chi2, idx_for_energy, gain, resultAmplitudesVector(idx_for_energy), respCorrection);
 }
 
