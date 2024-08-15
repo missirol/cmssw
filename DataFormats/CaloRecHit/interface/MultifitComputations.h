@@ -82,12 +82,12 @@ namespace calo {
           T sumsq2{0};
           auto const m_i_j = M(i, j);
           for (int k = 0; k < j; ++k)
-            sumsq2 += L(i, k) * L(j, k);
+            sumsq2 = std::fmaf(L(i, k), L(j, k), sumsq2);
 
           auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
           L(i, j) = value_i_j;
 
-          sumsq += value_i_j * value_i_j;
+          sumsq = std::fmaf(value_i_j, value_i_j, sumsq);
         }
 
         auto const l_i_i = std::sqrt(M(i, i) - sumsq);
@@ -146,13 +146,13 @@ namespace calo {
           T sumsq2{0};
           auto const m_i_j = M(std::max(i_real, j_real), std::min(i_real, j_real));
           for (int k = 0; k < j; ++k)
-            sumsq2 += L(i, k) * L(j, k);
+            sumsq2 = std::fmaf(L(i, k), L(j, k), sumsq2);
 
           auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
           L(i, j) = value_i_j;
 
-          sumsq += value_i_j * value_i_j;
-          total += value_i_j * b[j];
+          sumsq = std::fmaf(value_i_j, value_i_j, sumsq);
+          total = std::fmaf(value_i_j, b[j], total);
         }
 
         auto const l_i_i = std::sqrt(M(i_real, i_real) - sumsq);
@@ -228,7 +228,7 @@ namespace calo {
           // update accum
           CMS_UNROLL_LOOP
           for (int counter = iL; counter < NSAMPLES; counter++)
-            reg_b[counter] -= x_prev * reg_L[counter];
+            reg_b[counter] = std::fmaf(-x_prev, reg_L[counter], reg_b[counter]);
 
           // load the next column of cholesky
           CMS_UNROLL_LOOP
@@ -270,7 +270,7 @@ namespace calo {
         // update accum
         CMS_UNROLL_LOOP
         for (int counter = iL; counter < NSAMPLES; counter++)
-          reg_b_tmp[counter] -= x_prev * reg_L[counter];
+          reg_b_tmp[counter] = std::fmaf(-x_prev, reg_L[counter], reg_b_tmp[counter]);
 
         // load the next column of cholesky
         CMS_UNROLL_LOOP
@@ -421,8 +421,7 @@ namespace calo {
             float sum = 0;
             CMS_UNROLL_LOOP
             for (int counter = 0; counter < NPULSES; counter++)
-              sum += counter > icol_real ? AtA(counter, icol_real) * solution(counter)
-                                         : AtA(icol_real, counter) * solution(counter);
+              sum = std::fmaf(counter > icol_real ? AtA(counter, icol_real) : AtA(icol_real, counter), solution(counter), sum);
 
             auto const w = atb - sum;
             if (w > w_max) {
@@ -468,7 +467,7 @@ namespace calo {
           for (int i = npassive - 2; i >= 0; --i) {
             float total = 0;
             for (int j = i + 1; j < npassive; j++)
-              total += matrixL(j, i) * s(j);
+              total = std::fmaf(matrixL(j, i), s(j), total);
 
             s(i) = (reg_b[i] - total) / matrixL(i, i);
           }
@@ -517,7 +516,7 @@ namespace calo {
           // upadte solution
           for (int i = 0; i < npassive; i++) {
             auto const i_real = pulseOffsets(i);
-            solution(i_real) += alpha * (s(i) - solution(i_real));
+            solution(i_real) = std::fmaf(alpha, s(i) - solution(i_real), solution(i_real));
           }
           //solution.head(npassive) += alpha *
           //    (s.head(npassive) - solution.head(npassive));

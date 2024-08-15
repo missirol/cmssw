@@ -44,7 +44,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                                                    float const tzero,
                                                                    float const slope,
                                                                    float const tmax) {
-        auto const rawDelay = tzero + slope * std::log(fC);
+        auto const rawDelay = std::fmaf(slope, std::log(fC), tzero);
         return rawDelay < 0 ? 0 : (rawDelay > tmax ? tmax : rawDelay);
       }
 
@@ -210,14 +210,103 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         float value = 0.0f;
         if (sample_over10ts == its_start) {
           value = bin_0_start == -1
-                      ? accVarLenIdxMinusOneVec[distTo25ns_start] + factor * diffVarItvlIdxMinusOneVec[distTo25ns_start]
-                      : accVarLenIdxZeroVec[distTo25ns_start] + factor * diffVarItvlIdxZeroVec[distTo25ns_start];
+                      ? std::fmaf(factor, diffVarItvlIdxMinusOneVec[distTo25ns_start], accVarLenIdxMinusOneVec[distTo25ns_start])
+                      : std::fmaf(factor, diffVarItvlIdxZeroVec[distTo25ns_start], accVarLenIdxZeroVec[distTo25ns_start]);
         } else if (sample_over10ts > its_start) {
           int const bin_idx = distTo25ns_start + 1 + (sample_over10ts - its_start - 1) * ns_per_bx + bin_0_start;
-          value = acc25nsVec[bin_idx] + factor * diff25nsItvlVec[bin_idx];
+          value = std::fmaf(factor, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx]);
         }
         return value;
       }
+
+
+
+
+
+
+
+
+
+
+
+
+      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_pulse_shape_value2(PulseShapeConstElement const& pulseShape,
+                                                                     float const pulse_time,
+                                                                     int const sample,
+                                                                     int const shift, int const id) {
+        auto const& acc25nsVec = pulseShape.acc25nsVec();
+        auto const& diff25nsItvlVec = pulseShape.diff25nsItvlVec();
+        auto const& accVarLenIdxMinusOneVec = pulseShape.accVarLenIdxMinusOneVec();
+        auto const& diffVarItvlIdxMinusOneVec = pulseShape.diffVarItvlIdxMinusOneVec();
+        auto const& accVarLenIdxZeroVec = pulseShape.accVarLenIdxZEROVec();
+        auto const& diffVarItvlIdxZeroVec = pulseShape.diffVarItvlIdxZEROVec();
+
+        // constants
+        constexpr float slew = 0.f;
+        constexpr auto ns_per_bx = ::hcal::constants::nsPerBX;
+
+        // FIXME: clean up all the rounding... this is coming from original cpu version
+        float const i_start_float = -::hcal::constants::iniTimeShift - pulse_time - slew > 0.f
+                                        ? 0.f
+                                        : std::abs(-::hcal::constants::iniTimeShift - pulse_time - slew) + 1.f;
+        int i_start = static_cast<int>(i_start_float);
+        float offset_start = static_cast<float>(i_start) - ::hcal::constants::iniTimeShift - pulse_time - slew;
+
+        // boundary
+        if (offset_start == 1.0f) {
+          offset_start = 0.f;
+          i_start -= 1;
+        }
+
+        int const bin_start = static_cast<int>(offset_start);
+        float const bin_start_up = static_cast<float>(bin_start) + 0.5f;
+        int const bin_0_start = offset_start < bin_start_up ? bin_start - 1 : bin_start;
+        int const its_start = i_start / ns_per_bx;
+        int const distTo25ns_start = ns_per_bx - 1 - i_start % ns_per_bx;
+        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5;
+
+
+        auto const sample_over10ts = sample + shift;
+        float value = 0.0f;
+        if (sample_over10ts == its_start) {
+          value = bin_0_start == -1
+                      ? std::fmaf(factor, diffVarItvlIdxMinusOneVec[distTo25ns_start], accVarLenIdxMinusOneVec[distTo25ns_start])
+                      : std::fmaf(factor, diffVarItvlIdxZeroVec[distTo25ns_start], accVarLenIdxZeroVec[distTo25ns_start]);
+
+
+
+
+   printf("XXX compute_pulse distTo25ns_start=%d diffVarItvlIdxMinusOneVec=%a diffVarItvlIdxZeroVec=%a value=%a\n", distTo25ns_start, diffVarItvlIdxMinusOneVec[distTo25ns_start], diffVarItvlIdxZeroVec[distTo25ns_start], value);
+
+
+
+
+        } else if (sample_over10ts > its_start) {
+          int const bin_idx = distTo25ns_start + 1 + (sample_over10ts - its_start - 1) * ns_per_bx + bin_0_start;
+          value = std::fmaf(factor, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx]);
+
+
+
+   printf("XXX compute_pulse bin_idx=%d diff25nsItvlVec=%a acc25nsVec=%a value=%a\n", bin_idx, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx], value);
+
+
+        }
+        return value;
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       // TODO: provide constants from configuration
       // from RecoLocalCalo/HcalRecProducers/python/HBHEMahiParameters_cfi.py
@@ -897,6 +986,10 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                            ? compute_pulse_shape_value(pulseShape, t0p, idx, shift)
                                            : 0;
 
+if (id == 1164472391) {
+  compute_pulse_shape_value2(pulseShape, t0, idx, shift, id);
+}
+
                 // store to global
                 pulseMatrix[ipulse * nsamples + sample] = value;
                 pulseMatrixM[ipulse * nsamples + sample] = value_t0m;
@@ -945,7 +1038,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
             // diagonal
             auto tmp_value = 0.5 * (tmppcol * tmppcol + tmpmcol * tmpmcol);
-            covarianceMatrix(col, col) += ampl2 * tmp_value;
+            covarianceMatrix(col, col) = std::fmaf(ampl2, tmp_value, covarianceMatrix(col, col));
 
             // FIXME: understand if this actually gets unrolled
             CMS_UNROLL_LOOP
@@ -959,7 +1052,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
               auto const covValue = 0.5 * (tmppcol * tmpprow + tmpmcol * tmpmrow);
 
-              covarianceMatrix(row, col) += ampl2 * covValue;
+              covarianceMatrix(row, col) = std::fmaf(ampl2, covValue, covarianceMatrix(row, col));
             }
           }
         }
@@ -1090,6 +1183,18 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
               }
 #endif
 
+if (id == 1164472391) {
+
+                for (int counter = 0; counter < NSAMPLES; counter++) {
+                  printf("XXX glbPulseMatrixView [%d] ", counter);
+                  for (int icol = 0; icol < NPULSES; icol++) {
+                    printf("%a ", glbPulseMatrixView(counter, icol));
+                  }
+                  printf("\n");
+                }
+
+}
+
               int npassive = 0;
               float chi2 = 0, previous_chi2 = 0.f, chi2_2itersback = 0.f;
               for (int iter = 1; iter < nMaxItersMin; iter++) {
@@ -1106,8 +1211,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 for (unsigned int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::stride; counter++) {
                   covarianceMatrix(counter, counter) += noiseTermsView.coeffRef(counter);
                   if (counter != 0)
-                    covarianceMatrix(counter, counter - 1) +=
-                        noisecorr * noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter);
+                    covarianceMatrix(counter, counter - 1) = std::fmaf(noisecorr, noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter), covarianceMatrix(counter, counter - 1));
                 }
 
                 // update covariance matrix
@@ -1133,6 +1237,26 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 calo::multifit::MapSymM<float, NSAMPLES> matrixL{matrixLStorage};
                 calo::multifit::compute_decomposition_unrolled(matrixL, covarianceMatrix);
 
+if (id == 1164472391) {
+
+                for (int counter = 0; counter < NSAMPLES; counter++) {
+                  printf("XXX covarianceMatrix [%d] ", counter);
+                  for (int icol = 0; icol < NSAMPLES; icol++) {
+                    printf("%a ", covarianceMatrix(counter, icol));
+                  }
+                  printf("\n");
+                }
+
+                for (int counter = 0; counter < NSAMPLES; counter++) {
+                  printf("XXX matrixL [%d] ", counter);
+                  for (int icol = 0; icol < NSAMPLES; icol++) {
+                    printf("%a ", matrixL(counter, icol));
+                  }
+                  printf("\n");
+                }
+
+}
+
                 //
                 // replace eigen
                 //
@@ -1150,6 +1274,30 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 //
                 float reg_b[NSAMPLES];
                 calo::multifit::solve_forward_subst_vector(reg_b, inputAmplitudesView, matrixL);
+
+if (id == 1164472391) {
+
+                for (int counter = 0; counter < NSAMPLES; counter++) {
+                  printf("XXX glbPulseMatrixView [%d] ", counter);
+                  for (int icol = 0; icol < NPULSES; icol++) {
+                    printf("%a ", glbPulseMatrixView(counter, icol));
+                  }
+                  printf("\n");
+                }
+
+                for (int counter = 0; counter < NSAMPLES; counter++) {
+                  printf("XXX A [%d] ", counter);
+                  for (int icol = 0; icol < NPULSES; icol++) {
+                    printf("%a ", A(counter, icol));
+                  }
+                  printf("\n");
+                }
+
+                printf("XXX reg_b ");
+                for (int counter = 0; counter < NSAMPLES; counter++)
+                  printf("%a ", reg_b[counter]);
+                printf("\n");
+}
 
                 // TODO: we do not really need to change these matrcies
                 // will be fixed in the optimized version
@@ -1172,7 +1320,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   float sum = 0.f;
                   CMS_UNROLL_LOOP
                   for (int counter = 0; counter < NSAMPLES; counter++)
-                    sum += reg_ai[counter] * reg_ai[counter];
+                    sum = std::fmaf(reg_ai[counter], reg_ai[counter], sum);
 
                   // store
                   AtA(icol, icol) = sum;
@@ -1190,7 +1338,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                     float sum = 0.f;
                     CMS_UNROLL_LOOP
                     for (int counter = 0; counter < NSAMPLES; counter++)
-                      sum += reg_aj[counter] * reg_ai[counter];
+                      sum = std::fmaf(reg_aj[counter], reg_ai[counter], sum);
 
                     // store
                     //AtA(icol, j) = sum;
@@ -1201,7 +1349,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   float sum_atb = 0;
                   CMS_UNROLL_LOOP
                   for (int counter = 0; counter < NSAMPLES; counter++)
-                    sum_atb += reg_ai[counter] * reg_b[counter];
+                    sum_atb = std::fmaf(reg_ai[counter], reg_b[counter], sum_atb);
 
                   // store atb
                   Atb(icol) = sum_atb;
@@ -1224,6 +1372,26 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 printf("\n");
 #endif
 
+if (id == 1164472391) {
+
+                for (int i = 0; i < 8; i++) {
+                  printf("XXX AtA [%d] ", i);
+                  for (int j = 0; j < 8; j++)
+                    printf("%a ", AtA(i, j));
+                  printf("\n");
+                }
+
+                printf("XXX Atb ");
+                for (int i = 0; i < 8; i++)
+                  printf("%a ", Atb(i));
+                printf("\n");
+
+                printf("XXX result Amplitudes before nnls ");
+                for (int i = 0; i < 8; i++)
+                  printf("%a ", resultAmplitudesVector(i));
+                printf("\n");
+}
+
                 // for fnnls
                 calo::multifit::MapSymM<float, NPULSES> matrixLForFnnls{shrMatrixLFnnlsStorage};
 
@@ -1244,6 +1412,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 for (int i = 0; i < 8; i++)
                   printf("resultAmplitudes(%d) = %f\n", i, resultAmplitudesVector(i));
 #endif
+
+if (id == 1164472391) {
+                printf("XXX result Amplitudes after  nnls ");
+                for (int i = 0; i < 8; i++)
+                  printf("%a ", resultAmplitudesVector(i));
+                printf("\n");
+}
 
                 calo::multifit::calculateChiSq(
                     matrixL, glbPulseMatrixView, resultAmplitudesVector, inputAmplitudesView, chi2);
@@ -1273,6 +1448,16 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
               outputGPU.chi2()[gch] = chi2;
               auto const idx_for_energy = std::abs(pulseOffsetsView.offsets()[0]);
+
+
+if (id == 1164472391) {
+  printf("XXX id=%d chi2=%a idx_for_energy=%d gain=%a resultAmplitude=%a respCorrection=%a\n", id, chi2, idx_for_energy, gain, resultAmplitudesVector(idx_for_energy), respCorrection);
+}
+
+
+
+
+
               outputGPU.energy()[gch] = (gain * resultAmplitudesVector(idx_for_energy)) * respCorrection;
 
             }  // loop over channels
