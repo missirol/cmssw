@@ -421,7 +421,8 @@ namespace calo {
             float sum = 0;
             CMS_UNROLL_LOOP
             for (int counter = 0; counter < NPULSES; counter++)
-              sum = std::fmaf(counter > icol_real ? AtA(counter, icol_real) : AtA(icol_real, counter), solution(counter), sum);
+              sum = std::fmaf(
+                  counter > icol_real ? AtA(counter, icol_real) : AtA(icol_real, counter), solution(counter), sum);
 
             auto const w = atb - sum;
             if (w > w_max) {

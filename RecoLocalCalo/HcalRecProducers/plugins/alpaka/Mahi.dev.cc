@@ -14,9 +14,9 @@
 
 #include "Mahi.h"
 
-//#ifdef HCAL_MAHI_GPUDEBUG
+#ifdef HCAL_MAHI_GPUDEBUG
 #define DETID_TO_DEBUG 1164996613
-//#endif
+#endif
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
@@ -45,18 +45,6 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                                                    float const tzero,
                                                                    float const tmax) {
         auto const rawDelay = std::fmaf(log_fC, slope, tzero);
-        return rawDelay < 0 ? 0 : (rawDelay > tmax ? tmax : rawDelay);
-      }
-
-      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_time_slew_delay2(float const log_fC,
-                                                                   float const slope,
-                                                                   float const tzero,
-                                                                   float const tmax) {
-        auto const rawDelay = std::fmaf(log_fC, slope, tzero);
-
-//printf("XXX rawDelay=%a slope=%a fC=%a log(fC)=%a tzero=%a tmax=%a\n", rawDelay, slope, fC, std::log(fC), tzero, tmax);
-printf("XXX log_fC=%a rawDelay=%a\n", log_fC, rawDelay);
-
         return rawDelay < 0 ? 0 : (rawDelay > tmax ? tmax : rawDelay);
       }
 
@@ -134,8 +122,9 @@ printf("XXX log_fC=%a rawDelay=%a\n", log_fC, rawDelay);
         auto const range = qieType == 0 ? (adc >> 5) & 0x3 : (adc >> 6) & 0x3;
         auto const* qieShapeToUse = qieType == 0 ? qie8shape : qie11shape;
         auto const nbins = qieType == 0 ? 32 : 64;
-        auto const center = adc % nbins == nbins - 1 ? 0.5 * (3 * qieShapeToUse[adc] - qieShapeToUse[adc - 1])
-                                                     : 0.5 * (qieShapeToUse[adc] + qieShapeToUse[adc + 1]);
+        auto const center = adc % nbins == nbins - 1
+                                ? 0.5f * std::fmaf(3.f, qieShapeToUse[adc], -qieShapeToUse[adc - 1])
+                                : 0.5f * std::fmaf(1.f, qieShapeToUse[adc], qieShapeToUse[adc + 1]);
         auto const index = get_qiecoder_index(capid, range);
         return (center - qieOffsets[index]) / qieSlopes[index];
       }
@@ -221,109 +210,17 @@ printf("XXX log_fC=%a rawDelay=%a\n", log_fC, rawDelay);
         auto const sample_over10ts = sample + shift;
         float value = 0.0f;
         if (sample_over10ts == its_start) {
-          value = bin_0_start == -1
-                      ? std::fmaf(factor, diffVarItvlIdxMinusOneVec[distTo25ns_start], accVarLenIdxMinusOneVec[distTo25ns_start])
-                      : std::fmaf(factor, diffVarItvlIdxZeroVec[distTo25ns_start], accVarLenIdxZeroVec[distTo25ns_start]);
+          value =
+              bin_0_start == -1
+                  ? std::fmaf(
+                        factor, diffVarItvlIdxMinusOneVec[distTo25ns_start], accVarLenIdxMinusOneVec[distTo25ns_start])
+                  : std::fmaf(factor, diffVarItvlIdxZeroVec[distTo25ns_start], accVarLenIdxZeroVec[distTo25ns_start]);
         } else if (sample_over10ts > its_start) {
           int const bin_idx = distTo25ns_start + 1 + (sample_over10ts - its_start - 1) * ns_per_bx + bin_0_start;
           value = std::fmaf(factor, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx]);
         }
         return value;
       }
-
-
-
-
-
-
-
-
-
-
-
-
-      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_pulse_shape_value2(PulseShapeConstElement const& pulseShape,
-                                                                     float const pulse_time,
-                                                                     int const sample,
-                                                                     int const shift, int const id) {
-        auto const& acc25nsVec = pulseShape.acc25nsVec();
-        auto const& diff25nsItvlVec = pulseShape.diff25nsItvlVec();
-        auto const& accVarLenIdxMinusOneVec = pulseShape.accVarLenIdxMinusOneVec();
-        auto const& diffVarItvlIdxMinusOneVec = pulseShape.diffVarItvlIdxMinusOneVec();
-        auto const& accVarLenIdxZeroVec = pulseShape.accVarLenIdxZEROVec();
-        auto const& diffVarItvlIdxZeroVec = pulseShape.diffVarItvlIdxZEROVec();
-
-        // constants
-        constexpr float slew = 0.f;
-        constexpr auto ns_per_bx = ::hcal::constants::nsPerBX;
-
-        // FIXME: clean up all the rounding... this is coming from original cpu version
-        float const i_start_float = -::hcal::constants::iniTimeShift - pulse_time - slew > 0.f
-                                        ? 0.f
-                                        : std::abs(-::hcal::constants::iniTimeShift - pulse_time - slew) + 1.f;
-        int i_start = static_cast<int>(i_start_float);
-        float offset_start = static_cast<float>(i_start) - ::hcal::constants::iniTimeShift - pulse_time - slew;
-
-        // boundary
-        if (offset_start == 1.0f) {
-          offset_start = 0.f;
-          i_start -= 1;
-        }
-
-        int const bin_start = static_cast<int>(offset_start);
-        float const bin_start_up = static_cast<float>(bin_start) + 0.5f;
-        int const bin_0_start = offset_start < bin_start_up ? bin_start - 1 : bin_start;
-        int const its_start = i_start / ns_per_bx;
-        int const distTo25ns_start = ns_per_bx - 1 - i_start % ns_per_bx;
-        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5f;
-
-
-        auto const sample_over10ts = sample + shift;
-        float value = 0.0f;
-        if (sample_over10ts == its_start) {
-          value = bin_0_start == -1
-                      ? std::fmaf(factor, diffVarItvlIdxMinusOneVec[distTo25ns_start], accVarLenIdxMinusOneVec[distTo25ns_start])
-                      : std::fmaf(factor, diffVarItvlIdxZeroVec[distTo25ns_start], accVarLenIdxZeroVec[distTo25ns_start]);
-
-
-
-
-//   printf("XXX compute_pulse pulse_time=%a offset_start=%a bin_0_start=%d factor=%a distTo25ns_start=%d diffVarItvlIdxMinusOneVec=%a diffVarItvlIdxZeroVec=%a value=%a\n", pulse_time, offset_start, bin_0_start, factor, distTo25ns_start, diffVarItvlIdxMinusOneVec[distTo25ns_start], diffVarItvlIdxZeroVec[distTo25ns_start], value);
-
-
-
-
-        } else if (sample_over10ts > its_start) {
-          int const bin_idx = distTo25ns_start + 1 + (sample_over10ts - its_start - 1) * ns_per_bx + bin_0_start;
-          value = std::fmaf(factor, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx]);
-
-
-
-//   printf("XXX compute_pulse factor=%a bin_idx=%d diff25nsItvlVec=%a acc25nsVec=%a value=%a\n", factor, bin_idx, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx], value);
-
-
-        }
-
-
-//   printf("XXX compute_pulse pulse_time=%a offset_start=%a bin_0_start=%d factor=%a value=%a\n", pulse_time, offset_start, bin_0_start, factor, value);
-
-
-        return value;
-      }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       // TODO: provide constants from configuration
       // from RecoLocalCalo/HcalRecProducers/python/HBHEMahiParameters_cfi.py
@@ -734,14 +631,8 @@ printf("XXX log_fC=%a rawDelay=%a\n", log_fC, rawDelay);
                 auto const amplitude = rawCharge - pedestalToUseForMethod0;
                 auto const noiseADC = (1. / std::sqrt(12)) * dfc;
                 auto const noisePhotoSq = amplitude > pedestalWidth ? (amplitude * fcByPE) : 0.f;
-                auto const noiseTerm = std::fmaf(noiseADC, noiseADC, std::fmaf(pedestalWidth, pedestalWidth, noisePhotoSq));
-
-if (id == DETID_TO_DEBUG) {
-
-//  printf("XXX rawCharge=%a pedestalToUseForMethod0=%a noiseADC=%a noisePhotoSq=%a noiseTerm=%a\n", rawCharge, pedestalToUseForMethod0, noiseADC, noisePhotoSq, noiseTerm);
-
-}
-
+                auto const noiseTerm =
+                    std::fmaf(noiseADC, noiseADC, std::fmaf(pedestalWidth, pedestalWidth, noisePhotoSq));
 
                 // store to global memory
                 amplitudesForChannel[sampleWithinWindow] = amplitude;
@@ -802,8 +693,9 @@ if (id == DETID_TO_DEBUG) {
                   // need to correct by slew
                   // requires an accumulator -> more shared mem -> omit here unless
                   // really needed
-                  float const time =
-                      max_energy > 0.f && max_energy_1 > 0.f ? 25.f * (position + max_energy_1 / sum) : 25.f * position;
+                  float const time = max_energy > 0.f && max_energy_1 > 0.f
+                                         ? 25.f * std::fmaf(max_energy_1, 1.f / sum, position)
+                                         : 25.f * position;
 
                   // store method0 quantities to global mem
                   outputGPU.detId()[gch] = id;
@@ -1008,15 +900,6 @@ if (id == DETID_TO_DEBUG) {
                                            ? compute_pulse_shape_value(pulseShape, t0p, idx, shift)
                                            : 0;
 
-if (id == DETID_TO_DEBUG) {
-//  printf("XXX tzeroTimeSlew=%a slopeTimeSlew=%a tmaxTimeSlew=%a t0=%a\n", tzeroTimeSlew, slopeTimeSlew, tmaxTimeSlew, t0);
-//  compute_pulse_shape_value2(pulseShape, t0, idx, shift, id);
-
-  float const log_amp = std::log(std::max(1.f, amplitude));
-  compute_time_slew_delay2(log_amp, slopeTimeSlew, tzeroTimeSlew, tmaxTimeSlew);
-
-}
-
                 // store to global
                 pulseMatrix[ipulse * nsamples + sample] = value;
                 pulseMatrixM[ipulse * nsamples + sample] = value_t0m;
@@ -1151,21 +1034,14 @@ if (id == DETID_TO_DEBUG) {
                       ? mahi.effectivePedestalWidths()[hashedId].data()
                       : mahi.pedestals_width()[hashedId].data();
 
-              auto const averagePedestalWidth2 = 0.25f * std::fmaf(pedestalWidthsForChannel[0], pedestalWidthsForChannel[0],
-                                                         std::fmaf(pedestalWidthsForChannel[1], pedestalWidthsForChannel[1],
-                                                         std::fmaf(pedestalWidthsForChannel[2], pedestalWidthsForChannel[2],
-                                                                   pedestalWidthsForChannel[3]* pedestalWidthsForChannel[3])));
-
-//if (id == DETID_TO_DEBUG) {
-//
-//                printf("XXX pedestalWidthsForChannel ");
-//                for (int icol = 0; icol < 4; icol++) {
-//                  printf("%a ", pedestalWidthsForChannel[icol]);
-//                }
-//                printf("\n");
-//                printf("XXX averagePedestalWidth2 = %a\n", averagePedestalWidth2);
-//
-//}
+              auto const averagePedestalWidth2 =
+                  0.25f * std::fmaf(pedestalWidthsForChannel[0],
+                                    pedestalWidthsForChannel[0],
+                                    std::fmaf(pedestalWidthsForChannel[1],
+                                              pedestalWidthsForChannel[1],
+                                              std::fmaf(pedestalWidthsForChannel[2],
+                                                        pedestalWidthsForChannel[2],
+                                                        pedestalWidthsForChannel[3] * pedestalWidthsForChannel[3])));
 
               // FIXME on cpu ts 0 capid was used - does it make any difference
               auto const gain = mahi.gains_value()[hashedId][0];
@@ -1222,18 +1098,6 @@ if (id == DETID_TO_DEBUG) {
               }
 #endif
 
-//if (id == DETID_TO_DEBUG) {
-//
-//                for (int counter = 0; counter < NSAMPLES; counter++) {
-//                  printf("XXX glbPulseMatrixView [%d] ", counter);
-//                  for (int icol = 0; icol < NPULSES; icol++) {
-//                    printf("%a ", glbPulseMatrixView(counter, icol));
-//                  }
-//                  printf("\n");
-//                }
-//
-//}
-
               int npassive = 0;
               float chi2 = 0, previous_chi2 = 0.f, chi2_2itersback = 0.f;
               for (int iter = 1; iter < nMaxItersMin; iter++) {
@@ -1250,20 +1114,11 @@ if (id == DETID_TO_DEBUG) {
                 for (unsigned int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::stride; counter++) {
                   covarianceMatrix(counter, counter) += noiseTermsView.coeffRef(counter);
                   if (counter != 0)
-                    covarianceMatrix(counter, counter - 1) = std::fmaf(noisecorr, noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter), covarianceMatrix(counter, counter - 1));
+                    covarianceMatrix(counter, counter - 1) =
+                        std::fmaf(noisecorr,
+                                  noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter),
+                                  covarianceMatrix(counter, counter - 1));
                 }
-
-if (id == DETID_TO_DEBUG) {
-
-//                for (int counter = 0; counter < NSAMPLES; counter++) {
-//                  printf("XXX covarianceMatrix1 [%d] ", counter);
-//                  for (int icol = 0; icol < NSAMPLES; icol++) {
-//                    printf("%a ", covarianceMatrix(counter, icol));
-//                  }
-//                  printf("\n");
-//                }
-
-}
 
                 // update covariance matrix
                 update_covariance(resultAmplitudesVector,
@@ -1288,26 +1143,6 @@ if (id == DETID_TO_DEBUG) {
                 calo::multifit::MapSymM<float, NSAMPLES> matrixL{matrixLStorage};
                 calo::multifit::compute_decomposition_unrolled(matrixL, covarianceMatrix);
 
-if (id == DETID_TO_DEBUG) {
-
-//                for (int counter = 0; counter < NSAMPLES; counter++) {
-//                  printf("XXX covarianceMatrix2 [%d] ", counter);
-//                  for (int icol = 0; icol < NSAMPLES; icol++) {
-//                    printf("%a ", covarianceMatrix(counter, icol));
-//                  }
-//                  printf("\n");
-//                }
-//
-//                for (int counter = 0; counter < NSAMPLES; counter++) {
-//                  printf("XXX matrixL [%d] ", counter);
-//                  for (int icol = 0; icol < NSAMPLES; icol++) {
-//                    printf("%a ", matrixL(counter, icol));
-//                  }
-//                  printf("\n");
-//                }
-
-}
-
                 //
                 // replace eigen
                 //
@@ -1325,31 +1160,6 @@ if (id == DETID_TO_DEBUG) {
                 //
                 float reg_b[NSAMPLES];
                 calo::multifit::solve_forward_subst_vector(reg_b, inputAmplitudesView, matrixL);
-
-if (id == DETID_TO_DEBUG) {
-
-//                for (int counter = 0; counter < NSAMPLES; counter++) {
-//                  printf("XXX glbPulseMatrixView [%d] ", counter);
-//                  for (int icol = 0; icol < NPULSES; icol++) {
-//                    printf("%a ", glbPulseMatrixView(counter, icol));
-//                  }
-//                  printf("\n");
-//                }
-//
-//                for (int counter = 0; counter < NSAMPLES; counter++) {
-//                  printf("XXX A [%d] ", counter);
-//                  for (int icol = 0; icol < NPULSES; icol++) {
-//                    printf("%a ", A(counter, icol));
-//                  }
-//                  printf("\n");
-//                }
-//
-//                printf("XXX reg_b ");
-//                for (int counter = 0; counter < NSAMPLES; counter++)
-//                  printf("%a ", reg_b[counter]);
-//                printf("\n");
-
-}
 
                 // TODO: we do not really need to change these matrcies
                 // will be fixed in the optimized version
@@ -1424,27 +1234,6 @@ if (id == DETID_TO_DEBUG) {
                 printf("\n");
 #endif
 
-if (id == DETID_TO_DEBUG) {
-
-//                for (int i = 0; i < 8; i++) {
-//                  printf("XXX AtA [%d] ", i);
-//                  for (int j = 0; j < 8; j++)
-//                    printf("%a ", AtA(i, j));
-//                  printf("\n");
-//                }
-//
-//                printf("XXX Atb ");
-//                for (int i = 0; i < 8; i++)
-//                  printf("%a ", Atb(i));
-//                printf("\n");
-
-//                printf("XXX result Amplitudes before nnls ");
-//                for (int i = 0; i < 8; i++)
-//                  printf("%a ", resultAmplitudesVector(i));
-//                printf("\n");
-
-}
-
                 // for fnnls
                 calo::multifit::MapSymM<float, NPULSES> matrixLForFnnls{shrMatrixLFnnlsStorage};
 
@@ -1465,15 +1254,6 @@ if (id == DETID_TO_DEBUG) {
                 for (int i = 0; i < 8; i++)
                   printf("resultAmplitudes(%d) = %f\n", i, resultAmplitudesVector(i));
 #endif
-
-if (id == DETID_TO_DEBUG) {
-
-//                printf("XXX result Amplitudes after  nnls ");
-//                for (int i = 0; i < 8; i++)
-//                  printf("%a ", resultAmplitudesVector(i));
-//                printf("\n");
-
-}
 
                 calo::multifit::calculateChiSq(
                     matrixL, glbPulseMatrixView, resultAmplitudesVector, inputAmplitudesView, chi2);
@@ -1503,20 +1283,6 @@ if (id == DETID_TO_DEBUG) {
 
               outputGPU.chi2()[gch] = chi2;
               auto const idx_for_energy = std::abs(pulseOffsetsView.offsets()[0]);
-
-
-if (id == DETID_TO_DEBUG) {
-
-//  printf("XXX id=%d chi2=%a idx_for_energy=%d gain=%a resultAmplitude=%a respCorrection=%a\n",
-//      id, chi2, idx_for_energy, gain, resultAmplitudesVector(idx_for_energy), respCorrection
-//  );
-
-}
-
-
-
-
-
               outputGPU.energy()[gch] = (gain * resultAmplitudesVector(idx_for_energy)) * respCorrection;
 
             }  // loop over channels
