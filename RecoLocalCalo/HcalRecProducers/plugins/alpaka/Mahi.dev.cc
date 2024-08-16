@@ -15,7 +15,7 @@
 #include "Mahi.h"
 
 //#ifdef HCAL_MAHI_GPUDEBUG
-#define DETID_TO_DEBUG 1165520907
+#define DETID_TO_DEBUG 1164996613
 //#endif
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
@@ -40,11 +40,23 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 #endif
       }
 
-      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_time_slew_delay(float const fC,
-                                                                   float const tzero,
+      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_time_slew_delay(float const log_fC,
                                                                    float const slope,
+                                                                   float const tzero,
                                                                    float const tmax) {
-        auto const rawDelay = std::fmaf(slope, std::log(fC), tzero);
+        auto const rawDelay = std::fmaf(log_fC, slope, tzero);
+        return rawDelay < 0 ? 0 : (rawDelay > tmax ? tmax : rawDelay);
+      }
+
+      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_time_slew_delay2(float const log_fC,
+                                                                   float const slope,
+                                                                   float const tzero,
+                                                                   float const tmax) {
+        auto const rawDelay = std::fmaf(log_fC, slope, tzero);
+
+//printf("XXX rawDelay=%a slope=%a fC=%a log(fC)=%a tzero=%a tmax=%a\n", rawDelay, slope, fC, std::log(fC), tzero, tmax);
+printf("XXX log_fC=%a rawDelay=%a\n", log_fC, rawDelay);
+
         return rawDelay < 0 ? 0 : (rawDelay > tmax ? tmax : rawDelay);
       }
 
@@ -113,7 +125,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                                                           float const par2,
                                                                           float const par3,
                                                                           float const x) {
-        return par3 * x * x + par2 * x + par1;
+        return std::fmaf(par3, x * x, std::fmaf(par2, x, par1));
       }
 
       // compute the charge using the adc, qie type and the appropriate qie shape array
@@ -204,7 +216,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         int const bin_0_start = offset_start < bin_start_up ? bin_start - 1 : bin_start;
         int const its_start = i_start / ns_per_bx;
         int const distTo25ns_start = ns_per_bx - 1 - i_start % ns_per_bx;
-        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5;
+        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5f;
 
         auto const sample_over10ts = sample + shift;
         float value = 0.0f;
@@ -263,7 +275,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         int const bin_0_start = offset_start < bin_start_up ? bin_start - 1 : bin_start;
         int const its_start = i_start / ns_per_bx;
         int const distTo25ns_start = ns_per_bx - 1 - i_start % ns_per_bx;
-        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5;
+        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5f;
 
 
         auto const sample_over10ts = sample + shift;
@@ -276,7 +288,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
 
 
-   printf("XXX compute_pulse distTo25ns_start=%d diffVarItvlIdxMinusOneVec=%a diffVarItvlIdxZeroVec=%a value=%a\n", distTo25ns_start, diffVarItvlIdxMinusOneVec[distTo25ns_start], diffVarItvlIdxZeroVec[distTo25ns_start], value);
+//   printf("XXX compute_pulse pulse_time=%a offset_start=%a bin_0_start=%d factor=%a distTo25ns_start=%d diffVarItvlIdxMinusOneVec=%a diffVarItvlIdxZeroVec=%a value=%a\n", pulse_time, offset_start, bin_0_start, factor, distTo25ns_start, diffVarItvlIdxMinusOneVec[distTo25ns_start], diffVarItvlIdxZeroVec[distTo25ns_start], value);
 
 
 
@@ -287,10 +299,15 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
 
 
-   printf("XXX compute_pulse bin_idx=%d diff25nsItvlVec=%a acc25nsVec=%a value=%a\n", bin_idx, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx], value);
+//   printf("XXX compute_pulse factor=%a bin_idx=%d diff25nsItvlVec=%a acc25nsVec=%a value=%a\n", factor, bin_idx, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx], value);
 
 
         }
+
+
+//   printf("XXX compute_pulse pulse_time=%a offset_start=%a bin_0_start=%d factor=%a value=%a\n", pulse_time, offset_start, bin_0_start, factor, value);
+
+
         return value;
       }
 
@@ -719,6 +736,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 auto const noisePhotoSq = amplitude > pedestalWidth ? (amplitude * fcByPE) : 0.f;
                 auto const noiseTerm = std::fmaf(noiseADC, noiseADC, std::fmaf(pedestalWidth, pedestalWidth, noisePhotoSq));
 
+if (id == DETID_TO_DEBUG) {
+
+//  printf("XXX rawCharge=%a pedestalToUseForMethod0=%a noiseADC=%a noisePhotoSq=%a noiseTerm=%a\n", rawCharge, pedestalToUseForMethod0, noiseADC, noisePhotoSq, noiseTerm);
+
+}
+
+
                 // store to global memory
                 amplitudesForChannel[sampleWithinWindow] = amplitude;
                 noiseTermsForChannel[sampleWithinWindow] = noiseTerm;
@@ -943,13 +967,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
                 auto t0 = meanTime;
                 if (applyTimeSlew) {
-                  if (amplitude <= 1.0f)
-                    t0 += compute_time_slew_delay(1.0, tzeroTimeSlew, slopeTimeSlew, tmaxTimeSlew);
-                  else
-                    t0 += compute_time_slew_delay(amplitude, tzeroTimeSlew, slopeTimeSlew, tmaxTimeSlew);
+                  float const log_amp = std::log(std::max(1.f, amplitude));
+                  t0 += compute_time_slew_delay(log_amp, slopeTimeSlew, tzeroTimeSlew, tmaxTimeSlew);
                 }
-                auto const t0m = -deltaT + t0;
-                auto const t0p = deltaT + t0;
+                auto const t0m = t0 - deltaT;
+                auto const t0p = t0 + deltaT;
 
 #ifdef HCAL_MAHI_GPUDEBUG
                 if (sample == 0 && ipulse == 0) {
@@ -987,7 +1009,12 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                            : 0;
 
 if (id == DETID_TO_DEBUG) {
-  compute_pulse_shape_value2(pulseShape, t0, idx, shift, id);
+//  printf("XXX tzeroTimeSlew=%a slopeTimeSlew=%a tmaxTimeSlew=%a t0=%a\n", tzeroTimeSlew, slopeTimeSlew, tmaxTimeSlew, t0);
+//  compute_pulse_shape_value2(pulseShape, t0, idx, shift, id);
+
+  float const log_amp = std::log(std::max(1.f, amplitude));
+  compute_time_slew_delay2(log_amp, slopeTimeSlew, tzeroTimeSlew, tmaxTimeSlew);
+
 }
 
                 // store to global
@@ -1037,7 +1064,7 @@ if (id == DETID_TO_DEBUG) {
             auto const tmpmcol = valueM_col - value_col;
 
             // diagonal
-            auto tmp_value = 0.5 * (tmppcol * tmppcol + tmpmcol * tmpmcol);
+            auto tmp_value = 0.5f * std::fmaf(tmppcol, tmppcol, tmpmcol * tmpmcol);
             covarianceMatrix(col, col) = std::fmaf(ampl2, tmp_value, covarianceMatrix(col, col));
 
             // FIXME: understand if this actually gets unrolled
@@ -1050,7 +1077,7 @@ if (id == DETID_TO_DEBUG) {
               float tmpprow = valueP_row - value_row;
               float tmpmrow = valueM_row - value_row;
 
-              auto const covValue = 0.5 * (tmppcol * tmpprow + tmpmcol * tmpmrow);
+              auto const covValue = 0.5f * std::fmaf(tmppcol, tmpprow, tmpmcol * tmpmrow);
 
               covarianceMatrix(row, col) = std::fmaf(ampl2, covValue, covarianceMatrix(row, col));
             }
@@ -1129,16 +1156,16 @@ if (id == DETID_TO_DEBUG) {
                                                          std::fmaf(pedestalWidthsForChannel[2], pedestalWidthsForChannel[2],
                                                                    pedestalWidthsForChannel[3]* pedestalWidthsForChannel[3])));
 
-if (id == DETID_TO_DEBUG) {
-
-                printf("XXX pedestalWidthsForChannel ");
-                for (int icol = 0; icol < 4; icol++) {
-                  printf("%a ", pedestalWidthsForChannel[icol]);
-                }
-                printf("\n");
-                printf("XXX averagePedestalWidth2 = %a\n", averagePedestalWidth2);
-
-}
+//if (id == DETID_TO_DEBUG) {
+//
+//                printf("XXX pedestalWidthsForChannel ");
+//                for (int icol = 0; icol < 4; icol++) {
+//                  printf("%a ", pedestalWidthsForChannel[icol]);
+//                }
+//                printf("\n");
+//                printf("XXX averagePedestalWidth2 = %a\n", averagePedestalWidth2);
+//
+//}
 
               // FIXME on cpu ts 0 capid was used - does it make any difference
               auto const gain = mahi.gains_value()[hashedId][0];
@@ -1195,17 +1222,17 @@ if (id == DETID_TO_DEBUG) {
               }
 #endif
 
-if (id == DETID_TO_DEBUG) {
-
-                for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX glbPulseMatrixView [%d] ", counter);
-                  for (int icol = 0; icol < NPULSES; icol++) {
-                    printf("%a ", glbPulseMatrixView(counter, icol));
-                  }
-                  printf("\n");
-                }
-
-}
+//if (id == DETID_TO_DEBUG) {
+//
+//                for (int counter = 0; counter < NSAMPLES; counter++) {
+//                  printf("XXX glbPulseMatrixView [%d] ", counter);
+//                  for (int icol = 0; icol < NPULSES; icol++) {
+//                    printf("%a ", glbPulseMatrixView(counter, icol));
+//                  }
+//                  printf("\n");
+//                }
+//
+//}
 
               int npassive = 0;
               float chi2 = 0, previous_chi2 = 0.f, chi2_2itersback = 0.f;
@@ -1228,13 +1255,13 @@ if (id == DETID_TO_DEBUG) {
 
 if (id == DETID_TO_DEBUG) {
 
-                for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX covarianceMatrix1 [%d] ", counter);
-                  for (int icol = 0; icol < NSAMPLES; icol++) {
-                    printf("%a ", covarianceMatrix(counter, icol));
-                  }
-                  printf("\n");
-                }
+//                for (int counter = 0; counter < NSAMPLES; counter++) {
+//                  printf("XXX covarianceMatrix1 [%d] ", counter);
+//                  for (int icol = 0; icol < NSAMPLES; icol++) {
+//                    printf("%a ", covarianceMatrix(counter, icol));
+//                  }
+//                  printf("\n");
+//                }
 
 }
 
@@ -1263,21 +1290,21 @@ if (id == DETID_TO_DEBUG) {
 
 if (id == DETID_TO_DEBUG) {
 
-                for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX covarianceMatrix2 [%d] ", counter);
-                  for (int icol = 0; icol < NSAMPLES; icol++) {
-                    printf("%a ", covarianceMatrix(counter, icol));
-                  }
-                  printf("\n");
-                }
-
-                for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX matrixL [%d] ", counter);
-                  for (int icol = 0; icol < NSAMPLES; icol++) {
-                    printf("%a ", matrixL(counter, icol));
-                  }
-                  printf("\n");
-                }
+//                for (int counter = 0; counter < NSAMPLES; counter++) {
+//                  printf("XXX covarianceMatrix2 [%d] ", counter);
+//                  for (int icol = 0; icol < NSAMPLES; icol++) {
+//                    printf("%a ", covarianceMatrix(counter, icol));
+//                  }
+//                  printf("\n");
+//                }
+//
+//                for (int counter = 0; counter < NSAMPLES; counter++) {
+//                  printf("XXX matrixL [%d] ", counter);
+//                  for (int icol = 0; icol < NSAMPLES; icol++) {
+//                    printf("%a ", matrixL(counter, icol));
+//                  }
+//                  printf("\n");
+//                }
 
 }
 
@@ -1301,26 +1328,27 @@ if (id == DETID_TO_DEBUG) {
 
 if (id == DETID_TO_DEBUG) {
 
-                for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX glbPulseMatrixView [%d] ", counter);
-                  for (int icol = 0; icol < NPULSES; icol++) {
-                    printf("%a ", glbPulseMatrixView(counter, icol));
-                  }
-                  printf("\n");
-                }
+//                for (int counter = 0; counter < NSAMPLES; counter++) {
+//                  printf("XXX glbPulseMatrixView [%d] ", counter);
+//                  for (int icol = 0; icol < NPULSES; icol++) {
+//                    printf("%a ", glbPulseMatrixView(counter, icol));
+//                  }
+//                  printf("\n");
+//                }
+//
+//                for (int counter = 0; counter < NSAMPLES; counter++) {
+//                  printf("XXX A [%d] ", counter);
+//                  for (int icol = 0; icol < NPULSES; icol++) {
+//                    printf("%a ", A(counter, icol));
+//                  }
+//                  printf("\n");
+//                }
+//
+//                printf("XXX reg_b ");
+//                for (int counter = 0; counter < NSAMPLES; counter++)
+//                  printf("%a ", reg_b[counter]);
+//                printf("\n");
 
-                for (int counter = 0; counter < NSAMPLES; counter++) {
-                  printf("XXX A [%d] ", counter);
-                  for (int icol = 0; icol < NPULSES; icol++) {
-                    printf("%a ", A(counter, icol));
-                  }
-                  printf("\n");
-                }
-
-                printf("XXX reg_b ");
-                for (int counter = 0; counter < NSAMPLES; counter++)
-                  printf("%a ", reg_b[counter]);
-                printf("\n");
 }
 
                 // TODO: we do not really need to change these matrcies
@@ -1398,22 +1426,23 @@ if (id == DETID_TO_DEBUG) {
 
 if (id == DETID_TO_DEBUG) {
 
-                for (int i = 0; i < 8; i++) {
-                  printf("XXX AtA [%d] ", i);
-                  for (int j = 0; j < 8; j++)
-                    printf("%a ", AtA(i, j));
-                  printf("\n");
-                }
+//                for (int i = 0; i < 8; i++) {
+//                  printf("XXX AtA [%d] ", i);
+//                  for (int j = 0; j < 8; j++)
+//                    printf("%a ", AtA(i, j));
+//                  printf("\n");
+//                }
+//
+//                printf("XXX Atb ");
+//                for (int i = 0; i < 8; i++)
+//                  printf("%a ", Atb(i));
+//                printf("\n");
 
-                printf("XXX Atb ");
-                for (int i = 0; i < 8; i++)
-                  printf("%a ", Atb(i));
-                printf("\n");
+//                printf("XXX result Amplitudes before nnls ");
+//                for (int i = 0; i < 8; i++)
+//                  printf("%a ", resultAmplitudesVector(i));
+//                printf("\n");
 
-                printf("XXX result Amplitudes before nnls ");
-                for (int i = 0; i < 8; i++)
-                  printf("%a ", resultAmplitudesVector(i));
-                printf("\n");
 }
 
                 // for fnnls
@@ -1438,10 +1467,12 @@ if (id == DETID_TO_DEBUG) {
 #endif
 
 if (id == DETID_TO_DEBUG) {
-                printf("XXX result Amplitudes after  nnls ");
-                for (int i = 0; i < 8; i++)
-                  printf("%a ", resultAmplitudesVector(i));
-                printf("\n");
+
+//                printf("XXX result Amplitudes after  nnls ");
+//                for (int i = 0; i < 8; i++)
+//                  printf("%a ", resultAmplitudesVector(i));
+//                printf("\n");
+
 }
 
                 calo::multifit::calculateChiSq(
@@ -1475,7 +1506,11 @@ if (id == DETID_TO_DEBUG) {
 
 
 if (id == DETID_TO_DEBUG) {
-  printf("XXX id=%d chi2=%a idx_for_energy=%d gain=%a resultAmplitude=%a respCorrection=%a\n", id, chi2, idx_for_energy, gain, resultAmplitudesVector(idx_for_energy), respCorrection);
+
+//  printf("XXX id=%d chi2=%a idx_for_energy=%d gain=%a resultAmplitude=%a respCorrection=%a\n",
+//      id, chi2, idx_for_energy, gain, resultAmplitudesVector(idx_for_energy), respCorrection
+//  );
+
 }
 
 
