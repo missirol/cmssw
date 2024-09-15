@@ -36,7 +36,7 @@ public:
 
   // make job
   // fill seedCollection with the "TrajectorySeed"
-  void makeSeed(TrajectorySeedCollection &seedCollection, const SeedingHitSet &hits) final;
+  void makeSeed(TrajectorySeedCollection &seedCollection, const SeedingHitSet &hits, bool const vv=false) final;
 
 private:
   virtual bool initialKinematic(GlobalTrajectoryParameters &kine, const SeedingHitSet &hits) const;
@@ -47,7 +47,7 @@ private:
 
   void buildSeed(TrajectorySeedCollection &seedCollection,
                  const SeedingHitSet &hits,
-                 const FreeTrajectoryState &fts) const dso_hidden;
+                 const FreeTrajectoryState &fts, bool const vvv=false) const dso_hidden;
 
   SeedingHitSet::RecHitPointer refitHit(SeedingHitSet::ConstRecHitPointer hit,
                                         const TrajectoryStateOnSurface &state) const dso_hidden;
