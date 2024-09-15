@@ -20,6 +20,6 @@ public:
 
   // make job
   // fill seedCollection with the "TrajectorySeed"
-  virtual void makeSeed(TrajectorySeedCollection& seedCollection, const SeedingHitSet& hits) = 0;
+  virtual void makeSeed(TrajectorySeedCollection& seedCollection, const SeedingHitSet& hits, bool const vv=false) = 0;
 };
 #endif

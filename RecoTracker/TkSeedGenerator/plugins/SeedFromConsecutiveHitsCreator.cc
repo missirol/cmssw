@@ -66,7 +66,7 @@ void SeedFromConsecutiveHitsCreator::init(const TrackingRegion& iregion,
   cloner = (*builder).cloner();
 }
 
-void SeedFromConsecutiveHitsCreator::makeSeed(TrajectorySeedCollection& seedCollection, const SeedingHitSet& hits) {
+void SeedFromConsecutiveHitsCreator::makeSeed(TrajectorySeedCollection& seedCollection, const SeedingHitSet& hits, bool const vv) {
   if (hits.size() < 2)
     return;
 
@@ -79,11 +79,28 @@ void SeedFromConsecutiveHitsCreator::makeSeed(TrajectorySeedCollection& seedColl
   CurvilinearTrajectoryError error = initialError(sin2Theta);
   FreeTrajectoryState fts(kine, error);
 
+if (vv) {
+edm::LogPrint("AAA") << "      XXX-S "
+<< "hits.size=" << hits.size()
+;}
+
   if (region->direction().x() != 0 &&
       forceKinematicWithRegionDirection_)  // a direction was given, check if it is an etaPhi region
   {
+
+if (vv) {
+edm::LogPrint("AAA") << "      XXX-S "
+<< "region->direction().x=" << region->direction().x()
+;}
+
     const RectangularEtaPhiTrackingRegion* etaPhiRegion = dynamic_cast<const RectangularEtaPhiTrackingRegion*>(region);
     if (etaPhiRegion) {
+
+if (vv) {
+edm::LogPrint("AAA") << "      XXX-S "
+<< "etaPhiRegion=" << etaPhiRegion
+;}
+
       //the following completely reset the kinematics, perhaps it makes no sense and newKine=kine would do better
       GlobalVector direction = region->direction() / region->direction().mag();
       GlobalVector momentum = direction * fts.momentum().mag();
@@ -108,7 +125,7 @@ void SeedFromConsecutiveHitsCreator::makeSeed(TrajectorySeedCollection& seedColl
     }
   }
 
-  buildSeed(seedCollection, hits, fts);
+  buildSeed(seedCollection, hits, fts, vv);
 }
 
 bool SeedFromConsecutiveHitsCreator::initialKinematic(GlobalTrajectoryParameters& kine,
@@ -158,7 +175,7 @@ CurvilinearTrajectoryError SeedFromConsecutiveHitsCreator::initialError(float si
 
 void SeedFromConsecutiveHitsCreator::buildSeed(TrajectorySeedCollection& seedCollection,
                                                const SeedingHitSet& hits,
-                                               const FreeTrajectoryState& fts) const {
+                                               const FreeTrajectoryState& fts, bool const vvv) const {
   // get updator
   KFUpdator updator;
 
@@ -167,12 +184,35 @@ void SeedFromConsecutiveHitsCreator::buildSeed(TrajectorySeedCollection& seedCol
   TrajectoryStateOnSurface updatedState;
   edm::OwnVector<TrackingRecHit> seedHits;
 
+if(vvv){
+edm::LogPrint("AAA") << "      BBB-S " << __LINE__
+<< " seedColl.size=" << seedCollection.size()
+<< " seedHits.size=" << seedHits.size()
+<< " hits.size=" << hits.size()
+;}
+
   const TrackingRecHit* hit = nullptr;
   for (unsigned int iHit = 0; iHit < hits.size(); iHit++) {
     hit = hits[iHit]->hit();
     TrajectoryStateOnSurface state =
         (iHit == 0) ? propagator_->propagate(fts, trackerGeometry_->idToDet(hit->geographicalId())->surface())
                     : propagator_->propagate(updatedState, trackerGeometry_->idToDet(hit->geographicalId())->surface());
+
+if(vvv){
+edm::LogPrint("AAA") << "      BBB-S " << __LINE__
+<< " iHit=" << iHit
+<< " hit.rawId=" << hit->rawId()
+<< " hit.lp=" << hit->localPosition()
+<< " hit.gp=" << hit->globalPosition()
+;
+
+edm::LogPrint("AAA") << "      BBB-S " << __LINE__
+<< " iHit=" << iHit
+<< " hit.rawId=" << hit->rawId()
+<< " seedHits.size=" << seedHits.size()
+<< " state.isValid=" << state.isValid()
+;}
+
     if (!state.isValid())
       return;
 
@@ -180,15 +220,37 @@ void SeedFromConsecutiveHitsCreator::buildSeed(TrajectorySeedCollection& seedCol
 
     std::unique_ptr<BaseTrackerRecHit> newtth(refitHit(tth, state));
 
+if(vvv){
+edm::LogPrint("AAA") << "      BBB-S " << __LINE__
+<< " iHit=" << iHit
+<< " hit.rawId=" << hit->rawId()
+<< " seedHits.size=" << seedHits.size()
+<< " checkHit=" << checkHit(state, &*newtth)
+;}
+
     if (!checkHit(state, &*newtth))
       return;
 
     updatedState = updator.update(state, *newtth);
+
+if(vvv){
+edm::LogPrint("AAA") << "      BBB-S " << __LINE__
+<< " iHit=" << iHit
+<< " hit.rawId=" << hit->rawId()
+<< " seedHits.size=" << seedHits.size()
+<< " updatedState.isValid=" << updatedState.isValid()
+;}
+
     if (!updatedState.isValid())
       return;
 
     seedHits.push_back(newtth.release());
   }
+
+if(vvv){
+edm::LogPrint("AAA") << "      BBB-S " << __LINE__
+<< " (seedCollection.emplace_back) hit=" << hit
+;}
 
   if (!hit)
     return;

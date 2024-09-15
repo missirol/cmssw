@@ -88,6 +88,8 @@ void SeedGeneratorFromProtoTracksEDProducer::produce(edm::Event& ev, const edm::
 
   const TrackCollection& protos = *(trks.product());
 
+bool const vvv = (moduleDescription().moduleLabel() == "hltIter0IterL3MuonPixelSeedsFromPixelTracksPPOnAA");
+
   edm::Handle<reco::VertexCollection> vertices;
   bool foundVertices = ev.getByToken(theInputVertexCollectionTag, vertices);
   //const reco::VertexCollection & vertices = *(h_vertices.product());
@@ -128,18 +130,48 @@ void SeedGeneratorFromProtoTracksEDProducer::produce(edm::Event& ev, const edm::
     if (!keepTrack)
       continue;
 
+
+if(vvv){
+edm::LogPrint("AAA") << "XXX0 " << __LINE__
+<< " pt=" << proto.pt()
+<< " eta=" << proto.eta()
+<< " phi=" << proto.phi()
+;}
+
+if(vvv){
+edm::LogPrint("AAA") << "    " << __LINE__
+<< " v.x=" << proto.vertex().x()
+<< " v.y=" << proto.vertex().y()
+<< " v.z=" << proto.vertex().z()
+;}
+
     if (useProtoTrackKinematics) {
       SeedFromProtoTrack seedFromProtoTrack(config_, proto, es);
       if (seedFromProtoTrack.isValid())
         (*result).push_back(seedFromProtoTrack.trajectorySeed());
     } else {
       std::vector<Hit> hits;
+
       for (unsigned int iHit = 0, nHits = proto.recHitsSize(); iHit < nHits; ++iHit) {
         TrackingRecHitRef refHit = proto.recHit(iHit);
         if (refHit->isValid())
           hits.push_back((Hit) & (*refHit));
       }
       sort(hits.begin(), hits.end(), HitLessByRadius());
+
+if(vvv){
+edm::LogPrint("AAA") << "    " << __LINE__
+<< " proto.recHitsSize=" << proto.recHitsSize()
+<< " hits=" << hits.size()
+;}
+
+if(vvv){
+for(auto const& rh : hits){
+edm::LogPrint("AAA") << "        " << __LINE__
+<< " rh.lp=" << rh->localPosition()
+<< " rh.gp=" << rh->globalPosition()
+;}}
+
 
       if (hits.size() > 1) {
         double mom_perp =
@@ -148,12 +180,18 @@ void SeedGeneratorFromProtoTracksEDProducer::produce(edm::Event& ev, const edm::
 
         seedCreator_.init(region, es, nullptr);
         if (hits.size() > 3 and not includeFourthHit_)
-          seedCreator_.makeSeed(*result, {hits[0], hits[1], hits[2]});
+          seedCreator_.makeSeed(*result, {hits[0], hits[1], hits[2]}, vvv);
         else
-          seedCreator_.makeSeed(*result, hits);
+          seedCreator_.makeSeed(*result, hits, vvv);
       }
     }
   }
+
+if(vvv){
+edm::LogPrint("AAA") << "        " << __LINE__
+<< " result.size=" << result->size()
+;}
+
 
   ev.put(std::move(result));
   if (produceComplement_)
