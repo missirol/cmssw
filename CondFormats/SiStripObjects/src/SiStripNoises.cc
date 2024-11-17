@@ -1,4 +1,5 @@
 #include "CondFormats/SiStripObjects/interface/SiStripNoises.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include <iostream>
 #include <algorithm>
@@ -112,12 +113,13 @@ void SiStripNoises::encode(const InputVector& Vi, std::vector<unsigned char>& Vo
 
 //============ Methods for bulk-decoding all noises for a module ================
 
-void SiStripNoises::allNoises(std::vector<float>& noises, const Range& range) const {
+bool SiStripNoises::allNoises(std::vector<float>& noises, const Range& range) const {
   size_t mysize = ((range.second - range.first) << 3) / 9;
   size_t size = noises.size();
-  if (mysize < size)
-    throw cms::Exception("CorruptedData") << "[SiStripNoises::allNoises] Requested noise for " << noises.size()
-                                          << " strips, I have it only for " << mysize << " strips\n";
+  if (mysize < size) {
+    edm::LogError("SiStripNoises") << "[SiStripNoises::allNoises] Failure: requested noise for " << noises.size() << " strips, I have it only for " << mysize << " strips. The data from this module might be corrupted.";
+    return false;
+  }
   size_t size8 = size & (~0x7), carry = size & 0x7;  // we have an optimized way of unpacking 8 strips
   const uint8_t* ptr = (&*range.second) - 1;
   std::vector<float>::iterator out = noises.begin(), end8 = noises.begin() + size8;
@@ -146,6 +148,7 @@ void SiStripNoises::allNoises(std::vector<float>& noises, const Range& range) co
     *out = static_cast<float>(get9bits(ptr, rem) / 10.0f);
     ++out;
   }
+  return true;
 }
 
 /*

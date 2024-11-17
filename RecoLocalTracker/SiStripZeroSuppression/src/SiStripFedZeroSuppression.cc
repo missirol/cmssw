@@ -256,7 +256,7 @@ void SiStripFedZeroSuppression::suppress(const edm::DetSet<SiStripRawDigi>& in, 
   }
 }
 
-void SiStripFedZeroSuppression::fillThresholds_(const uint32_t detID, size_t size) {
+bool SiStripFedZeroSuppression::fillThresholds_(const uint32_t detID, size_t size) {
   SiStripNoises::Range detNoiseRange = noise_->getRange(detID);
   SiStripThreshold::Range detThRange = threshold_->getRange(detID);
 
@@ -268,7 +268,13 @@ void SiStripFedZeroSuppression::fillThresholds_(const uint32_t detID, size_t siz
     lowThrSN_.resize(size);
   }
 
-  noise_->allNoises(noises_, detNoiseRange);
+  bool const allNoisesFilled = noise_->allNoises(noises_, detNoiseRange);
+
+  if (not allNoisesFilled) {
+    edm::LogError("SiStripZeroSuppression") << "[SiStripFedZeroSuppression::fillThresholds_] Failure in SiStripNoises::allNoises for detId " << detID;
+    return false;
+  }
+
   threshold_->allThresholds(lowThrSN_, highThrSN_, detThRange);  // thresholds as S/N
   for (size_t strip = 0; strip < size; ++strip) {
     float noise = noises_[strip];
@@ -281,6 +287,8 @@ void SiStripFedZeroSuppression::fillThresholds_(const uint32_t detID, size_t siz
     //   Apparently the optimized code inlines differently and this changes the roundoff.
     //   The +1e-6 fixes the problem.   [GPetruc]
   }
+
+  return true;
 }
 
 void SiStripFedZeroSuppression::suppress(const std::vector<int16_t>& in,
@@ -295,7 +303,12 @@ void SiStripFedZeroSuppression::suppress(const std::vector<int16_t>& in,
         << " size = " << in.size();
 #endif
 
-  fillThresholds_(detID, size + firstAPV * 128);  // want to decouple this from the other cost
+  bool const thresholdFilled = fillThresholds_(detID, size + firstAPV * 128);  // want to decouple this from the other cost
+
+  if (not thresholdFilled) {
+    edm::LogError("SiStripZeroSuppression") << "[SiStripFedZeroSuppression::suppress] Error from fillThresholds_ method. Skipping detId " << detID;
+    return;
+  }
 
   std::vector<int16_t>::const_iterator in_iter = in.begin();
   uint16_t strip = firstAPV * 128;

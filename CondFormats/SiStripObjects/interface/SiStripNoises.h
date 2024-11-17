@@ -76,7 +76,7 @@ public:
     return getNoiseFast(strip, range);
   }
 
-  void allNoises(std::vector<float>& noises, const Range& range) const;
+  bool allNoises(std::vector<float>& noises, const Range& range) const;
   void setData(float noise_, InputVector& vped);
 
   void printDebug(std::stringstream& ss, const TrackerTopology* trackerTopo) const;
