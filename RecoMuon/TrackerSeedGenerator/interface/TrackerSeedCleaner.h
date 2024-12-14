@@ -18,7 +18,6 @@
 #include "RecoTracker/TransientTrackingRecHit/interface/TkTransientTrackingRecHitBuilder.h"
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"
 #include "RecoTracker/TkTrackingRegions/interface/RectangularEtaPhiTrackingRegion.h"
-#include "RecoMuon/TrackerSeedGenerator/interface/RedundantSeedCleaner.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
@@ -62,13 +61,14 @@ public:
   virtual void setEvent(const edm::Event&);
 
 private:
+  std::vector<TrajectorySeed> define(std::vector<TrajectorySeed> const& coll) const;
+
   const MuonServiceProxy* theProxyService;
   const edm::Event* theEvent;
 
   edm::InputTag theBeamSpotTag;  //beam spot
   edm::Handle<reco::BeamSpot> bsHandle_;
   edm::EDGetTokenT<reco::BeamSpot> beamspotToken_;
-  RedundantSeedCleaner* theRedundantCleaner;
 
   std::string builderName_;
   edm::ESHandle<TransientTrackingRecHitBuilder> theTTRHBuilder;

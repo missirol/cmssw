@@ -102,15 +102,17 @@ void TSGFromL2Muon::produce(edm::Event& ev, const edm::EventSetup& es) {
 
     //Run seed generator to fill seed container
     theTkSeedGenerator->trackerSeeds(staCand, *region, tTopo, tkSeeds);
-
+edm::LogPrint("TTT") << "TSGFromL2Muon " << __LINE__;
     //Seed Cleaner From Direction
     if (theSeedCleaner) {
       theSeedCleaner->clean(muRef, *region, tkSeeds);
     }
 
+edm::LogPrint("TTT") << "TSGFromL2Muon " << __LINE__;
     for (unsigned int is = 0; is != tkSeeds.size(); ++is) {
       result->push_back(L3MuonTrajectorySeed(tkSeeds[is], muRef));
     }
+edm::LogPrint("TTT") << "TSGFromL2Muon " << __LINE__;
   }
 
   //ADDME: remove seed duplicate, keeping the ref to L2
