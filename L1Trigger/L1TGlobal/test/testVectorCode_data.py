@@ -337,3 +337,25 @@ if dump:
     outfile = open('dump_testVectorCode_data_'+repr(job)+'.py','w')
     print(process.dumpPython(), file=outfile)
     outfile.close()
+
+#### EDITS
+process.options.numberOfThreads = 1
+process.options.numberOfThreads = 0
+
+process.source.fileNames = ['root://eoscms.cern.ch//eos/cms/store/data/Run2024I/EphemeralHLTPhysics2/RAW/v1/000/386/593/00000/184a7ffb-babe-47de-a3f8-9a4190b2b011.root']
+
+del process.MessageLogger
+process.load('FWCore.MessageService.MessageLogger_cfi')
+
+from L1Trigger.L1TGlobal.l1tAcceptAnalyzer_cfi import l1tAcceptAnalyzer as _l1tAcceptAnalyzer
+process.l1tAcceptAnalyzer = _l1tAcceptAnalyzer.clone(
+  globalAlgoBlocks = 'gtStage2Digis',
+  globalObjectMapRecord = 'simGtStage2Digis',
+)
+
+process.p1 = cms.Path(
+     process.RawToDigi
+    *process.simGtExtFakeProd
+    *process.simGtStage2Digis
+    *process.l1tAcceptAnalyzer
+)
