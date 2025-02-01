@@ -15,7 +15,7 @@
 #include "Mahi.h"
 
 #ifdef HCAL_MAHI_GPUDEBUG
-#define DETID_TO_DEBUG 1125647428
+#define DETID_TO_DEBUG 1164996613
 #endif
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
@@ -40,11 +40,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 #endif
       }
 
-      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_time_slew_delay(float const fC,
-                                                                   float const tzero,
+      ALPAKA_FN_ACC ALPAKA_FN_INLINE float compute_time_slew_delay(float const log_fC,
                                                                    float const slope,
+                                                                   float const tzero,
                                                                    float const tmax) {
-        auto const rawDelay = tzero + slope * std::log(fC);
+        auto const rawDelay = std::fmaf(log_fC, slope, tzero);
         return rawDelay < 0 ? 0 : (rawDelay > tmax ? tmax : rawDelay);
       }
 
@@ -113,7 +113,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                                                                           float const par2,
                                                                           float const par3,
                                                                           float const x) {
-        return par3 * x * x + par2 * x + par1;
+        return std::fmaf(par3, x * x, std::fmaf(par2, x, par1));
       }
 
       // compute the charge using the adc, qie type and the appropriate qie shape array
@@ -122,8 +122,9 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         auto const range = qieType == 0 ? (adc >> 5) & 0x3 : (adc >> 6) & 0x3;
         auto const* qieShapeToUse = qieType == 0 ? qie8shape : qie11shape;
         auto const nbins = qieType == 0 ? 32 : 64;
-        auto const center = adc % nbins == nbins - 1 ? 0.5 * (3 * qieShapeToUse[adc] - qieShapeToUse[adc - 1])
-                                                     : 0.5 * (qieShapeToUse[adc] + qieShapeToUse[adc + 1]);
+        auto const center = adc % nbins == nbins - 1
+                                ? 0.5f * std::fmaf(3.f, qieShapeToUse[adc], -qieShapeToUse[adc - 1])
+                                : 0.5f * std::fmaf(1.f, qieShapeToUse[adc], qieShapeToUse[adc + 1]);
         auto const index = get_qiecoder_index(capid, range);
         return (center - qieOffsets[index]) / qieSlopes[index];
       }
@@ -204,17 +205,19 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         int const bin_0_start = offset_start < bin_start_up ? bin_start - 1 : bin_start;
         int const its_start = i_start / ns_per_bx;
         int const distTo25ns_start = ns_per_bx - 1 - i_start % ns_per_bx;
-        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5;
+        auto const factor = offset_start - static_cast<float>(bin_0_start) - 0.5f;
 
         auto const sample_over10ts = sample + shift;
         float value = 0.0f;
         if (sample_over10ts == its_start) {
-          value = bin_0_start == -1
-                      ? accVarLenIdxMinusOneVec[distTo25ns_start] + factor * diffVarItvlIdxMinusOneVec[distTo25ns_start]
-                      : accVarLenIdxZeroVec[distTo25ns_start] + factor * diffVarItvlIdxZeroVec[distTo25ns_start];
+          value =
+              bin_0_start == -1
+                  ? std::fmaf(
+                        factor, diffVarItvlIdxMinusOneVec[distTo25ns_start], accVarLenIdxMinusOneVec[distTo25ns_start])
+                  : std::fmaf(factor, diffVarItvlIdxZeroVec[distTo25ns_start], accVarLenIdxZeroVec[distTo25ns_start]);
         } else if (sample_over10ts > its_start) {
           int const bin_idx = distTo25ns_start + 1 + (sample_over10ts - its_start - 1) * ns_per_bx + bin_0_start;
-          value = acc25nsVec[bin_idx] + factor * diff25nsItvlVec[bin_idx];
+          value = std::fmaf(factor, diff25nsItvlVec[bin_idx], acc25nsVec[bin_idx]);
         }
         return value;
       }
@@ -252,7 +255,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
             sipmq += shrChargeMinusPedestal[lch * nsamplesForCompute + ts];
           auto const effectivePixelsFired = sipmq / fcByPE;
           auto const factor = compute_reco_correction_factor(parLin1, parLin2, parLin3, effectivePixelsFired);
-          rawCharge = (charge - pedestal) * factor + pedestal;
+          rawCharge = std::fmaf(charge - pedestal, factor, pedestal);
 
 #ifdef HCAL_MAHI_GPUDEBUG
           printf("first = %d last = %d sipmQ = %f factor = %f rawCharge = %f\n", first, last, sipmq, factor, rawCharge);
@@ -628,7 +631,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 auto const amplitude = rawCharge - pedestalToUseForMethod0;
                 auto const noiseADC = (1. / std::sqrt(12)) * dfc;
                 auto const noisePhotoSq = amplitude > pedestalWidth ? (amplitude * fcByPE) : 0.f;
-                auto const noiseTerm = noiseADC * noiseADC + noisePhotoSq + pedestalWidth * pedestalWidth;
+                auto const noiseTerm =
+                    std::fmaf(noiseADC, noiseADC, std::fmaf(pedestalWidth, pedestalWidth, noisePhotoSq));
 
                 // store to global memory
                 amplitudesForChannel[sampleWithinWindow] = amplitude;
@@ -689,8 +693,9 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   // need to correct by slew
                   // requires an accumulator -> more shared mem -> omit here unless
                   // really needed
-                  float const time =
-                      max_energy > 0.f && max_energy_1 > 0.f ? 25.f * (position + max_energy_1 / sum) : 25.f * position;
+                  float const time = max_energy > 0.f && max_energy_1 > 0.f
+                                         ? 25.f * std::fmaf(max_energy_1, 1.f / sum, position)
+                                         : 25.f * position;
 
                   // store method0 quantities to global mem
                   outputGPU.detId()[gch] = id;
@@ -854,13 +859,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
                 auto t0 = meanTime;
                 if (applyTimeSlew) {
-                  if (amplitude <= 1.0f)
-                    t0 += compute_time_slew_delay(1.0, tzeroTimeSlew, slopeTimeSlew, tmaxTimeSlew);
-                  else
-                    t0 += compute_time_slew_delay(amplitude, tzeroTimeSlew, slopeTimeSlew, tmaxTimeSlew);
+                  float const log_amp = std::log(std::max(1.f, amplitude));
+                  t0 += compute_time_slew_delay(log_amp, slopeTimeSlew, tzeroTimeSlew, tmaxTimeSlew);
                 }
-                auto const t0m = -deltaT + t0;
-                auto const t0p = deltaT + t0;
+                auto const t0m = t0 - deltaT;
+                auto const t0p = t0 + deltaT;
 
 #ifdef HCAL_MAHI_GPUDEBUG
                 if (sample == 0 && ipulse == 0) {
@@ -944,8 +947,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
             auto const tmpmcol = valueM_col - value_col;
 
             // diagonal
-            auto tmp_value = 0.5 * (tmppcol * tmppcol + tmpmcol * tmpmcol);
-            covarianceMatrix(col, col) += ampl2 * tmp_value;
+            auto tmp_value = 0.5f * std::fmaf(tmppcol, tmppcol, tmpmcol * tmpmcol);
+            covarianceMatrix(col, col) = std::fmaf(ampl2, tmp_value, covarianceMatrix(col, col));
 
             // FIXME: understand if this actually gets unrolled
             CMS_UNROLL_LOOP
@@ -957,9 +960,9 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
               float tmpprow = valueP_row - value_row;
               float tmpmrow = valueM_row - value_row;
 
-              auto const covValue = 0.5 * (tmppcol * tmpprow + tmpmcol * tmpmrow);
+              auto const covValue = 0.5f * std::fmaf(tmppcol, tmpprow, tmpmcol * tmpmrow);
 
-              covarianceMatrix(row, col) += ampl2 * covValue;
+              covarianceMatrix(row, col) = std::fmaf(ampl2, covValue, covarianceMatrix(row, col));
             }
           }
         }
@@ -1030,10 +1033,15 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   useEffectivePedestals && (gch < f01HEDigis.size() || gch >= nchannelsf015)
                       ? mahi.effectivePedestalWidths()[hashedId].data()
                       : mahi.pedestals_width()[hashedId].data();
-              auto const averagePedestalWidth2 = 0.25 * (pedestalWidthsForChannel[0] * pedestalWidthsForChannel[0] +
-                                                         pedestalWidthsForChannel[1] * pedestalWidthsForChannel[1] +
-                                                         pedestalWidthsForChannel[2] * pedestalWidthsForChannel[2] +
-                                                         pedestalWidthsForChannel[3] * pedestalWidthsForChannel[3]);
+
+              auto const averagePedestalWidth2 =
+                  0.25f * std::fmaf(pedestalWidthsForChannel[0],
+                                    pedestalWidthsForChannel[0],
+                                    std::fmaf(pedestalWidthsForChannel[1],
+                                              pedestalWidthsForChannel[1],
+                                              std::fmaf(pedestalWidthsForChannel[2],
+                                                        pedestalWidthsForChannel[2],
+                                                        pedestalWidthsForChannel[3] * pedestalWidthsForChannel[3])));
 
               // FIXME on cpu ts 0 capid was used - does it make any difference
               auto const gain = mahi.gains_value()[hashedId][0];
@@ -1106,8 +1114,10 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                 for (unsigned int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::stride; counter++) {
                   covarianceMatrix(counter, counter) += noiseTermsView.coeffRef(counter);
                   if (counter != 0)
-                    covarianceMatrix(counter, counter - 1) +=
-                        noisecorr * noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter);
+                    covarianceMatrix(counter, counter - 1) =
+                        std::fmaf(noisecorr,
+                                  noiseElectronicView.coeffRef(counter - 1) * noiseElectronicView.coeffRef(counter),
+                                  covarianceMatrix(counter, counter - 1));
                 }
 
                 // update covariance matrix
@@ -1172,7 +1182,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   float sum = 0.f;
                   CMS_UNROLL_LOOP
                   for (int counter = 0; counter < NSAMPLES; counter++)
-                    sum += reg_ai[counter] * reg_ai[counter];
+                    sum = std::fmaf(reg_ai[counter], reg_ai[counter], sum);
 
                   // store
                   AtA(icol, icol) = sum;
@@ -1190,7 +1200,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                     float sum = 0.f;
                     CMS_UNROLL_LOOP
                     for (int counter = 0; counter < NSAMPLES; counter++)
-                      sum += reg_aj[counter] * reg_ai[counter];
+                      sum = std::fmaf(reg_aj[counter], reg_ai[counter], sum);
 
                     // store
                     //AtA(icol, j) = sum;
@@ -1201,7 +1211,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   float sum_atb = 0;
                   CMS_UNROLL_LOOP
                   for (int counter = 0; counter < NSAMPLES; counter++)
-                    sum_atb += reg_ai[counter] * reg_b[counter];
+                    sum_atb = std::fmaf(reg_ai[counter], reg_b[counter], sum_atb);
 
                   // store atb
                   Atb(icol) = sum_atb;
