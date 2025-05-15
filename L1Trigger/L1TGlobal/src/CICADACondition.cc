@@ -40,22 +40,23 @@ l1t::CICADACondition& l1t::CICADACondition::operator=(const l1t::CICADACondition
 }
 
 const bool l1t::CICADACondition::evaluateCondition(const int bxEval) const {
-  bool condResult = false;
-  const float cicadaScore = m_uGtB->getCICADAScore();
+
+  auto const* cicadaScoreBXVec = m_uGtB->getCandL1CICADAScore();
+
+  if (cicadaScoreBXVec->isEmpty(bxEval)) {
+    return false;
+  }
+
+  float const cicadaScore = cicadaScoreBXVec->at(bxEval, 0);
 
   // This gets rid of a GT emulator convention "iCondition".
   // This usually indexes the next line, which is somewhat concerning
   // AXOL1TL operates this way, but it should be checked
   const CICADATemplate::ObjectParameter objPar = (*(m_gtCICADATemplate->objectParameter()))[0];
 
-  bool condGEqVal = m_gtCICADATemplate->condGEq();
-  bool passCondition = false;
+  bool const condGEqVal = m_gtCICADATemplate->condGEq();
 
-  passCondition = checkCut(objPar.minCICADAThreshold, cicadaScore, condGEqVal);
-
-  condResult |= passCondition;
-
-  return condResult;
+  return checkCut(objPar.minCICADAThreshold, cicadaScore, condGEqVal);
 }
 
 void l1t::CICADACondition::print(std::ostream& myCout) const {
