@@ -8,28 +8,25 @@ Implementation:
 Matching can be done on the xi and/or mass+rapidity variables, using the do_xi and do_my booleans. If both are set to true, both matching conditions must be met
 */
 
-// include files
-#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/stream/EDFilter.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+
+#include "CondTools/RunInfo/interface/LHCInfoCombined.h"
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 #include "DataFormats/ProtonReco/interface/ForwardProton.h"
+#include "DataFormats/ProtonReco/interface/ForwardProtonFwd.h"
 
-#include "CondTools/RunInfo/interface/LHCInfoCombined.h"
-
-#include "FWCore/Framework/interface/MakerMacros.h"
-
-// class declaration
-//
 class HLTPPSJetComparisonFilter : public edm::stream::EDFilter<> {
 public:
   explicit HLTPPSJetComparisonFilter(const edm::ParameterSet &);
-  ~HLTPPSJetComparisonFilter() override;
+  ~HLTPPSJetComparisonFilter() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions &);
 
@@ -44,28 +41,21 @@ private:
   const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd> lhcInfoPerFillToken_;
   const bool useNewLHCInfo_;
 
-  edm::ParameterSet param_;
+  const edm::EDGetTokenT<reco::PFJetCollection> jetToken_;
+  const edm::EDGetTokenT<reco::ForwardProtonCollection> recoProtonSingleRPToken_;
 
-  edm::InputTag jetInputTag_;  // Input tag identifying the jet track
-  edm::EDGetTokenT<reco::PFJetCollection> jet_token_;
+  const double maxDiffxi_;
+  const double maxDiffm_;
+  const double maxDiffy_;
 
-  edm::InputTag forwardProtonInputTag_;  // Input tag identifying the forward proton collection
-  edm::EDGetTokenT<std::vector<reco::ForwardProton>> recoProtonSingleRPToken_;
+  const unsigned int nJets_;
 
-  double maxDiffxi_;
-  double maxDiffm_;
-  double maxDiffy_;
+  const bool do_xi_;
+  const bool do_my_;
 
-  unsigned int n_jets_;
-
-  bool do_xi_;
-  bool do_my_;
-
-  float sqrt_s_;
+  float comEnergy_;
 };
 
-// fill descriptions
-//
 void HLTPPSJetComparisonFilter::fillDescriptions(edm::ConfigurationDescriptions &descriptions) {
   edm::ParameterSetDescription desc;
 
@@ -95,10 +85,6 @@ void HLTPPSJetComparisonFilter::fillDescriptions(edm::ConfigurationDescriptions 
   return;
 }
 
-// destructor and constructor
-//
-HLTPPSJetComparisonFilter::~HLTPPSJetComparisonFilter() = default;
-
 HLTPPSJetComparisonFilter::HLTPPSJetComparisonFilter(const edm::ParameterSet &iConfig)
     : lhcInfoToken_(esConsumes<edm::Transition::BeginLuminosityBlock>(
           edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoLabel")))),
@@ -108,66 +94,61 @@ HLTPPSJetComparisonFilter::HLTPPSJetComparisonFilter(const edm::ParameterSet &iC
           edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerFillLabel")))),
       useNewLHCInfo_(iConfig.getParameter<bool>("useNewLHCInfo")),
 
-      jetInputTag_(iConfig.getParameter<edm::InputTag>("jetInputTag")),
-      jet_token_(consumes<reco::PFJetCollection>(jetInputTag_)),
-
-      forwardProtonInputTag_(iConfig.getParameter<edm::InputTag>("forwardProtonInputTag")),
-      recoProtonSingleRPToken_(consumes<std::vector<reco::ForwardProton>>(forwardProtonInputTag_)),
+      jetToken_(consumes(iConfig.getParameter<edm::InputTag>("jetInputTag"))),
+      recoProtonSingleRPToken_(consumes(iConfig.getParameter<edm::InputTag>("forwardProtonInputTag"))),
 
       maxDiffxi_(iConfig.getParameter<double>("maxDiffxi")),
       maxDiffm_(iConfig.getParameter<double>("maxDiffm")),
       maxDiffy_(iConfig.getParameter<double>("maxDiffy")),
 
-      n_jets_(iConfig.getParameter<unsigned int>("nJets")),
+      nJets_(iConfig.getParameter<unsigned int>("nJets")),
 
       do_xi_(iConfig.getParameter<bool>("do_xi")),
       do_my_(iConfig.getParameter<bool>("do_my")),
 
-      sqrt_s_(0.f) {}
+      comEnergy_(0.f) {}
 
-// member functions
-//
 void HLTPPSJetComparisonFilter::beginLuminosityBlock(edm::LuminosityBlock const &, edm::EventSetup const &iSetup) {
   LHCInfoCombined const lhcInfoCombined{
       iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_};
-  sqrt_s_ = 2. * lhcInfoCombined.energy;
+  comEnergy_ = 2.f * lhcInfoCombined.energy;
 
-  if (sqrt_s_ <= 0.f) {
+  if (comEnergy_ <= 0.f) {
     edm::LogError("HLTPPSJetComparisonFilter")
-        << "Invalid value of center-of-mass energy from LHCInfo (" << lhcInfoCombined.energy
-        << "), returning false for all events in this LuminosityBlock.";
+        << "Invalid value of beam energy from LHCInfoCombined (" << lhcInfoCombined.energy
+        << "), returning \"false\" for all the events in this LuminosityBlock.";
   }
 }
 
 bool HLTPPSJetComparisonFilter::filter(edm::Event &iEvent, edm::EventSetup const &iSetup) {
-  if (sqrt_s_ <= 0) {
+  if (comEnergy_ <= 0.f) {
     return false;
   }
 
-  edm::Handle<reco::PFJetCollection> jets;
-  iEvent.getByToken(jet_token_, jets);  // get jet collection
+  // get jet collection
+  auto const &jets = iEvent.get(jetToken_);
 
-  edm::Handle<std::vector<reco::ForwardProton>> recoSingleRPProtons;
-  iEvent.getByToken(recoProtonSingleRPToken_, recoSingleRPProtons);  // get RP proton collection
+  // get RP proton collection
+  auto const &recoSingleRPProtons = iEvent.get(recoProtonSingleRPToken_);
 
-  if (jets->size() < n_jets_)
+  if (jets.size() < nJets_)
     return false;  // test for nr jets
 
   if (do_xi_ && maxDiffxi_ > 0) {  // xi matching bloc
 
     float sum45 = 0, sum56 = 0;
 
-    for (unsigned int i = 0; i < n_jets_; i++) {
-      sum45 += (*jets)[i].energy() + (*jets)[i].pz();
-      sum56 += (*jets)[i].energy() - (*jets)[i].pz();
+    for (unsigned int i = 0; i < nJets_; i++) {
+      sum45 += jets[i].energy() + jets[i].pz();
+      sum56 += jets[i].energy() - jets[i].pz();
     }
 
-    const float xi45 = sum45 / sqrt_s_;  // get arm45 xi for n leading-pT jets
-    const float xi56 = sum56 / sqrt_s_;  // get arm56 xi for n leading-pT jets
+    const float xi45 = sum45 / comEnergy_;  // get arm45 xi for n leading-pT jets
+    const float xi56 = sum56 / comEnergy_;  // get arm56 xi for n leading-pT jets
 
     float min45 = 1000., min56 = 1000.;
 
-    for (const auto &proton : *recoSingleRPProtons)  // cycle over proton tracks
+    for (const auto &proton : recoSingleRPProtons)  // cycle over proton tracks
     {
       if (proton.validFit())  // Check that the track fit is valid
       {
@@ -191,13 +172,13 @@ bool HLTPPSJetComparisonFilter::filter(edm::Event &iEvent, edm::EventSetup const
 
     // get the mass and rap of the n jets
     ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float>> j_sum;
-    for (unsigned int i = 0; i < n_jets_; i++)
-      j_sum = j_sum + (*jets)[i].p4();
+    for (unsigned int i = 0; i < nJets_; i++)
+      j_sum = j_sum + jets[i].p4();
 
     const auto &mjet = j_sum.M();
     const auto &yjet = j_sum.Rapidity();
 
-    for (const auto &proton1 : *recoSingleRPProtons)  // cycle over first RP (only arm45)
+    for (const auto &proton1 : recoSingleRPProtons)  // cycle over first RP (only arm45)
     {
       if (proton1.validFit()) {
         CTPPSDetId rpId1(
@@ -205,7 +186,7 @@ bool HLTPPSJetComparisonFilter::filter(edm::Event &iEvent, edm::EventSetup const
         if (rpId1.arm() == 0) {
           const auto &xi_45 = proton1.xi();
 
-          for (const auto &proton2 : *recoSingleRPProtons)  // cycle over second RP (only arm56)
+          for (const auto &proton2 : recoSingleRPProtons)  // cycle over second RP (only arm56)
           {
             if (proton2.validFit()) {
               CTPPSDetId rpId2((*proton2.contributingLocalTracks().begin())->rpId());
@@ -213,7 +194,7 @@ bool HLTPPSJetComparisonFilter::filter(edm::Event &iEvent, edm::EventSetup const
                 const auto &xi_56 = proton2.xi();
 
                 // m, y matching tests
-                const auto m = sqrt_s_ * sqrt(xi_45 * xi_56);
+                const auto m = comEnergy_ * sqrt(xi_45 * xi_56);
                 const auto y = 0.5f * log(xi_45 / xi_56);
                 if ((std::abs(m - mjet) / mjet < maxDiffm_ || maxDiffm_ <= 0) &&
                     (std::abs(y - yjet) < maxDiffy_ || maxDiffy_ <= 0))
@@ -230,4 +211,5 @@ bool HLTPPSJetComparisonFilter::filter(edm::Event &iEvent, edm::EventSetup const
   return true;  // if none of the fail conds are met, event has passed the trigger
 }
 
+#include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(HLTPPSJetComparisonFilter);
