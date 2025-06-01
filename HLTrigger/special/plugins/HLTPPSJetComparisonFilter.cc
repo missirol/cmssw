@@ -14,6 +14,7 @@ Matching can be done on the xi and/or mass+rapidity variables, using the do_xi a
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/global/EDFilter.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
@@ -119,7 +120,13 @@ HLTPPSJetComparisonFilter::HLTPPSJetComparisonFilter(const edm::ParameterSet &iC
 //
 bool HLTPPSJetComparisonFilter::filter(edm::StreamID, edm::Event &iEvent, const edm::EventSetup &iSetup) const {
   LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
-  float sqs = 2. * lhcInfoCombined.energy;  // get sqrt(s)
+  float const sqs = 2.f * lhcInfoCombined.energy;  // get sqrt(s)
+
+  if (sqs <= 0) {
+    edm::LogError("HLTPPSJetComparisonFilter") << "Invalid value of beam energy from LHCInfoCombined ("
+                                               << lhcInfoCombined.energy << "), rejecting this event.";
+    return false;
+  }
 
   edm::Handle<reco::PFJetCollection> jets;
   iEvent.getByToken(jet_token_, jets);  // get jet collection
