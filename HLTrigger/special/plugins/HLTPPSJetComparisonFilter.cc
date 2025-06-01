@@ -13,7 +13,7 @@ Matching can be done on the xi and/or mass+rapidity variables, using the do_xi a
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/global/EDFilter.h"
+#include "FWCore/Framework/interface/stream/EDFilter.h"
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
@@ -26,13 +26,16 @@ Matching can be done on the xi and/or mass+rapidity variables, using the do_xi a
 
 // class declaration
 //
-class HLTPPSJetComparisonFilter : public edm::global::EDFilter<> {
+class HLTPPSJetComparisonFilter : public edm::stream::EDFilter<> {
 public:
   explicit HLTPPSJetComparisonFilter(const edm::ParameterSet &);
   ~HLTPPSJetComparisonFilter() override;
 
   static void fillDescriptions(edm::ConfigurationDescriptions &);
-  bool filter(edm::StreamID, edm::Event &, const edm::EventSetup &) const override;
+
+  void beginLuminosityBlock(edm::LuminosityBlock const &, edm::EventSetup const &iSetup) override;
+
+  bool filter(edm::Event &iEvent, edm::EventSetup const &iSetup) override;
 
 private:
   // ----------member data ---------------------------
@@ -57,6 +60,8 @@ private:
 
   bool do_xi_;
   bool do_my_;
+
+  float sqrt_s_;
 };
 
 // fill descriptions
@@ -95,9 +100,12 @@ void HLTPPSJetComparisonFilter::fillDescriptions(edm::ConfigurationDescriptions 
 HLTPPSJetComparisonFilter::~HLTPPSJetComparisonFilter() = default;
 
 HLTPPSJetComparisonFilter::HLTPPSJetComparisonFilter(const edm::ParameterSet &iConfig)
-    : lhcInfoToken_(esConsumes(edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoLabel")))),
-      lhcInfoPerLSToken_(esConsumes(edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerLSLabel")))),
-      lhcInfoPerFillToken_(esConsumes(edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerFillLabel")))),
+    : lhcInfoToken_(esConsumes<edm::Transition::BeginLuminosityBlock>(
+          edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoLabel")))),
+      lhcInfoPerLSToken_(esConsumes<edm::Transition::BeginLuminosityBlock>(
+          edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerLSLabel")))),
+      lhcInfoPerFillToken_(esConsumes<edm::Transition::BeginLuminosityBlock>(
+          edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerFillLabel")))),
       useNewLHCInfo_(iConfig.getParameter<bool>("useNewLHCInfo")),
 
       jetInputTag_(iConfig.getParameter<edm::InputTag>("jetInputTag")),
@@ -113,13 +121,28 @@ HLTPPSJetComparisonFilter::HLTPPSJetComparisonFilter(const edm::ParameterSet &iC
       n_jets_(iConfig.getParameter<unsigned int>("nJets")),
 
       do_xi_(iConfig.getParameter<bool>("do_xi")),
-      do_my_(iConfig.getParameter<bool>("do_my")) {}
+      do_my_(iConfig.getParameter<bool>("do_my")),
+
+      sqrt_s_(0.f) {}
 
 // member functions
 //
-bool HLTPPSJetComparisonFilter::filter(edm::StreamID, edm::Event &iEvent, const edm::EventSetup &iSetup) const {
-  LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
-  float sqs = 2. * lhcInfoCombined.energy;  // get sqrt(s)
+void HLTPPSJetComparisonFilter::beginLuminosityBlock(edm::LuminosityBlock const &, edm::EventSetup const &iSetup) {
+  LHCInfoCombined const lhcInfoCombined{
+      iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_};
+  sqrt_s_ = 2. * lhcInfoCombined.energy;
+
+  if (sqrt_s_ <= 0.f) {
+    edm::LogError("HLTPPSJetComparisonFilter")
+        << "Invalid value of center-of-mass energy from LHCInfo (" << lhcInfoCombined.energy
+        << "), returning false for all events in this LuminosityBlock.";
+  }
+}
+
+bool HLTPPSJetComparisonFilter::filter(edm::Event &iEvent, edm::EventSetup const &iSetup) {
+  if (sqrt_s_ <= 0) {
+    return false;
+  }
 
   edm::Handle<reco::PFJetCollection> jets;
   iEvent.getByToken(jet_token_, jets);  // get jet collection
@@ -139,8 +162,8 @@ bool HLTPPSJetComparisonFilter::filter(edm::StreamID, edm::Event &iEvent, const 
       sum56 += (*jets)[i].energy() - (*jets)[i].pz();
     }
 
-    const float xi45 = sum45 / sqs;  // get arm45 xi for n leading-pT jets
-    const float xi56 = sum56 / sqs;  // get arm56 xi for n leading-pT jets
+    const float xi45 = sum45 / sqrt_s_;  // get arm45 xi for n leading-pT jets
+    const float xi56 = sum56 / sqrt_s_;  // get arm56 xi for n leading-pT jets
 
     float min45 = 1000., min56 = 1000.;
 
@@ -190,8 +213,8 @@ bool HLTPPSJetComparisonFilter::filter(edm::StreamID, edm::Event &iEvent, const 
                 const auto &xi_56 = proton2.xi();
 
                 // m, y matching tests
-                const auto &m = sqs * sqrt(xi_45 * xi_56);
-                const auto &y = 0.5 * log(xi_45 / xi_56);
+                const auto m = sqrt_s_ * sqrt(xi_45 * xi_56);
+                const auto y = 0.5f * log(xi_45 / xi_56);
                 if ((std::abs(m - mjet) / mjet < maxDiffm_ || maxDiffm_ <= 0) &&
                     (std::abs(y - yjet) < maxDiffy_ || maxDiffy_ <= 0))
                   return true;  // pass cond, immediately return true
