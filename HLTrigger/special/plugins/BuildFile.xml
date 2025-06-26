@@ -11,6 +11,7 @@
 <use name="DataFormats/CSCDigi"/>
 <use name="DataFormats/CSCRecHit"/>
 <use name="DataFormats/CTPPSDetId"/>
+<use name="DataFormats/CaloTowers"/>
 <use name="DataFormats/Common"/>
 <use name="DataFormats/DTDigi"/>
 <use name="DataFormats/DetId"/>
@@ -28,12 +29,13 @@
 <use name="DataFormats/Math"/>
 <use name="DataFormats/MuonDetId"/>
 <use name="DataFormats/MuonReco"/>
+<use name="DataFormats/RPCRecHit"/>
 <use name="DataFormats/RecoCandidate"/>
+<use name="DataFormats/Scouting"/>
 <use name="DataFormats/TCDS"/>
 <use name="DataFormats/TrackReco"/>
 <use name="DataFormats/TrackerRecHit2D"/>
 <use name="DataFormats/VertexReco"/>
-<use name="DataFormats/RPCRecHit"/>
 <use name="EventFilter/HcalRawToDigi"/>
 <use name="FWCore/Framework"/>
 <use name="FWCore/MessageLogger"/>
