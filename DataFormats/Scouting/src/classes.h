@@ -17,5 +17,6 @@
 #include "DataFormats/Scouting/interface/Run3ScoutingPhoton.h"
 #include "DataFormats/Scouting/interface/Run3ScoutingCaloRecHit.h"
 #include "DataFormats/Scouting/interface/Run3ScoutingCaloTower.h"
+#include "DataFormats/Scouting/interface/Run3ScoutingPFRecHit.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/Common/interface/Ref.h"

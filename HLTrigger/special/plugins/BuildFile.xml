@@ -29,6 +29,7 @@
 <use name="DataFormats/Math"/>
 <use name="DataFormats/MuonDetId"/>
 <use name="DataFormats/MuonReco"/>
+<use name="DataFormats/ParticleFlowReco"/>
 <use name="DataFormats/RPCRecHit"/>
 <use name="DataFormats/RecoCandidate"/>
 <use name="DataFormats/Scouting"/>
