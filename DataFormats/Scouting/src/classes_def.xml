@@ -64,6 +64,9 @@
       <version ClassVersion="3" checksum="316446070"/>
       <version ClassVersion="4" checksum="1670865213"/>
   </class>
+  <class name="Run3ScoutingCaloRecHit" ClassVersion="3">
+      <version ClassVersion="3" checksum="1483478021"/>
+  </class>
   <class name="Run3ScoutingCaloTower" ClassVersion="3">
       <version ClassVersion="3" checksum="2758135228"/>
   </class>
@@ -103,6 +106,7 @@
   <class name="std::vector<Run3ScoutingPhoton>"/>
   <class name="std::vector<Run3ScoutingTrack>"/>
   <class name="std::vector<Run3ScoutingVertex>"/>
+  <class name="std::vector<Run3ScoutingCaloRecHit>"/>
   <class name="std::vector<Run3ScoutingCaloTower>"/>
   <class name="std::vector<ScoutingCaloJet>"/>
   <class name="std::vector<ScoutingElectron>"/>
@@ -120,6 +124,7 @@
   <class name="edm::Wrapper<std::vector<Run3ScoutingPhoton> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingTrack> >"/> 
   <class name="edm::Wrapper<std::vector<Run3ScoutingVertex> >"/>
+  <class name="edm::Wrapper<std::vector<Run3ScoutingCaloRecHit> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingCaloTower> >"/>
   <class name="edm::Wrapper<std::vector<ScoutingCaloJet> >"/>
   <class name="edm::Wrapper<std::vector<ScoutingElectron> >"/>

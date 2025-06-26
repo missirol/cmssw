@@ -56,7 +56,7 @@ process.hltOutputScoutingPF.outputCommands += [
 echo "=================================="
 echo " hlt1 (baseline)"
 echo "=================================="
-cmsRun hlt1.py 2>&1 | tee hlt1.log
+#cmsRun hlt1.py 2>&1 | tee hlt1.log
 
 echo "=================================="
 echo " hlt2 (target)"
