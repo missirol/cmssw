@@ -21,11 +21,13 @@ private:
   void produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const& setup) const final;
 
   const edm::EDGetTokenT<CaloTowerCollection> recoCaloTowersToken_;
+  const double minEnergy_;
   const int mantissaPrecision_;
 };
 
 HLTScoutingCaloTowerProducer::HLTScoutingCaloTowerProducer(const edm::ParameterSet& iConfig)
     : recoCaloTowersToken_(consumes(iConfig.getParameter<edm::InputTag>("src"))),
+      minEnergy_(iConfig.getParameter<double>("minEnergy")),
       mantissaPrecision_(iConfig.getParameter<int>("mantissaPrecision")) {
   produces<Run3ScoutingCaloTowerCollection>();
 }
@@ -38,6 +40,10 @@ void HLTScoutingCaloTowerProducer::produce(edm::StreamID sid, edm::Event& iEvent
   run3ScoutCaloTowers->reserve(recoCaloTowers.size());
 
   for (auto const& recoCaloTower : recoCaloTowers) {
+
+    if (recoCaloTower.energy() < minEnergy_) {
+      continue;
+    }
 
     run3ScoutCaloTowers->emplace_back(
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().pt(), mantissaPrecision_),
@@ -63,7 +69,8 @@ void HLTScoutingCaloTowerProducer::produce(edm::StreamID sid, edm::Event& iEvent
 void HLTScoutingCaloTowerProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag("hltTowerMakerForAll"));
-  desc.add<int>("mantissaPrecision", 10)->setComment("default float16, change to 23 for float32");
+  desc.add<double>("minEnergy", -1)->setComment("Minimum energy of the CaloTower in GeV");
+  desc.add<int>("mantissaPrecision", 10)->setComment("default of 10 corresponds to float16, change to 23 for float32");
   descriptions.add("hltScoutingCaloTowerProducer", desc);
 }
 
