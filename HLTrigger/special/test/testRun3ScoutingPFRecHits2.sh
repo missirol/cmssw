@@ -1,11 +1,11 @@
 #!/bin/bash
 
 inputFiles=($(ls /eos/cms/store/data/Run2025C/HLTPhysics/RAW/v1/000/393/461/*/*.root))
-printf -v joined '%s,' "${inputFiles[@]:0:1}"
+printf -v joined '%s,' "${inputFiles[@]:0:12}"
 inputFilesStr="${joined%,}"
 inputFilesStr=${inputFilesStr//\/eos\/cms/}
 
-hltGetConfiguration /dev/CMSSW_15_0_0/GRun \
+hltGetConfiguration /dev/CMSSW_15_0_0/GRun/V93 \
   --globaltag 150X_dataRun3_HLT_v1 \
   --data \
   --no-prescale \
@@ -72,9 +72,9 @@ process.hltOutputScoutingPF.outputCommands += [
 echo "=================================="
 echo " hlt1 (baseline)"
 echo "=================================="
-#cmsRun hlt1.py 2>&1 | tee hlt1.log
+cmsRun hlt1.py 2>&1 | tee hlt1.log
 
 echo "=================================="
 echo " hlt2 (target)"
 echo "=================================="
-cmsRun hlt2.py 2>&1 | tee hlt2.log
+#cmsRun hlt2.py 2>&1 | tee hlt2.log
