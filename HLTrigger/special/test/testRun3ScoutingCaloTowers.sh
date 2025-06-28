@@ -42,7 +42,7 @@ process.hltOutputScoutingPF.fileName = 'hlt2.root'
 
 process.hltScoutingCaloTowerPacker = cms.EDProducer("HLTScoutingCaloTowerProducer",
   src = cms.InputTag('hltTowerMakerForAll'),
-  minEnergy = cms.double(1),
+  minEnergy = cms.double(-1),
   mantissaPrecision = cms.int32(10),
 )
 
