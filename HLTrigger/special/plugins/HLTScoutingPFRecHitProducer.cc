@@ -47,7 +47,6 @@ void HLTScoutingPFRecHitProducer::produce(edm::StreamID sid, edm::Event& iEvent,
     }
 
     run3ScoutPFRecHits->emplace_back(
-      recoPFRecHit.detId(),
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.energy(), mantissaPrecision_),
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.positionREP().rho(), mantissaPrecision_),
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.positionREP().eta(), mantissaPrecision_),

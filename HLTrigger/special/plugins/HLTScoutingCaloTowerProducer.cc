@@ -46,20 +46,11 @@ void HLTScoutingCaloTowerProducer::produce(edm::StreamID sid, edm::Event& iEvent
     }
 
     run3ScoutCaloTowers->emplace_back(
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().pt(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().eta(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().phi(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().mass(), mantissaPrecision_),
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.emEnergy(), mantissaPrecision_),
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.hadEnergy(), mantissaPrecision_),
       MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.outerEnergy(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.ecalTime(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.hcalTime(), mantissaPrecision_),
-      recoCaloTower.ieta(),
-      recoCaloTower.iphi(),
-      recoCaloTower.numCrystals(),
-      recoCaloTower.constituents().size(),
-      recoCaloTower.towerStatusWord()
+      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().eta(), mantissaPrecision_),
+      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().phi(), mantissaPrecision_)
     );
   }
 

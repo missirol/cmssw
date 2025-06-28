@@ -68,13 +68,10 @@
       <version ClassVersion="3" checksum="1483478021"/>
   </class>
   <class name="Run3ScoutingCaloTower" ClassVersion="3">
-      <version ClassVersion="3" checksum="2758135228"/>
-  </class>
-  <class name="Run3ScoutingCaloTower2" ClassVersion="3">
-      <version ClassVersion="3" checksum="4148999970"/>
+      <version ClassVersion="3" checksum="2309841320"/>
   </class>
   <class name="Run3ScoutingPFRecHit" ClassVersion="3">
-      <version ClassVersion="3" checksum="919099986"/>
+      <version ClassVersion="3" checksum="2035457019"/>
   </class>
   <class name="Run3ScoutingPFRecHit2" ClassVersion="3">
       <version ClassVersion="3" checksum="4008661167"/>
@@ -117,7 +114,6 @@
   <class name="std::vector<Run3ScoutingVertex>"/>
   <class name="std::vector<Run3ScoutingCaloRecHit>"/>
   <class name="std::vector<Run3ScoutingCaloTower>"/>
-  <class name="std::vector<Run3ScoutingCaloTower2>"/>
   <class name="std::vector<Run3ScoutingPFRecHit>"/>
   <class name="std::vector<Run3ScoutingPFRecHit2>"/>
   <class name="std::vector<ScoutingCaloJet>"/>
@@ -138,7 +134,6 @@
   <class name="edm::Wrapper<std::vector<Run3ScoutingVertex> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingCaloRecHit> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingCaloTower> >"/>
-  <class name="edm::Wrapper<std::vector<Run3ScoutingCaloTower2> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingPFRecHit> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingPFRecHit2> >"/>
   <class name="edm::Wrapper<std::vector<ScoutingCaloJet> >"/>
