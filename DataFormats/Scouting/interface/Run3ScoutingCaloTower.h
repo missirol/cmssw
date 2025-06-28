@@ -10,23 +10,10 @@
 
 class Run3ScoutingCaloTower {
 public:
-  Run3ScoutingCaloTower(float emEnergy,
-                         float hadEnergy,
-                         float outerEnergy,
-                         float eta,
-                         float phi)
-      : emEnergy_{emEnergy},
-        hadEnergy_{hadEnergy},
-        outerEnergy_{outerEnergy},
-        eta_{eta},
-        phi_{phi} {}
+  Run3ScoutingCaloTower(float emEnergy, float hadEnergy, float outerEnergy, float eta, float phi)
+      : emEnergy_{emEnergy}, hadEnergy_{hadEnergy}, outerEnergy_{outerEnergy}, eta_{eta}, phi_{phi} {}
 
-  Run3ScoutingCaloTower()
-      : emEnergy_{0},
-        hadEnergy_{0},
-        outerEnergy_{0},
-        eta_{0},
-        phi_{0} {}
+  Run3ScoutingCaloTower() : emEnergy_{0}, hadEnergy_{0}, outerEnergy_{0}, eta_{0}, phi_{0} {}
 
   float emEnergy() const { return emEnergy_; }
   float hadEnergy() const { return hadEnergy_; }

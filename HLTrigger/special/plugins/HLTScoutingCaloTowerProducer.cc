@@ -18,7 +18,7 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  void produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const& setup) const final;
+  void produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const&) const final;
 
   const edm::EDGetTokenT<CaloTowerCollection> recoCaloTowersToken_;
   const double minEnergy_;
@@ -32,26 +32,23 @@ HLTScoutingCaloTowerProducer::HLTScoutingCaloTowerProducer(const edm::ParameterS
   produces<Run3ScoutingCaloTowerCollection>();
 }
 
-void HLTScoutingCaloTowerProducer::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup const& setup) const {
-
+void HLTScoutingCaloTowerProducer::produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const&) const {
   auto const& recoCaloTowers = iEvent.get(recoCaloTowersToken_);
 
   auto run3ScoutCaloTowers = std::make_unique<Run3ScoutingCaloTowerCollection>();
   run3ScoutCaloTowers->reserve(recoCaloTowers.size());
 
   for (auto const& recoCaloTower : recoCaloTowers) {
-
     if (recoCaloTower.energy() < minEnergy_) {
       continue;
     }
 
     run3ScoutCaloTowers->emplace_back(
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.emEnergy(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.hadEnergy(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.outerEnergy(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().eta(), mantissaPrecision_),
-      MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().phi(), mantissaPrecision_)
-    );
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.emEnergy(), mantissaPrecision_),
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.hadEnergy(), mantissaPrecision_),
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.outerEnergy(), mantissaPrecision_),
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().eta(), mantissaPrecision_),
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().phi(), mantissaPrecision_));
   }
 
   iEvent.put(std::move(run3ScoutCaloTowers));

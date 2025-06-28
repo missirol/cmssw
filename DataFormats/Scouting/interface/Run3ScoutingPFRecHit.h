@@ -9,7 +9,8 @@
 
 class Run3ScoutingPFRecHit {
 public:
-  Run3ScoutingPFRecHit(float energy, float rho, float eta, float phi) : energy_{energy}, rho_{rho}, eta_{eta}, phi_{phi} {}
+  Run3ScoutingPFRecHit(float energy, float rho, float eta, float phi)
+      : energy_{energy}, rho_{rho}, eta_{eta}, phi_{phi} {}
 
   Run3ScoutingPFRecHit() : energy_{0}, rho_{0}, eta_{0}, phi_{0} {}
 
