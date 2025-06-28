@@ -11,8 +11,8 @@ if __name__ == '__main__':
     ###
     ### parameters
     ###
-    minRunNumber = -1
-    maxRunNumber = -1
+    minRunNumber = None
+    maxRunNumber = None
     numEventsPerJob = -1
 
     numThreadsPerJobs = 32
