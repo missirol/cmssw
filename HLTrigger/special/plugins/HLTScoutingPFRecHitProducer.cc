@@ -19,7 +19,7 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  void produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const&) const final;
+  void produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const& setup) const final;
 
   const edm::EDGetTokenT<reco::PFRecHitCollection> recoPFRecHitsToken_;
   const double minEnergy_;
@@ -33,7 +33,7 @@ HLTScoutingPFRecHitProducer::HLTScoutingPFRecHitProducer(const edm::ParameterSet
   produces<Run3ScoutingPFRecHitCollection>();
 }
 
-void HLTScoutingPFRecHitProducer::produce(edm::StreamID, edm::Event& iEvent, edm::EventSetup const&) const {
+void HLTScoutingPFRecHitProducer::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup const& setup) const {
   auto const& recoPFRecHits = iEvent.get(recoPFRecHitsToken_);
 
   auto run3ScoutPFRecHits = std::make_unique<Run3ScoutingPFRecHitCollection>();
@@ -45,10 +45,8 @@ void HLTScoutingPFRecHitProducer::produce(edm::StreamID, edm::Event& iEvent, edm
     }
 
     run3ScoutPFRecHits->emplace_back(
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.energy(), mantissaPrecision_),
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.positionREP().rho(), mantissaPrecision_),
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.positionREP().eta(), mantissaPrecision_),
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.positionREP().phi(), mantissaPrecision_));
+        recoPFRecHit.detId(),
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.energy(), mantissaPrecision_));
   }
 
   iEvent.put(std::move(run3ScoutPFRecHits));

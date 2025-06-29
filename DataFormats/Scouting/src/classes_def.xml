@@ -71,10 +71,7 @@
       <version ClassVersion="3" checksum="2495238062"/>
   </class>
   <class name="Run3ScoutingPFRecHit" ClassVersion="3">
-      <version ClassVersion="3" checksum="2035457019"/>
-  </class>
-  <class name="Run3ScoutingPFRecHit2" ClassVersion="3">
-      <version ClassVersion="3" checksum="4008661167"/>
+      <version ClassVersion="3" checksum="967438451"/>
   </class>
   <class name="ScoutingCaloJet" ClassVersion="3">
       <version ClassVersion="2" checksum="2705685116"/>
@@ -115,7 +112,6 @@
   <class name="std::vector<Run3ScoutingCaloRecHit>"/>
   <class name="std::vector<Run3ScoutingCaloTower>"/>
   <class name="std::vector<Run3ScoutingPFRecHit>"/>
-  <class name="std::vector<Run3ScoutingPFRecHit2>"/>
   <class name="std::vector<ScoutingCaloJet>"/>
   <class name="std::vector<ScoutingElectron>"/>
   <class name="std::vector<ScoutingMuon>"/>
@@ -135,7 +131,6 @@
   <class name="edm::Wrapper<std::vector<Run3ScoutingCaloRecHit> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingCaloTower> >"/>
   <class name="edm::Wrapper<std::vector<Run3ScoutingPFRecHit> >"/>
-  <class name="edm::Wrapper<std::vector<Run3ScoutingPFRecHit2> >"/>
   <class name="edm::Wrapper<std::vector<ScoutingCaloJet> >"/>
   <class name="edm::Wrapper<std::vector<ScoutingElectron> >"/>
   <class name="edm::Wrapper<std::vector<ScoutingMuon> >"/>
