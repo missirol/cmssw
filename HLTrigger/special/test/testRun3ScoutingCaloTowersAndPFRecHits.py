@@ -46,6 +46,8 @@ process.options.wantSummary = False
 process.hltOutputScoutingPF.compressionAlgorithm = 'LZMA'
 process.hltOutputScoutingPF.compressionLevel = 4
 
+process.hltOutputScoutingPF.outputCommands += ['drop *_*_*_HLT']
+
 streamPaths = [foo for foo in process.endpaths_() if foo.endswith('Output') and foo != 'ScoutingPFOutput']
 for foo in streamPaths:
     process.__delattr__(foo)
@@ -67,8 +69,8 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 500
     config_baseline = f"from {hltLabel} import cms, process"
     hltCfgTypes[f'{hltLabel}_baseline'] = config_baseline
 
-    ## CaloTowersNoCuts
-    config_CaloTowersNoCuts = f"""from {hltLabel} import cms, process
+    ## CaloTowers
+    config_CaloTowers = f"""from {hltLabel} import cms, process
 
 process.hltScoutingCaloTowerPacker = cms.EDProducer("HLTScoutingCaloTowerProducer",
     src = cms.InputTag('hltTowerMakerForAll'),
@@ -82,10 +84,10 @@ process.hltOutputScoutingPF.outputCommands += [
     'keep *_hltScoutingCaloTowerPacker_*_*',
 ]
 """
-    hltCfgTypes[f'{hltLabel}_CaloTowersNoCuts'] = config_CaloTowersNoCuts
+    hltCfgTypes[f'{hltLabel}_CaloTowers'] = config_CaloTowers
 
-    ## CaloTowersEgeq1p0
-    config_CaloTowersEgeq1p0 = f"""from {hltLabel} import cms, process
+    ## CaloTowers_Egt1p0
+    config_CaloTowers_Egt1p0 = f"""from {hltLabel} import cms, process
 
 process.hltScoutingCaloTowerPacker = cms.EDProducer("HLTScoutingCaloTowerProducer",
     src = cms.InputTag('hltTowerMakerForAll'),
@@ -99,10 +101,28 @@ process.hltOutputScoutingPF.outputCommands += [
     'keep *_hltScoutingCaloTowerPacker_*_*',
 ]
 """
-    hltCfgTypes[f'{hltLabel}_CaloTowersEgeq1p0'] = config_CaloTowersEgeq1p0
+    hltCfgTypes[f'{hltLabel}_CaloTowers_Egt1p0'] = config_CaloTowers_Egt1p0
 
-    ## PFRecHitsNoCuts
-    config_PFRecHitsNoCuts = f"""from {hltLabel} import cms, process
+    ## CaloTowers_Egt1p0_AbsEtaLt3p0
+    config_CaloTowers_Egt1p0_AbsEtaLt3p0 = f"""from {hltLabel} import cms, process
+
+process.hltScoutingCaloTowerPacker = cms.EDProducer("HLTScoutingCaloTowerProducer",
+    src = cms.InputTag('hltTowerMakerForAll'),
+    minEnergy = cms.double(1),
+    maxAbsEta = cms.double(3),
+    mantissaPrecision = cms.int32(10),
+)
+
+process.HLTPFScoutingPackingSequence.insert(0, process.hltScoutingCaloTowerPacker)
+
+process.hltOutputScoutingPF.outputCommands += [
+    'keep *_hltScoutingCaloTowerPacker_*_*',
+]
+"""
+    hltCfgTypes[f'{hltLabel}_CaloTowers_Egt1p0_AbsEtaLt3p0'] = config_CaloTowers_Egt1p0_AbsEtaLt3p0
+
+    ## PFRecHits
+    config_PFRecHits = f"""from {hltLabel} import cms, process
 
 process.hltScoutingPFRecHitPackerECAL = cms.EDProducer("HLTScoutingPFRecHitProducer",
   src = cms.InputTag('hltParticleFlowRecHitECALUnseeded'),
@@ -132,10 +152,10 @@ process.hltOutputScoutingPF.outputCommands += [
     'keep *_hltScoutingPFRecHitPackerHF_*_*',
 ]
 """
-    hltCfgTypes[f'{hltLabel}_PFRecHitsNoCuts'] = config_PFRecHitsNoCuts
+    hltCfgTypes[f'{hltLabel}_PFRecHits'] = config_PFRecHits
 
-    ## PFRecHitsEgeq1p0
-    config_PFRecHitsEgeq1p0 = f"""from {hltLabel} import cms, process
+    ## PFRecHits_Egt1p0
+    config_PFRecHits_Egt1p0 = f"""from {hltLabel} import cms, process
 
 process.hltScoutingPFRecHitPackerECAL = cms.EDProducer("HLTScoutingPFRecHitProducer",
   src = cms.InputTag('hltParticleFlowRecHitECALUnseeded'),
@@ -165,40 +185,7 @@ process.hltOutputScoutingPF.outputCommands += [
     'keep *_hltScoutingPFRecHitPackerHF_*_*',
 ]
 """
-    hltCfgTypes[f'{hltLabel}_PFRecHitsEgeq1p0'] = config_PFRecHitsEgeq1p0
-
-    ## PFRecHits2NoCuts
-    config_PFRecHits2NoCuts = f"""from {hltLabel} import cms, process
-
-process.hltScoutingPFRecHitPackerECAL = cms.EDProducer("HLTScoutingPFRecHit2Producer",
-  src = cms.InputTag('hltParticleFlowRecHitECALUnseeded'),
-  minEnergy = cms.double(-1),
-  mantissaPrecision = cms.int32(10),
-)
-
-process.hltScoutingPFRecHitPackerHBHE = cms.EDProducer("HLTScoutingPFRecHit2Producer",
-  src = cms.InputTag('hltParticleFlowRecHitHBHE'),
-  minEnergy = cms.double(-1),
-  mantissaPrecision = cms.int32(10),
-)
-
-process.hltScoutingPFRecHitPackerHF = cms.EDProducer("HLTScoutingPFRecHit2Producer",
-  src = cms.InputTag('hltParticleFlowRecHitHF'),
-  minEnergy = cms.double(-1),
-  mantissaPrecision = cms.int32(10),
-)
-
-process.HLTPFScoutingPackingSequence.insert(0, process.hltScoutingPFRecHitPackerECAL)
-process.HLTPFScoutingPackingSequence.insert(1, process.hltScoutingPFRecHitPackerHBHE)
-process.HLTPFScoutingPackingSequence.insert(2, process.hltScoutingPFRecHitPackerHF)
-
-process.hltOutputScoutingPF.outputCommands += [
-    'keep *_hltScoutingPFRecHitPackerECAL_*_*',
-    'keep *_hltScoutingPFRecHitPackerHBHE_*_*',
-    'keep *_hltScoutingPFRecHitPackerHF_*_*',
-]
-"""
-    hltCfgTypes[f'{hltLabel}_PFRecHits2NoCuts'] = config_PFRecHits2NoCuts
+    hltCfgTypes[f'{hltLabel}_PFRecHits_Egt1p0'] = config_PFRecHits_Egt1p0
 
     print(f'Creating list of EDM input files on EOS ...')
     inputFileBlocks = []
