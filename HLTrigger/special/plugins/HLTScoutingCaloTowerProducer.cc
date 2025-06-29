@@ -22,12 +22,14 @@ private:
 
   const edm::EDGetTokenT<CaloTowerCollection> recoCaloTowersToken_;
   const double minEnergy_;
+  const double maxAbsEta_;
   const int mantissaPrecision_;
 };
 
 HLTScoutingCaloTowerProducer::HLTScoutingCaloTowerProducer(const edm::ParameterSet& iConfig)
     : recoCaloTowersToken_(consumes(iConfig.getParameter<edm::InputTag>("src"))),
       minEnergy_(iConfig.getParameter<double>("minEnergy")),
+      maxAbsEta_(iConfig.getParameter<double>("maxAbsEta")),
       mantissaPrecision_(iConfig.getParameter<int>("mantissaPrecision")) {
   produces<Run3ScoutingCaloTowerCollection>();
 }
@@ -43,12 +45,15 @@ void HLTScoutingCaloTowerProducer::produce(edm::StreamID, edm::Event& iEvent, ed
       continue;
     }
 
+    if (maxAbsEta_ > 0 and std::abs(recoCaloTower.eta()) > maxAbsEta_) {
+      continue;
+    }
+
     run3ScoutCaloTowers->emplace_back(
         MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.emEnergy(), mantissaPrecision_),
         MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.hadEnergy(), mantissaPrecision_),
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.outerEnergy(), mantissaPrecision_),
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().eta(), mantissaPrecision_),
-        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.p4().phi(), mantissaPrecision_));
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.eta(), mantissaPrecision_),
+        MiniFloatConverter::reduceMantissaToNbitsRounding(recoCaloTower.phi(), mantissaPrecision_));
   }
 
   iEvent.put(std::move(run3ScoutCaloTowers));
@@ -58,6 +63,7 @@ void HLTScoutingCaloTowerProducer::fillDescriptions(edm::ConfigurationDescriptio
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag("hltTowerMakerForAll"));
   desc.add<double>("minEnergy", -1)->setComment("Minimum energy of the CaloTower in GeV");
+  desc.add<double>("maxAbsEta", -1)->setComment("Maximum absolute pseudorapidity of the CaloTower");
   desc.add<int>("mantissaPrecision", 10)->setComment("default of 10 corresponds to float16, change to 23 for float32");
   descriptions.add("hltScoutingCaloTowerProducer", desc);
 }

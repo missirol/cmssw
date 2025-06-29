@@ -68,7 +68,7 @@
       <version ClassVersion="3" checksum="1483478021"/>
   </class>
   <class name="Run3ScoutingCaloTower" ClassVersion="3">
-      <version ClassVersion="3" checksum="2309841320"/>
+      <version ClassVersion="3" checksum="2495238062"/>
   </class>
   <class name="Run3ScoutingPFRecHit" ClassVersion="3">
       <version ClassVersion="3" checksum="2035457019"/>
