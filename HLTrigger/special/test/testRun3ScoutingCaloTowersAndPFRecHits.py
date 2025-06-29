@@ -233,12 +233,3 @@ process.hltOutputScoutingPF.outputCommands += [
 
         pool = multiprocessing.Pool(processes=count)
         pool.map(execmd, jobCmds)
-
-
-
-
-
-
-
-
-
