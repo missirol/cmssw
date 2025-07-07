@@ -46,7 +46,8 @@ void HLTScoutingCaloRecHitProducer::produce(edm::StreamID sid, edm::Event& iEven
 
     run3ScoutCaloRecHits->emplace_back(
         MiniFloatConverter::reduceMantissaToNbitsRounding(recoPFRecHit.energy(), mantissaPrecision_),
-        recoPFRecHit.detId());
+        recoPFRecHit.detId(),
+        recoPFRecHit.flags());
   }
 
   iEvent.put(std::move(run3ScoutCaloRecHits));

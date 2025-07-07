@@ -65,16 +65,16 @@
       <version ClassVersion="4" checksum="1670865213"/>
   </class>
   <class name="Run3ScoutingCaloRecHit" ClassVersion="3">
-      <version ClassVersion="3" checksum="3071786450"/>
+      <version ClassVersion="3" checksum="980932934"/>
   </class>
   <class name="Run3ScoutingEBRecHit" ClassVersion="3">
-      <version ClassVersion="3" checksum="4185830890"/>
+      <version ClassVersion="3" checksum="874335175"/>
   </class>
   <class name="Run3ScoutingEERecHit" ClassVersion="3">
-      <version ClassVersion="3" checksum="1563726243"/>
+      <version ClassVersion="3" checksum="3804741343"/>
   </class>
   <class name="Run3ScoutingHBHERecHit" ClassVersion="3">
-      <version ClassVersion="3" checksum="1428239475"/>
+      <version ClassVersion="3" checksum="2178827280"/>
   </class>
   <class name="ScoutingCaloJet" ClassVersion="3">
       <version ClassVersion="2" checksum="2705685116"/>
