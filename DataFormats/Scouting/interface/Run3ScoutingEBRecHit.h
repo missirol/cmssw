@@ -9,18 +9,20 @@
 
 class Run3ScoutingEBRecHit {
 public:
-  Run3ScoutingEBRecHit(float energy, int8_t ieta, uint16_t iphi) : energy_{energy}, ieta_{ieta}, iphi_{iphi} {}
+  Run3ScoutingEBRecHit(float energy, float time, unsigned int detId, uint32_t flags) : energy_{energy}, time_{time}, detId_{detId}, flags_{flags} {}
 
-  Run3ScoutingEBRecHit() : energy_{0}, ieta_{0}, iphi_{0} {}
+  Run3ScoutingEBRecHit() : energy_{0}, time_{0}, detId_{0}, flags_{0} {}
 
   float energy() const { return energy_; }
-  int8_t ieta() const { return ieta_; }
-  uint16_t iphi() const { return iphi_; }
+  float time() const { return time_; }
+  unsigned int detId() const { return detId_; }
+  uint32_t flags() const { return flags_; }
 
 private:
   float energy_;
-  int8_t ieta_;
-  uint16_t iphi_;
+  float time_;
+  unsigned int detId_;
+  uint32_t flags_;
 };
 
 using Run3ScoutingEBRecHitCollection = std::vector<Run3ScoutingEBRecHit>;

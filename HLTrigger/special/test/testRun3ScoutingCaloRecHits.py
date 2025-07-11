@@ -97,26 +97,23 @@ process.hltOutputScoutingPF.outputCommands += [
     ## XcalRecHits
     config_XcalRecHits = f"""from {hltLabel} import cms, process
 
-process.hltScoutingECALRecHitPacker = cms.EDProducer("HLTScoutingECALRecHitProducer",
-  pfRecHits = cms.InputTag('hltParticleFlowRecHitECALUnseeded'),
+process.hltScoutingRecHitPacker = cms.EDProducer("HLTScoutingRecHitProducer",
+  pfRecHitsECAL = cms.InputTag('hltParticleFlowRecHitECALUnseeded'),
   minEnergyEB = cms.double(-1),
   minEnergyEE = cms.double(-1),
+
+  pfRecHitsHBHE = cms.InputTag('hltParticleFlowRecHitHBHE'),
+  minEnergyHBHE = cms.double(1),
+
   mantissaPrecision = cms.int32(10),
 )
 
-process.hltScoutingHBHERecHitPacker = cms.EDProducer("HLTScoutingHBHERecHitProducer",
-  pfRecHits = cms.InputTag('hltParticleFlowRecHitHBHE'),
-  minEnergy = cms.double(1),
-  mantissaPrecision = cms.int32(10),
-)
-
-process.HLTPFScoutingPackingSequence.insert(0, process.hltScoutingECALRecHitPacker)
-process.HLTPFScoutingPackingSequence.insert(1, process.hltScoutingHBHERecHitPacker)
+process.HLTPFScoutingPackingSequence.insert(0, process.hltScoutingRecHitPacker)
 
 process.hltOutputScoutingPF.outputCommands += [
-    'keep *_hltScoutingECALRecHitPacker_EB_*',
-    'keep *_hltScoutingECALRecHitPacker_EE_*',
-    'keep *_hltScoutingHBHERecHitPacker_*_*',
+    'keep *_hltScoutingRecHitPacker_EB_*',
+    'keep *_hltScoutingRecHitPacker_EE_*',
+    'keep *_hltScoutingRecHitPacker_HBHE_*',
 ]
 """
     hltCfgTypes[f'{hltLabel}_XcalRecHits'] = config_XcalRecHits

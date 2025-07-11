@@ -9,21 +9,18 @@
 
 class Run3ScoutingEERecHit {
 public:
-  Run3ScoutingEERecHit(float energy, uint8_t ix, uint8_t iy, bool positiveZ)
-      : energy_{energy}, ix_{ix}, iy_{iy}, positiveZ_{positiveZ} {}
+  Run3ScoutingEERecHit(float energy, float time, unsigned int detId) : energy_{energy}, time_{time}, detId_{detId} {}
 
-  Run3ScoutingEERecHit() : energy_{0}, ix_{0}, iy_{0}, positiveZ_{false} {}
+  Run3ScoutingEERecHit() : energy_{0}, time_{0}, detId_{0} {}
 
   float energy() const { return energy_; }
-  uint8_t ix() const { return ix_; }
-  uint8_t iy() const { return iy_; }
-  bool positiveZ() { return positiveZ_; }
+  float time() const { return time_; }
+  unsigned int detId() const { return detId_; }
 
 private:
   float energy_;
-  uint8_t ix_;
-  uint8_t iy_;
-  bool positiveZ_;
+  float time_;
+  unsigned int detId_;
 };
 
 using Run3ScoutingEERecHitCollection = std::vector<Run3ScoutingEERecHit>;
