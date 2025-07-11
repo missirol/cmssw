@@ -15,8 +15,8 @@ if __name__ == '__main__':
     maxRunNumber = None
     numEventsPerJob = -1
 
-    numThreadsPerJobs = 32
-    numStreamsPerJobs = 24
+    numThreadsPerJobs = 20
+    numStreamsPerJobs = 20
 
     eosDirs = [f'/eos/cms/store/data/Run2025C/EphemeralHLTPhysics{foo}/RAW/v1/000/393/240/00000' for foo in range(8)]
 

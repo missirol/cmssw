@@ -10,9 +10,9 @@ merge_files() {
 }
 
 hltLabels=(
-  hlt250706_baseline
-  hlt250706_CaloRecHits
-  hlt250706_XcalRecHits
+  hlt8677a2aa_baseline
+  hlt8677a2aa_CaloRecHits
+  hlt8677a2aa_XcalRecHits
 )
 
 for hltLabel in "${hltLabels[@]}"; do
