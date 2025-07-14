@@ -69,31 +69,6 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 500
     config_baseline = f"from {hltLabel} import cms, process"
     hltCfgTypes[f'{hltLabel}_baseline'] = config_baseline
 
-    ## CaloRecHits
-    config_CaloRecHits = f"""from {hltLabel} import cms, process
-
-process.hltScoutingCaloRecHitPackerECAL = cms.EDProducer("HLTScoutingCaloRecHitProducer",
-  pfRecHits = cms.InputTag('hltParticleFlowRecHitECALUnseeded'),
-  minEnergy = cms.double(-1),
-  mantissaPrecision = cms.int32(10),
-)
-
-process.hltScoutingCaloRecHitPackerHBHE = cms.EDProducer("HLTScoutingCaloRecHitProducer",
-  pfRecHits = cms.InputTag('hltParticleFlowRecHitHBHE'),
-  minEnergy = cms.double(1),
-  mantissaPrecision = cms.int32(10),
-)
-
-process.HLTPFScoutingPackingSequence.insert(0, process.hltScoutingCaloRecHitPackerECAL)
-process.HLTPFScoutingPackingSequence.insert(1, process.hltScoutingCaloRecHitPackerHBHE)
-
-process.hltOutputScoutingPF.outputCommands += [
-    'keep *_hltScoutingCaloRecHitPackerECAL_*_*',
-    'keep *_hltScoutingCaloRecHitPackerHBHE_*_*',
-]
-"""
-    hltCfgTypes[f'{hltLabel}_CaloRecHits'] = config_CaloRecHits
-
     ## XcalRecHits
     config_XcalRecHits = f"""from {hltLabel} import cms, process
 
