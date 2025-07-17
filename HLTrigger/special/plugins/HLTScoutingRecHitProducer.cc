@@ -96,8 +96,7 @@ void HLTScoutingRecHitProducer::produce(edm::StreamID, edm::Event& iEvent, edm::
     }
 
     run3ScoutHBHERecHits->emplace_back(
-        MiniFloatConverter::reduceMantissaToNbitsRounding(rh.energy(), mantissaPrecision_),
-        rh.detId());
+        MiniFloatConverter::reduceMantissaToNbitsRounding(rh.energy(), mantissaPrecision_), rh.detId());
   }
 
   iEvent.put(std::move(run3ScoutHBHERecHits), "HBHE");
