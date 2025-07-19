@@ -15,8 +15,8 @@ if __name__ == '__main__':
     maxRunNumber = None
     numEventsPerJob = -1
 
-    numThreadsPerJobs = 20
-    numStreamsPerJobs = 20
+    numThreadsPerJobs = 32
+    numStreamsPerJobs = 32
 
     eosDirs = [f'/eos/cms/store/data/Run2025C/EphemeralHLTPhysics{foo}/RAW/v1/000/393/240/00000' for foo in range(8)]
 
@@ -77,6 +77,10 @@ process.hltScoutingRecHitPacker = cms.EDProducer("HLTScoutingRecHitProducer",
   minEnergyEB = cms.double(-1),
   minEnergyEE = cms.double(-1),
 
+  pfRecHitsECALCleaned = cms.InputTag('hltParticleFlowRecHitECALUnseeded:Cleaned'),
+  minEnergyCleanedEB = cms.double(-1),
+  minEnergyCleanedEE = cms.double(-1),
+
   pfRecHitsHBHE = cms.InputTag('hltParticleFlowRecHitHBHE'),
   minEnergyHBHE = cms.double(1),
 
@@ -88,6 +92,8 @@ process.HLTPFScoutingPackingSequence.insert(0, process.hltScoutingRecHitPacker)
 process.hltOutputScoutingPF.outputCommands += [
     'keep *_hltScoutingRecHitPacker_EB_*',
     'keep *_hltScoutingRecHitPacker_EE_*',
+    'keep *_hltScoutingRecHitPacker_EBCleaned_*',
+    'keep *_hltScoutingRecHitPacker_EECleaned_*',
     'keep *_hltScoutingRecHitPacker_HBHE_*',
 ]
 """
