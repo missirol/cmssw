@@ -224,9 +224,9 @@ namespace edmtest {
     if (expectedEERecHitIntegralValues_.size() != 1) {
       throwWithMessageFromConstructor("test configuration error, expectedEERecHitIntegralValues must have size 1");
     }
-    if (expectedHBHERecHitFloatingPointValues_.size() != 1) {
+    if (expectedHBHERecHitFloatingPointValues_.size() != 2) {
       throwWithMessageFromConstructor(
-          "test configuration error, expectedHBHERecHitFloatingPointValues must have size 1");
+          "test configuration error, expectedHBHERecHitFloatingPointValues must have size 2");
     }
     if (expectedHBHERecHitIntegralValues_.size() != 1) {
       throwWithMessageFromConstructor("test configuration error, expectedHBHERecHitIntegralValues must have size 1");
@@ -1324,6 +1324,9 @@ namespace edmtest {
 
       if (hbheRecHit.energy() != expectedHBHERecHitFloatingPointValues_[0] + offset) {
         throwWithMessage("analyzeHBHERecHits, energy does not equal expected value");
+      }
+      if (hbheRecHit.time() != expectedHBHERecHitFloatingPointValues_[1] + offset) {
+        throwWithMessage("analyzeHBHERecHits, time does not equal expected value");
       }
       if (hbheRecHit.detId() != static_cast<unsigned int>(expectedHBHERecHitIntegralValues_[0] + iOffset)) {
         throwWithMessage("analyzeHBHERecHits, detId does not equal expected value");

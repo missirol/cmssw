@@ -70,7 +70,8 @@
   <class name="Run3ScoutingEERecHit" ClassVersion="3">
       <version ClassVersion="3" checksum="343593247"/>
   </class>
-  <class name="Run3ScoutingHBHERecHit" ClassVersion="3">
+  <class name="Run3ScoutingHBHERecHit" ClassVersion="4">
+      <version ClassVersion="4" checksum="3439505242"/>
       <version ClassVersion="3" checksum="1840081356"/>
   </class>
   <class name="ScoutingCaloJet" ClassVersion="3">
