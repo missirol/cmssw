@@ -145,6 +145,8 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
   if (saveTags())
     filterproduct.addCollectionTag(candTag_);
 
+  bool const verbose = (moduleDescription().moduleLabel() == "hltIsoMu24FilterEle24Tau30Monitoring");
+
   // Read RecoChargedCandidates from L3MuonCandidateProducer:
   Handle<RecoChargedCandidateCollection> mucands;
   iEvent.getByToken(candToken_, mucands);
@@ -168,6 +170,19 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
   // map the L3 cands matched to a L1 to their position in the recoMuon collection
   std::map<unsigned int, RecoChargedCandidateRef> MuonToL3s;
 
+  if (verbose)
+    edm::LogPrint("AAA") << "AAA mucands=" << mucands->size() << " vl2cands=" << vl2cands.size();
+
+  if (verbose)
+    for (auto const& mu : *mucands) {
+      edm::LogPrint("AAA") << "AAA   mucand pt=" << mu.pt() << " eta=" << mu.eta() << " phi=" << mu.phi();
+    }
+
+  if (verbose)
+    for (auto const& mu : vl2cands) {
+      edm::LogPrint("AAA") << "AAA   prevlc pt=" << mu->pt() << " eta=" << mu->eta() << " phi=" << mu->phi();
+    }
+
   // Test to see if we can use L3MuonTrajectorySeeds:
   if (mucands->empty())
     return false;
@@ -187,6 +202,9 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
     useL3MTS = a != nullptr;
   }
 
+  if (verbose)
+    edm::LogPrint("AAA") << "AAA useL3MTS=" << useL3MTS;
+
   // If we can use L3MuonTrajectory seeds run the older code:
   if (useL3MTS) {
     LogDebug("HLTMuonL3PreFilter") << "HLTMuonL3PreFilter::hltFilter is in mode: useL3MTS";
@@ -197,8 +215,11 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
       edm::Ref<L3MuonTrajectorySeedCollection> l3seedRef =
           tk->seedRef().castTo<edm::Ref<L3MuonTrajectorySeedCollection> >();
       TrackRef staTrack = l3seedRef->l2Track();
-      LogDebug("HLTMuonL3PreFilter") << "L2 from: " << iEvent.getStableProvenance(staTrack.id()).moduleLabel()
-                                     << " index: " << staTrack.key();
+
+      if (verbose)
+        edm::LogPrint("HLTMuonL3PreFilter")
+            << "L2 from: " << iEvent.getStableProvenance(staTrack.id()).moduleLabel() << " index: " << staTrack.key();
+
       L2toL3s[staTrack].push_back(RecoChargedCandidateRef(mucands, i));
     }
   }  //end of useL3MTS
@@ -210,6 +231,15 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
     // Read Links collection:
     edm::Handle<reco::MuonTrackLinksCollection> links;
     iEvent.getByToken(linkToken_, links);
+
+    if (verbose) {
+      edm::LogPrint("AAA") << "AAA links=" << links->size();
+      for (auto const& link : *links) {
+        auto const& tkTrk = *link.trackerTrack();
+        edm::LogPrint("AAA") << "AAA   link-tkTrk pt=" << tkTrk.pt() << " eta=" << tkTrk.eta()
+                             << " phi=" << tkTrk.phi();
+      }
+    }
 
     edm::Handle<trigger::TriggerFilterObjectWithRefs> level1Cands;
     std::vector<l1t::MuonRef> vl1cands;
@@ -237,10 +267,20 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
 
           if (dR2 < 0.02 * 0.02 and dPt < 0.001) {
             const TrackRef staTrack = link.standAloneTrack();
+
+            if (verbose)
+              edm::LogPrint("HLTMuonL3PreFilter")
+                  << "AAA  (links) L2 from: " << iEvent.getStableProvenance(staTrack.id()).moduleLabel()
+                  << " index: " << staTrack.key();
+
             L2toL3s[staTrack].push_back(RecoChargedCandidateRef(cand));
+
             check_l1match = false;
           }
         }  //MTL loop
+
+        if (verbose)
+          edm::LogPrint("AAA") << "AAA check_l1match=" << check_l1match;
 
         if (!l1CandTag_.label().empty() && check_l1match) {
           auto const propagated = prop.extrapolate(*tk);
@@ -249,6 +289,15 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
           iEvent.getByToken(l1CandToken_, level1Cands);
           level1Cands->getObjects(trigger::TriggerL1Mu, vl1cands);
           const unsigned int nL1Muons(vl1cands.size());
+
+          if (verbose)
+            edm::LogPrint("AAA") << "AAA   nL1Muons=" << nL1Muons;
+
+          if (verbose)
+            for (auto const& mu : vl1cands) {
+              edm::LogPrint("AAA") << "AAA   l1cand pt=" << mu->pt() << " eta=" << mu->eta() << " phi=" << mu->phi();
+            }
+
           for (unsigned int il1 = 0; il1 != nL1Muons; ++il1) {
             if (deltaR2(etaForMatch, phiForMatch, vl1cands[il1]->eta(), vl1cands[il1]->phi()) < L1MatchingdR2_) {
               MuonToL3s[i] = RecoChargedCandidateRef(cand);
@@ -260,10 +309,18 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
   }  //end of using normal TrajectorySeeds
 
   // look at all mucands,  check cuts and add to filter object
-  LogDebug("HLTMuonL3PreFilter") << "looking at: " << L2toL3s.size() << " L2->L3s from: " << mucands->size();
+  if (verbose)
+    edm::LogPrint("HLTMuonL3PreFilter") << "AAA looking at: " << L2toL3s.size() << " L2->L3s from: " << mucands->size();
+
   for (const auto& L2toL3s_it : L2toL3s) {
+    if (verbose)
+      edm::LogPrint("AAA") << "AAA before !triggeredByLevel2";
+
     if (!triggeredByLevel2(L2toL3s_it.first, vl2cands))
       continue;
+
+    if (verbose)
+      edm::LogPrint("AAA") << "AAA after  !triggeredByLevel2";
 
     //loop over the L3Tk reconstructed for this L2.
     unsigned int iTk = 0;
@@ -286,6 +343,14 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
   // this happens certainly if requireL3MuonTrajectorySeed_ is true
   if (!MuonToL3s.empty()) {
     iEvent.getByToken(recoMuToken_, recomuons);
+
+    if (verbose) {
+      edm::LogPrint("AAA") << "AAA MuonToL3s=" << MuonToL3s.size();
+      for (auto const& mu : *recomuons) {
+        edm::LogPrint("AAA") << "AAA   recoMu pt=" << mu.pt() << " eta=" << mu.eta() << " phi=" << mu.phi()
+                             << " isGlobalMuon=" << mu.isGlobalMuon();
+      }
+    }
   }
 
   for (const auto& MuonToL3s_it : MuonToL3s) {
@@ -305,10 +370,17 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
     if (muon.isTrackerMuon() && !muon::isGoodMuon(muon, trkMuonId_))
       continue;
 
+    if (verbose)
+      edm::LogPrint("AAA") << "AAA applySelection testing";
+
     const RecoChargedCandidateRef& cand = MuonToL3s_it.second;
     // apply common selection
     if (!applySelection(cand, beamSpot))
       continue;
+
+    if (verbose)
+      edm::LogPrint("AAA") << "AAA applySelection passed";
+
     filterproduct.addObject(TriggerMuon, cand);
     n++;
 
@@ -320,16 +392,19 @@ bool HLTMuonL3PreFilter::hltFilter(Event& iEvent,
   for (auto& i : vref) {
     RecoChargedCandidateRef candref = RecoChargedCandidateRef(i);
     TrackRef tk = candref->get<TrackRef>();
-    LogDebug("HLTMuonL3PreFilter") << " Track passing filter: trackRef pt= " << tk->pt() << " (" << candref->pt()
-                                   << ") "
-                                   << ", eta: " << tk->eta() << " (" << candref->eta() << ") ";
+
+    if (verbose)
+      edm::LogPrint("HLTMuonL3PreFilter")
+          << " Track passing filter: trackRef pt= " << tk->pt() << " (" << candref->pt() << ") "
+          << ", eta: " << tk->eta() << " (" << candref->eta() << ") ";
   }
 
   // filter decision
   const bool accept(n >= min_N_);
 
-  LogDebug("HLTMuonL3PreFilter") << " >>>>> Result of HLTMuonL3PreFilter is " << accept
-                                 << ", number of muons passing thresholds= " << n;
+  if (verbose)
+    edm::LogPrint("HLTMuonL3PreFilter") << " >>>>> Result of HLTMuonL3PreFilter is " << accept
+                                        << ", number of muons passing thresholds= " << n;
 
   return accept;
 }
