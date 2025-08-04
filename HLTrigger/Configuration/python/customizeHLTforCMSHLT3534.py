@@ -8,60 +8,60 @@ def customizeHLTforCMSHLT3534(process):
         process.hltSiStripRawToClustersFacility.Clusterizer.MaxClusterSize = 16
 
         # SiStrips unpacker for MkFit tracks not onDemand
-        process.hltSiStripRawToClustersFacilityForMkFit = process.hltSiStripRawToClustersFacility.clone(
+        process.hltSiStripRawToClustersFacilityGlobally = process.hltSiStripRawToClustersFacility.clone(
             onDemand = False,
         )
 
-        process.hltMeasurementTrackerEventForMkFit = process.hltMeasurementTrackerEvent.clone(
-            stripClusterProducer = 'hltSiStripRawToClustersFacilityForMkFit'
+        process.hltMeasurementTrackerEventGlobally = process.hltMeasurementTrackerEvent.clone(
+            stripClusterProducer = 'hltSiStripRawToClustersFacilityGlobally'
         )
 
         # SiStrips local-reco Sequence to be used for MkFit tracks
-        process.HLTDoLocalStripForMkFitSequence = cms.Sequence(
+        process.HLTDoLocalStripGloballySequence = cms.Sequence(
             process.hltSiStripExcludedFEDListProducer
-          + process.hltSiStripRawToClustersFacilityForMkFit
-          + process.hltMeasurementTrackerEventForMkFit
+          + process.hltSiStripRawToClustersFacilityGlobally
+          + process.hltMeasurementTrackerEventGlobally
         )
 
-        process.hltMeasurementTrackerEventForMkFitSerialSync = process.hltMeasurementTrackerEventSerialSync.clone(
-            stripClusterProducer = 'hltSiStripRawToClustersFacilityForMkFit'
+        process.hltMeasurementTrackerEventGloballySerialSync = process.hltMeasurementTrackerEventSerialSync.clone(
+            stripClusterProducer = 'hltSiStripRawToClustersFacilityGlobally'
         )
 
         # SiStrips local-reco Sequence to be used for MkFit tracks (SerialSync variant)
-        process.HLTDoLocalStripForMkFitSequenceSerialSync = cms.Sequence(
+        process.HLTDoLocalStripGloballySequenceSerialSync = cms.Sequence(
             process.hltSiStripExcludedFEDListProducer
-          + process.hltSiStripRawToClustersFacilityForMkFit
-          + process.hltMeasurementTrackerEventForMkFitSerialSync
+          + process.hltSiStripRawToClustersFacilityGlobally
+          + process.hltMeasurementTrackerEventGloballySerialSync
         )
     except: pass
 
     # update SiStrips clusters used by the relevant modules producing or consuming MkFit tracks
     try:
-        process.hltDoubletRecoveryClustersRefRemoval.stripClusters = 'hltSiStripRawToClustersFacilityForMkFit'
-        process.hltDoubletRecoveryMaskedMeasurementTrackerEvent.src = 'hltMeasurementTrackerEventForMkFit'
-        process.hltDoubletRecoveryPFlowPixelClusterCheck.ClusterCollectionLabel = 'hltMeasurementTrackerEventForMkFit'
+        process.hltDoubletRecoveryClustersRefRemoval.stripClusters = 'hltSiStripRawToClustersFacilityGlobally'
+        process.hltDoubletRecoveryMaskedMeasurementTrackerEvent.src = 'hltMeasurementTrackerEventGlobally'
+        process.hltDoubletRecoveryPFlowPixelClusterCheck.ClusterCollectionLabel = 'hltMeasurementTrackerEventGlobally'
     except: pass
 
     try:
-        process.hltDoubletRecoveryClustersRefRemovalSerialSync.stripClusters = 'hltSiStripRawToClustersFacilityForMkFit'
-        process.hltDoubletRecoveryMaskedMeasurementTrackerEventSerialSync.src = 'hltMeasurementTrackerEventForMkFitSerialSync'
-        process.hltDoubletRecoveryPFlowPixelClusterCheckSerialSync.ClusterCollectionLabel = 'hltMeasurementTrackerEventForMkFitSerialSync'
+        process.hltDoubletRecoveryClustersRefRemovalSerialSync.stripClusters = 'hltSiStripRawToClustersFacilityGlobally'
+        process.hltDoubletRecoveryMaskedMeasurementTrackerEventSerialSync.src = 'hltMeasurementTrackerEventGloballySerialSync'
+        process.hltDoubletRecoveryPFlowPixelClusterCheckSerialSync.ClusterCollectionLabel = 'hltMeasurementTrackerEventGloballySerialSync'
     except: pass
 
     try:
-        process.hltSiStripRecHits.ClusterProducer = 'hltSiStripRawToClustersFacilityForMkFit'
-        process.hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits.clusters = 'hltSiStripRawToClustersFacilityForMkFit'
-        process.hltIter0PFlowCtfWithMaterialTracks.MeasurementTrackerEvent = 'hltMeasurementTrackerEventForMkFit'
+        process.hltSiStripRecHits.ClusterProducer = 'hltSiStripRawToClustersFacilityGlobally'
+        process.hltIter0PFlowCkfTrackCandidatesMkFitSiStripHits.clusters = 'hltSiStripRawToClustersFacilityGlobally'
+        process.hltIter0PFlowCtfWithMaterialTracks.MeasurementTrackerEvent = 'hltMeasurementTrackerEventGlobally'
     except: pass
 
     try:
-        process.hltIter0PFlowCtfWithMaterialTracksSerialSync.MeasurementTrackerEvent = 'hltMeasurementTrackerEventForMkFitSerialSync'
+        process.hltIter0PFlowCtfWithMaterialTracksSerialSync.MeasurementTrackerEvent = 'hltMeasurementTrackerEventGloballySerialSync'
     except: pass
 
     try:
-        process.hltDisplacedhltIter4ClustersRefRemovalForTau.stripClusters = 'hltSiStripRawToClustersFacilityForMkFit'
-        process.hltDisplacedhltIter4MaskedMeasurementTrackerEventForTau.src = 'hltMeasurementTrackerEventForMkFit'
-        process.hltDisplacedhltIter4PFlowPixelLessClusterCheckForTau.ClusterCollectionLabel = 'hltMeasurementTrackerEventForMkFit'
+        process.hltDisplacedhltIter4ClustersRefRemovalForTau.stripClusters = 'hltSiStripRawToClustersFacilityGlobally'
+        process.hltDisplacedhltIter4MaskedMeasurementTrackerEventForTau.src = 'hltMeasurementTrackerEventGlobally'
+        process.hltDisplacedhltIter4PFlowPixelLessClusterCheckForTau.ClusterCollectionLabel = 'hltMeasurementTrackerEventGlobally'
     except: pass
 
     # The Sequence named HLTTrackReconstructionForPFNoMu contains the Sequences used for
@@ -70,7 +70,7 @@ def customizeHLTforCMSHLT3534(process):
     #  - (3) Iter0+Iter2 tracks, used for the standard ParticleFlow Sequence.
     #
     # Below, the following changes are made.
-    #  - (a) HLTDoLocalStripSequence is replaced by HLTDoLocalStripForMkFitSequence
+    #  - (a) HLTDoLocalStripSequence is replaced by HLTDoLocalStripGloballySequence
     #        in the Sequences which include HLTIterativeTrackingIter02 (MkFit tracks).
     #  - (b) A SerialSync variant of the Sequence HLTTrackReconstructionForPFNoMu is introduced,
     #        i.e. HLTTrackReconstructionForPFNoMuSerialSync.
@@ -83,14 +83,14 @@ def customizeHLTforCMSHLT3534(process):
         process.HLTTrackReconstructionForPFNoMu = cms.Sequence(
             process.HLTDoLocalPixelSequence
           + process.HLTRecopixelvertexingSequence
-          + process.HLTDoLocalStripForMkFitSequence
+          + process.HLTDoLocalStripGloballySequence
           + process.HLTIterativeTrackingIter02
         )
 
         process.HLTTrackReconstructionForPFNoMuSerialSync = cms.Sequence(
             process.HLTDoLocalPixelSequenceSerialSync
           + process.HLTRecopixelvertexingSequenceSerialSync
-          + process.HLTDoLocalStripForMkFitSequenceSerialSync
+          + process.HLTDoLocalStripGloballySequenceSerialSync
           + process.HLTIterativeTrackingIter02SerialSync
         )
     except: pass
@@ -155,7 +155,7 @@ def customizeHLTforCMSHLT3534(process):
         )
     except: pass
 
-    # replace HLTDoLocalStripSequence with HLTDoLocalStripForMkFitSequence
+    # replace HLTDoLocalStripSequence with HLTDoLocalStripGloballySequence
     # in the Paths that used the former to produce MkFit tracks (HLTIterativeTrackingIter02)
     for pathName, path in process.paths_().items():
         if not pathName.startswith('AlCa_IsoTrackHBHE_v'): continue
@@ -315,14 +315,14 @@ def customizeHLTforCMSHLT3534(process):
           + process.HLTEndSequence
         ))
 
-    # add hltSiStripRawToClustersFacilityForMkFit to the EventContent of
+    # add hltSiStripRawToClustersFacilityGlobally to the EventContent of
     # all the OutputModules in which hltSiStripRawToClustersFacility is kept
     #  - Streams: DQM, HLTMonitor, CosmicHLTMonitor.
     for outMod in process.outputModules_().values():
         extra_keeps = []
         for outCmd in outMod.outputCommands:
             if 'hltSiStripRawToClustersFacility' in outCmd:
-                extra_keeps += [outCmd.replace('hltSiStripRawToClustersFacility', 'hltSiStripRawToClustersFacilityForMkFit')]
+                extra_keeps += [outCmd.replace('hltSiStripRawToClustersFacility', 'hltSiStripRawToClustersFacilityGlobally')]
         outMod.outputCommands += extra_keeps
 
     return process
