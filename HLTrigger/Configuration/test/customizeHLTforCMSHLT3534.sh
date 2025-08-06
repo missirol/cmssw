@@ -14,5 +14,8 @@ process = customizeHLTforCMSHLT3534(process)
 
 edmConfigDump tmp.py > "${hltLabel}"_hlt1.py
 
-rm -f tmp.py
+mv "${hltLabel}"_hlt0.py "${hltLabel}"_hlt1.py ~/private
+
+rm -f tmp.py ~/private/*{.class*,.pyc}
+
 unset hltLabel
