@@ -318,12 +318,17 @@ def customizeHLTforCMSHLT3534(process):
     # add hltSiStripRawToClustersFacilityGlobally to the EventContent of
     # all the OutputModules in which hltSiStripRawToClustersFacility is kept
     #  - Streams: DQM, HLTMonitor, CosmicHLTMonitor.
-    for outModLabel in ['hltOutputHLTMonitor', 'hltOutputCosmicHLTMonitor']:
+    for outModLabel in ['hltOutputDQM', 'hltOutputHLTMonitor', 'hltOutputCosmicHLTMonitor']:
         outMod = getattr(process, outModLabel)
         extra_keeps = []
         for outCmd in outMod.outputCommands:
             if 'hltSiStripRawToClustersFacility' in outCmd:
                 extra_keeps += [outCmd.replace('hltSiStripRawToClustersFacility', 'hltSiStripRawToClustersFacilityGlobally')]
         outMod.outputCommands += extra_keeps
+
+    # remove the onDemand SiStrips clusters from the DQM EventContent (not needed any longer)
+    try:
+        process.hltOutputDQM.outputCommands.remove('keep *_hltSiStripRawToClustersFacility_*_*')
+    except: pass
 
     return process
