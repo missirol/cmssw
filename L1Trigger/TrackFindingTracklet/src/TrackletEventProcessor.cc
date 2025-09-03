@@ -9,6 +9,8 @@
 #include "L1Trigger/TrackFindingTracklet/interface/IMATH_TrackletCalculator.h"
 #include "L1Trigger/TrackFindingTracklet/interface/StubStreamData.h"
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+
 #include "DataFormats/Math/interface/deltaPhi.h"
 
 #include <iomanip>
@@ -48,8 +50,8 @@ void TrackletEventProcessor::init(Settings const& theSettings, const tt::Setup* 
         << "\n";
   }
 
-  if (settings_->debugTracklet()) {
-    edm::LogVerbatim("Tracklet") << "========================================================= \n"
+  if (true or settings_->debugTracklet()) {
+    edm::LogPrint("Tracklet") << "========================================================= \n"
                                  << "Conversion factors for global coordinates: \n"
                                  << "z    kz            = " << settings_->kz() << "\n"
                                  << "r    kr            = " << settings_->kr() << "\n"
@@ -181,6 +183,8 @@ void TrackletEventProcessor::event(SLHCEvent& ev,
   tracks_.clear();
   eventnum_++;
   bool first = (eventnum_ == 1);
+
+edm::LogPrint("AAA") << "EE0 eventnum=" << eventnum_ << " N_LAYER=" << N_LAYER << " N_SECTOR=" << N_SECTOR << " N_DISK=" << N_DISK << " ev.nstubs=" << ev.nstubs();
 
   for (unsigned int k = 0; k < N_SECTOR; k++) {
     sector_->setSector(k);
@@ -381,7 +385,9 @@ void TrackletEventProcessor::event(SLHCEvent& ev,
 
     // purge duplicate
     PDTimer_.start();
+edm::LogPrint("AAA") << "EE1a tracks.size=" << tracks_.size();
     sector_->executePD(tracks_);
+edm::LogPrint("AAA") << "EE1b tracks.size=" << tracks_.size();
     if (((settings_->writeMem() || settings_->writeMonitorData("IFit")) && k == settings_->writememsect()) ||
         settings_->writeMonitorData("CT")) {
       sector_->writeCT(first);

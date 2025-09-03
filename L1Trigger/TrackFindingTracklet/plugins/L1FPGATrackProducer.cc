@@ -677,6 +677,18 @@ void L1FPGATrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
   // this performs the actual tracklet event processing
   eventProcessor.event(ev, streamsTrackRaw, streamsStubRaw);
 
+edm::LogPrint("AAA") << "XX1 tracks.size=" << tracks.size();
+
+edm::LogPrint("AAA") << "XX1 streamsTrackRaw.size=" << streamsTrackRaw.size() << " (numStreamsTrack=" << numStreamsTrack << ")";
+for(uint idx=0; idx < streamsTrackRaw.size(); ++idx){
+edm::LogPrint("AAA") << "XX2   streamsTrackRaw[" << idx << "].size=" << streamsTrackRaw[idx].size();
+}
+
+edm::LogPrint("AAA") << "XX1 streamsStubRaw.size=" << streamsStubRaw.size() << " (numStreamsTrack=" << numStreamsTrack << ")";
+for(uint idx=0; idx < streamsStubRaw.size(); ++idx){
+edm::LogPrint("AAA") << "XX2   streamsStubRaw[" << idx << "].size=" << streamsStubRaw[idx].size();
+}
+
   for (const auto& track : tracks) {
     if (track.duplicate())
       continue;

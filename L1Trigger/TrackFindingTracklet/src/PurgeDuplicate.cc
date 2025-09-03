@@ -104,6 +104,8 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
 
   unsigned int numTrk = inputtracks_.size();
 
+edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
+
   ////////////////////
   // Hybrid Removal //
   ////////////////////
@@ -129,6 +131,9 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
 
     for (unsigned int bin = 0; bin < settings_.rinvBins().size() - 1; bin++) {
       for (unsigned int phiBin = 0; phiBin < settings_.phiBins().size() - 1; phiBin++) {
+
+        edm::LogPrint("AAA") << "PP2   bin=" << bin << " phiBin=" << phiBin;
+
         // Get vectors from TrackFit and save them
         // inputtracklets: Tracklet objects from the FitTrack (not actually fit yet)
         // inputstublists: L1Stubs for that track
@@ -183,6 +188,8 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
         if (inputtracklets_.empty())
           continue;
         const unsigned int numStublists = inputstublists_.size();
+
+        edm::LogPrint("AAA") << "PP1   numStublists=" << numStublists;
 
         if (settings_.inventStubs()) {
           for (unsigned int itrk = 0; itrk < numStublists; itrk++) {
@@ -293,6 +300,7 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
         // Check to see if the track is a duplicate
         for (unsigned int itrk = 0; itrk < numStublists; itrk++) {
           for (unsigned int jtrk = 0; jtrk < numStublists; jtrk++) {
+//            edm::LogPrint("AAA") << "PP2     dupMap[" << itrk << "][" << jtrk << "]=" << dupMap.at(itrk).at(jtrk);
             if (dupMap.at(itrk).at(jtrk)) {
               noMerge.at(itrk) = true;
             }
@@ -399,8 +407,13 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
       }
     }
 
+    edm::LogPrint("AAA") << "PP1 prefTracks.size=" << prefTracks.size();
+
     // Make the final track objects, fit with KF, and send to output
     for (unsigned int itrk = 0; itrk < prefTracks.size(); itrk++) {
+
+      edm::LogPrint("AAA") << "PP2   itrk=" << itrk;
+
       Tracklet* tracklet = inputtrackletsall[itrk];
       std::vector<const Stub*> trackstublist = inputstublistsall[itrk];
 
@@ -410,6 +423,8 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
 
       // If the track was accepted (and thus fit), add to output
       if (tracklet->fit()) {
+        edm::LogPrint("AAA") << "PP2   tracklet->fit, iSector=" << iSector;
+
         // Add fitted Track to output (later converted to TTTrack)
         Track* outtrack = tracklet->getTrack();
         outtrack->setSector(iSector);
