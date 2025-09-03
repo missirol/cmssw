@@ -307,6 +307,10 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
           }
         }
 
+for (unsigned int ktrk = 0; ktrk < noMerge.size(); ++ktrk) {
+  edm::LogPrint("AAA") << "PP2  noMerge[" << ktrk << "] = " << noMerge[ktrk];
+}
+
         // If the track isn't a duplicate, and if it's in more than one bin, and it is not in the proper rinv or phi bin, then mark it so it won't be sent to output
         for (unsigned int itrk = 0; itrk < numStublists; itrk++) {
           if (!noMerge.at(itrk)) {
@@ -314,10 +318,15 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
                  (findRinvBin(inputtracklets_[itrk]) != bin)) ||
                 ((findOverlapPhiBins(inputtracklets_[itrk]).size() > 1) &&
                  findPhiBin(inputtracklets_[itrk]) != phiBin)) {
+
               trackInfo[itrk].second = true;
+
+  edm::LogPrint("AAA") << "PP3a  -> trackInfo[" << itrk << "] = (" << trackInfo[itrk].first << ", " << trackInfo[itrk].second << ")";
+
             }
           }
         }
+
         // Merge duplicate tracks
         for (unsigned int itrk = 0; itrk < numStublists - 1; itrk++) {
           for (unsigned int jtrk = itrk + 1; jtrk < numStublists; jtrk++) {
@@ -380,10 +389,20 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
 
                 // Mark that rejected track has been merged into another track
                 trackInfo[rejetrk].second = true;
+
+  edm::LogPrint("AAA") << "PP3b  -> trackInfo[" << rejetrk << "] = (" << trackInfo[rejetrk].first << ", " << trackInfo[rejetrk].second << ")";
               }
             }
           }
         }
+
+for (unsigned int ktrk = 0; ktrk < trackInfo.size(); ++ktrk) {
+  edm::LogPrint("AAA") << "PP2  trackInfo[" << ktrk << "] = (" << trackInfo[ktrk].first << ", " << trackInfo[ktrk].second << ")";
+}
+
+for (unsigned int ktrk = 0; ktrk < trackBinInfo.size(); ++ktrk) {
+  edm::LogPrint("AAA") << "PP2  trackBinInfo[" << ktrk << "] = " << trackBinInfo[ktrk];
+}
 
         for (unsigned int ktrk = 0; ktrk < numStublists; ktrk++) {
           if ((trackInfo[ktrk].second != true) && (trackBinInfo[ktrk] != true)) {
