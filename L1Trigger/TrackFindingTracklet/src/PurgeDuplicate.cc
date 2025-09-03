@@ -252,10 +252,10 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
               // For each stub on the first track, find the stub with the best residual and store its index in the layStubidsTrk1 array
               for (unsigned int stcount = 0; stcount < stubsTrk1.size(); stcount++) {
                 int i = stubsTrk1[stcount].first;  // layer/disk
-                bool barrel = (i > 0 && i < 10);
-                bool endcapA = (i > 10);
+                bool barrel = (i > 0 && i <= N_LAYER);
+                bool endcapA = (i > N_LAYER);
                 bool endcapB = (i < 0);
-                int lay = barrel * (i - 1) + endcapA * (i - 5) - endcapB * i;  // encode in range 0-15
+                int lay = barrel * (i - 1) + endcapA * (i - (N_LAYER - 1)) - endcapB * i;  // encode in range 0-15
                 double nres = getPhiRes(inputtracklets_[itrk], fullStubslistsTrk1[stcount]);
                 double ores = 0;
                 if (layStubidsTrk1[lay] != -1)
