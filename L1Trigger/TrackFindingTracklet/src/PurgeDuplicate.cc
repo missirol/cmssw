@@ -75,6 +75,21 @@ void PurgeDuplicate::addInput(MemoryBase* memory, std::string input) {
     auto* tmp = dynamic_cast<TrackFitMemory*>(memory);
     assert(tmp != nullptr);
     inputtrackfits_.push_back(tmp);
+
+//int const i = inputtrackfits_.size() - 1;
+//edm::LogPrint("AAA") << "PP2   [" << input << "] trackfit[" << i << "] (nTracks = " << inputtrackfits_[i]->nTracks() << ")";
+
+//      for (unsigned int j = 0; j < inputtrackfits_[i]->nTracks(); j++) {
+//        Tracklet* aTrack = inputtrackfits_[i]->getTrack(j);
+//edm::LogPrint("AAA") << "PP2   [" << input << "] trackfit[" << i << "][" << j << "]: "
+//<< " rinv=" << aTrack->rinv()
+//<< " phi0=" << aTrack->phi0()
+//<< " d0=" << aTrack->d0()
+//<< " t=" << aTrack->t()
+//<< " z0=" << aTrack->z0()
+//;
+//      }
+
     return;
   }
   throw cms::Exception("BadConfig") << __FILE__ << " " << __LINE__ << " could not find input: " << input;
@@ -102,9 +117,23 @@ void PurgeDuplicate::execute(std::vector<Track>& outputtracks, unsigned int iSec
       return;
   }
 
+
+//    for (unsigned int i = 0; i < inputtrackfits_.size(); i++) {
+//      for (unsigned int j = 0; j < inputtrackfits_[i]->nTracks(); j++) {
+//        Tracklet* aTrack = inputtrackfits_[i]->getTrack(j);
+//edm::LogPrint("AAA") << "PP2   trackfit[" << i << "][" << j << "] (sector = " << iSector << "): "
+//<< " rinv=" << aTrack->rinv()
+//<< " phi0=" << aTrack->phi0()
+//<< " d0=" << aTrack->d0()
+//<< " t=" << aTrack->t()
+//<< " z0=" << aTrack->z0()
+//;
+//      }
+//    }
+
   unsigned int numTrk = inputtracks_.size();
 
-edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
+//edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
 
   ////////////////////
   // Hybrid Removal //
@@ -132,7 +161,7 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
     for (unsigned int bin = 0; bin < settings_.rinvBins().size() - 1; bin++) {
       for (unsigned int phiBin = 0; phiBin < settings_.phiBins().size() - 1; phiBin++) {
 
-        edm::LogPrint("AAA") << "PP2   bin=" << bin << " phiBin=" << phiBin;
+//        edm::LogPrint("AAA") << "PP2   bin=" << bin << " phiBin=" << phiBin;
 
         // Get vectors from TrackFit and save them
         // inputtracklets: Tracklet objects from the FitTrack (not actually fit yet)
@@ -140,8 +169,6 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
         // inputstubidslists: Stub stubIDs for that 3rack
         // mergedstubidslists: the same as inputstubidslists, but will be used during duplicate removal
         for (unsigned int i = 0; i < inputtrackfits_.size(); i++) {
-          if (inputtrackfits_[i]->nStublists() == 0)
-            continue;
           if (inputtrackfits_[i]->nStublists() != inputtrackfits_[i]->nTracks())
             throw cms::Exception("LogicError")
                 << __FILE__ << " " << __LINE__ << " Number of stublists and tracks don't match up! ";
@@ -293,6 +320,7 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
             if (nShareLay >= settings_.minIndStubs()) {  // For number of shared stub merge condition
               dupMap.at(itrk).at(jtrk) = true;
               dupMap.at(jtrk).at(itrk) = true;
+//edm::LogPrint("AAA") << "PP2     dupMap[" << itrk << "][" << jtrk << "]=" << dupMap.at(itrk).at(jtrk);
             }
           }
         }
@@ -300,16 +328,14 @@ edm::LogPrint("AAA") << "PP1 numTrk=" << numTrk;
         // Check to see if the track is a duplicate
         for (unsigned int itrk = 0; itrk < numStublists; itrk++) {
           for (unsigned int jtrk = 0; jtrk < numStublists; jtrk++) {
-//            edm::LogPrint("AAA") << "PP2     dupMap[" << itrk << "][" << jtrk << "]=" << dupMap.at(itrk).at(jtrk);
+//edm::LogPrint("AAA") << "PP2     dupMap[" << itrk << "][" << jtrk << "]=" << dupMap.at(itrk).at(jtrk);
             if (dupMap.at(itrk).at(jtrk)) {
               noMerge.at(itrk) = true;
+
+//  edm::LogPrint("AAA") << "PP2  noMerge[" << itrk << "] = " << noMerge[itrk];
             }
           }
         }
-
-for (unsigned int ktrk = 0; ktrk < noMerge.size(); ++ktrk) {
-  edm::LogPrint("AAA") << "PP2  noMerge[" << ktrk << "] = " << noMerge[ktrk];
-}
 
         // If the track isn't a duplicate, and if it's in more than one bin, and it is not in the proper rinv or phi bin, then mark it so it won't be sent to output
         for (unsigned int itrk = 0; itrk < numStublists; itrk++) {
@@ -321,7 +347,7 @@ for (unsigned int ktrk = 0; ktrk < noMerge.size(); ++ktrk) {
 
               trackInfo[itrk].second = true;
 
-  edm::LogPrint("AAA") << "PP3a  -> trackInfo[" << itrk << "] = (" << trackInfo[itrk].first << ", " << trackInfo[itrk].second << ")";
+//  edm::LogPrint("AAA") << "PP3a  -> trackInfo[" << itrk << "] = (" << trackInfo[itrk].first << ", " << trackInfo[itrk].second << ")";
 
             }
           }
@@ -390,19 +416,19 @@ for (unsigned int ktrk = 0; ktrk < noMerge.size(); ++ktrk) {
                 // Mark that rejected track has been merged into another track
                 trackInfo[rejetrk].second = true;
 
-  edm::LogPrint("AAA") << "PP3b  -> trackInfo[" << rejetrk << "] = (" << trackInfo[rejetrk].first << ", " << trackInfo[rejetrk].second << ")";
+//  edm::LogPrint("AAA") << "PP3b  -> trackInfo[" << rejetrk << "] = (" << trackInfo[rejetrk].first << ", " << trackInfo[rejetrk].second << ")";
               }
             }
           }
         }
 
-for (unsigned int ktrk = 0; ktrk < trackInfo.size(); ++ktrk) {
-  edm::LogPrint("AAA") << "PP2  trackInfo[" << ktrk << "] = (" << trackInfo[ktrk].first << ", " << trackInfo[ktrk].second << ")";
-}
+//for (unsigned int ktrk = 0; ktrk < trackInfo.size(); ++ktrk) {
+//  edm::LogPrint("AAA") << "PP2  trackInfo[" << ktrk << "] = (" << trackInfo[ktrk].first << ", " << trackInfo[ktrk].second << ")";
+//}
 
-for (unsigned int ktrk = 0; ktrk < trackBinInfo.size(); ++ktrk) {
-  edm::LogPrint("AAA") << "PP2  trackBinInfo[" << ktrk << "] = " << trackBinInfo[ktrk];
-}
+//for (unsigned int ktrk = 0; ktrk < trackBinInfo.size(); ++ktrk) {
+//  edm::LogPrint("AAA") << "PP2  trackBinInfo[" << ktrk << "] = " << trackBinInfo[ktrk];
+//}
 
         for (unsigned int ktrk = 0; ktrk < numStublists; ktrk++) {
           if ((trackInfo[ktrk].second != true) && (trackBinInfo[ktrk] != true)) {
@@ -415,6 +441,16 @@ for (unsigned int ktrk = 0; ktrk < trackBinInfo.size(); ++ktrk) {
           }
         }
 
+  edm::LogPrint("AAA") << "PP1 size:"
+<< " seedRank=" << seedRank.size()
+<< " trackInfo=" << trackInfo.size()
+<< " trackBinInfo=" << trackBinInfo.size()
+<< " inputtracks=" << inputtracks_.size()
+<< " inputtracklets=" << inputtracklets_.size()
+<< " inputstubidslists=" << inputstubidslists_.size()
+<< " inputstublists=" << inputstublists_.size()
+<< " mergedstubidslists=" << mergedstubidslists_.size();
+
         // Need to clear all the vectors which will be used in the next bin
         seedRank.clear();
         trackInfo.clear();
@@ -426,12 +462,12 @@ for (unsigned int ktrk = 0; ktrk < trackBinInfo.size(); ++ktrk) {
       }
     }
 
-    edm::LogPrint("AAA") << "PP1 prefTracks.size=" << prefTracks.size();
+//    edm::LogPrint("AAA") << "PP1 prefTracks.size=" << prefTracks.size();
 
     // Make the final track objects, fit with KF, and send to output
     for (unsigned int itrk = 0; itrk < prefTracks.size(); itrk++) {
 
-      edm::LogPrint("AAA") << "PP2   itrk=" << itrk;
+//      edm::LogPrint("AAA") << "PP2   itrk=" << itrk;
 
       Tracklet* tracklet = inputtrackletsall[itrk];
       std::vector<const Stub*> trackstublist = inputstublistsall[itrk];
@@ -442,7 +478,7 @@ for (unsigned int ktrk = 0; ktrk < trackBinInfo.size(); ++ktrk) {
 
       // If the track was accepted (and thus fit), add to output
       if (tracklet->fit()) {
-        edm::LogPrint("AAA") << "PP2   tracklet->fit, iSector=" << iSector;
+//        edm::LogPrint("AAA") << "PP2   tracklet->fit, iSector=" << iSector;
 
         // Add fitted Track to output (later converted to TTTrack)
         Track* outtrack = tracklet->getTrack();
