@@ -56,6 +56,22 @@ void L1TZDCEtSumsProducer::produce(edm::StreamID, edm::Event& iEvent, edm::Event
 
   auto const hcalTPs = iEvent.getHandle(hcalTPDigisToken_);
 
+
+int hfP_fg{0};
+int hfP_fg2{0};
+int hfP_fg3{0};
+int hfP_fg4{0};
+int hfP_fg5{0};
+int hfP_fg6{0};
+
+int hfM_fg{0};
+int hfM_fg2{0};
+int hfM_fg3{0};
+int hfM_fg4{0};
+int hfM_fg5{0};
+int hfM_fg6{0};
+
+
   if (not hcalTPs.isValid()) {
     edm::LogWarning("L1TZDCEtSumsProducer") << "Invalid handle to HcalTrigPrimDigiCollection collection"
                                             << ": returning empty l1t::EtSumBxCollection for ZDC EtSums !";
@@ -70,6 +86,48 @@ void L1TZDCEtSumsProducer::produce(edm::StreamID, edm::Event& iEvent, edm::Event
     std::vector<std::array<bool, 2>> iEtSumsFillFlags{nBXs, {{false, false}}};
 
     for (auto const& hcalTp : *hcalTPs) {
+
+
+
+
+{
+auto const ieta = hcalTp.id().ieta();
+auto const absIEta = std::abs(ieta);
+
+if (absIEta >= 29 and absIEta <= 41) {
+
+  bool const fg = hcalTp.t0().fineGrain(0);   // depth
+  bool const fg2 = hcalTp.t0().fineGrain(1);  // prompt
+  bool const fg3 = hcalTp.t0().fineGrain(2);  // delay 1
+  bool const fg4 = hcalTp.t0().fineGrain(3);  // delay 2
+  bool const fg5 = hcalTp.t0().fineGrain(4);
+  bool const fg6 = hcalTp.t0().fineGrain(5);
+
+  auto const iphi = hcalTp.id().iphi();
+  edm::LogPrint("AAA") << "[tp] ieta=" << ieta << " iphi=" << iphi << " fg=" << fg << " fg2=" << fg2 << " fg3=" << fg3 << " fg4=" << fg4 << " fg5=" << fg5 << " fg6=" << fg6;
+
+if (ieta < 0) {
+  if (fg) hfM_fg += 1;
+  if (fg2) hfM_fg2 += 1;
+  if (fg3) hfM_fg3 += 1;
+  if (fg4) hfM_fg4 += 1;
+  if (fg5) hfM_fg5 += 1;
+  if (fg6) hfM_fg6 += 1;
+} else {
+  if (fg) hfP_fg += 1;
+  if (fg2) hfP_fg2 += 1;
+  if (fg3) hfP_fg3 += 1;
+  if (fg4) hfP_fg4 += 1;
+  if (fg5) hfP_fg5 += 1;
+  if (fg6) hfP_fg6 += 1;
+}
+
+
+}
+
+}
+
+
       // iphi position 99 is used for the etSums
       auto const iphi = hcalTp.id().iphi();
 
@@ -126,6 +184,9 @@ void L1TZDCEtSumsProducer::produce(edm::StreamID, edm::Event& iEvent, edm::Event
       }
     }
   }
+
+edm::LogPrint("AAA") << "[SUM] hfM_fg=" << hfM_fg << " hfM_fg2=" << hfM_fg2 << " hfM_fg3=" << hfM_fg3 << " hfM_fg4=" << hfM_fg4 << " hfM_fg5=" << hfM_fg5 << " hfM_fg6=" << hfM_fg6;
+edm::LogPrint("AAA") << "[SUM] hfP_fg=" << hfP_fg << " hfP_fg2=" << hfP_fg2 << " hfP_fg3=" << hfP_fg3 << " hfP_fg4=" << hfP_fg4 << " hfP_fg5=" << hfP_fg5 << " hfP_fg6=" << hfP_fg6;
 
   iEvent.put(std::move(outZDCEtSums));
 }

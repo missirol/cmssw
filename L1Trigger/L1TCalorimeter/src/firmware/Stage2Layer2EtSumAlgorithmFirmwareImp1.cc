@@ -163,11 +163,15 @@ void l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::processEvent(const std::vector
 
         // count HF tower HCAL flags
         if (CaloTools::mpEta(abs(tower.hwEta())) >= CaloTools::mpEta(CaloTools::kHFBegin) &&
-            CaloTools::mpEta(abs(tower.hwEta())) <= CaloTools::mpEta(CaloTools::kHFEnd) && (tower.hwQual() & 0x4) > 0)
-          ringMB0 += 1;
-        if (CaloTools::mpEta(abs(tower.hwEta())) >= CaloTools::mpEta(CaloTools::kHFBegin) &&
-            CaloTools::mpEta(abs(tower.hwEta())) <= CaloTools::mpEta(CaloTools::kHFEnd) && (tower.hwQual() & 0x8) > 0)
-          ringMB1 += 1;
+            CaloTools::mpEta(abs(tower.hwEta())) <= CaloTools::mpEta(CaloTools::kHFEnd)) {
+
+          if ((tower.hwQual() & 0x4) > 0)
+            ringMB0 += 1;
+          if ((tower.hwQual() & 0x8) > 0)
+            ringMB1 += 1;
+
+edm::LogPrint("AAA") << " [tower]     (iphi = " << iphi << ") hwEta=" << tower.hwEta() << " quality=" << tower.hwQual() << " (ringMB0 = " << ringMB0 << ", ringMB1 = " << ringMB1 << ")";
+        }
 
         // tower counting
         if (tower.hwPt() > nTowThresholdHw_ && CaloTools::mpEta(abs(tower.hwEta())) <= nTowEtaMax_)
@@ -189,10 +193,14 @@ void l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::processEvent(const std::vector
       ntowers += ringNtowers;
     }
 
+edm::LogPrint("AAA") << " XXX1 (MB0 = " << mb0 << ", MB1 = " << mb1 << ")";
+
     if (mb0 > 0xf)
       mb0 = 0xf;
     if (mb1 > 0xf)
       mb1 = 0xf;
+
+edm::LogPrint("AAA") << " XXX2 (MB0 = " << mb0 << ", MB1 = " << mb1 << ")";
 
     // saturate energy sums if saturated TP/tower
 
