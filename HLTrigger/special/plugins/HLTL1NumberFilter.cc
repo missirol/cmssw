@@ -63,34 +63,77 @@ void HLTL1NumberFilter::fillDescriptions(edm::ConfigurationDescriptions& descrip
 bool HLTL1NumberFilter::filter(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   using namespace edm;
 
-  if (iEvent.isRealData()) {
-    bool accept(false);
-    edm::Handle<FEDRawDataCollection> theRaw;
-    iEvent.getByToken(inputToken_, theRaw);
-    const FEDRawData& data = theRaw->FEDData(fedId_);
-    if (data.data() and data.size() > 0) {
-      unsigned long counter;
-      if (useTCDS_) {
-        TCDSRecord record(data.data());
-        counter = record.getTriggerCount();
-      } else {
-        FEDHeader header(data.data());
-        counter = header.lvl1ID();
-      }
-      if (period_ != 0)
-        accept = (counter % period_ == 0);
-      if (invert_)
-        accept = not accept;
-      return accept;
-    } else {
-      LogWarning("HLTL1NumberFilter") << "No valid data for FED " << fedId_ << " used by HLTL1NumberFilter";
-      return false;
-    }
-  } else {
-    return true;
-  }
+//  if (iEvent.isRealData()) {
+//    bool accept(false);
+//    edm::Handle<FEDRawDataCollection> theRaw;
+//    iEvent.getByToken(inputToken_, theRaw);
+//    const FEDRawData& data = theRaw->FEDData(fedId_);
+//    if (data.data() and data.size() > 0) {
+//      unsigned long counter;
+//      if (useTCDS_) {
+//        TCDSRecord record(data.data());
+//        counter = record.getTriggerCount();
+//      } else {
+//        FEDHeader header(data.data());
+//        counter = header.lvl1ID();
+//      }
+//      if (period_ != 0)
+//        accept = (counter % period_ == 0);
+//      if (invert_)
+//        accept = not accept;
+//      return accept;
+//    } else {
+//      LogWarning("HLTL1NumberFilter") << "No valid data for FED " << fedId_ << " used by HLTL1NumberFilter";
+//      return false;
+//    }
+//  } else {
+//    return true;
+//  }
+
+  auto const evtId{iEvent.id().event()};
+
+  auto const& rawData = iEvent.get(inputToken_);
+
+  auto const& fedData1024 = rawData.FEDData(1024);
+  auto const& fedData1230 = rawData.FEDData(1230);
+  auto const& fedData1386 = rawData.FEDData(1386);
+  auto const& fedData1404 = rawData.FEDData(1404);
+
+  TCDSRecord tcdsRecord{fedData1024.data()};
+  auto const tcdsEventNumber{tcdsRecord.getEventNumber()};
+  auto const tcdsTriggerCount{tcdsRecord.getTriggerCount()};
+
+  FEDHeader header1024{fedData1024.data()};
+  auto const l1Id1024{header1024.lvl1ID()};
+
+  FEDHeader header1230{fedData1230.data()};
+  auto const l1Id1230{header1230.lvl1ID()};
+
+  FEDHeader header1386{fedData1386.data()};
+  auto const l1Id1386{header1386.lvl1ID()};
+
+  FEDHeader header1404{fedData1404.data()};
+  auto const l1Id1404{header1404.lvl1ID()};
+
+//  edm::LogPrint("HLTL1NumberFilter")
+//    << " evtId=" << evtId
+//    << " tcdsEventNumber=" << tcdsEventNumber
+//    << " tcdsTriggerCount=" << tcdsTriggerCount
+//    << " l1Id1024=" << l1Id1024
+//    << " l1Id1230=" << l1Id1230
+//    << " l1Id1386=" << l1Id1386
+//    << " l1Id1404=" << l1Id1404
+//  ;
+
+  if (evtId != tcdsEventNumber) throw cms::Exception("InputError") << "tcdsEventNumber";
+
+  if (tcdsTriggerCount != l1Id1024) throw cms::Exception("InputError") << "l1Id1024";
+  if (tcdsTriggerCount != l1Id1230) throw cms::Exception("InputError") << "l1Id1230";
+  if (tcdsTriggerCount != l1Id1386) throw cms::Exception("InputError") << "l1Id1386";
+  if (tcdsTriggerCount != l1Id1404) throw cms::Exception("InputError") << "l1Id1404";
+
+  return true;
 }
 
-// declare this class as a framework plugin
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(HLTL1NumberFilter);
