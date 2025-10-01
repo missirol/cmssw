@@ -274,7 +274,7 @@ namespace tmtt {
     unsigned int numMergedBend_;
 
     //--- Truth info about stub.
-    const TP* assocTP_;
+    const TP* assocTP_ = nullptr;
     std::set<const TP*> assocTPs_;
     //--- Truth info about the two clusters that make up the stub
     std::array<const TP*, 2> assocTPofCluster_;
