@@ -101,6 +101,8 @@ namespace trklet {
     Tracklet* next_tracklet;
 
     CircularBuffer<ProjectionTemp> inputProjBuffer_;
+
+    uint matchCounter_{0};
   };
 
 };  // namespace trklet

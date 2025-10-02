@@ -275,6 +275,35 @@ void MatchProcessor::execute(unsigned int iSector, double phimin) {
 
       bool match = matchCalculator(tracklet, fpgastub, print, istep);
 
+
+
+
+      if (tracklet != nullptr and fpgastub != nullptr) {
+        edm::LogPrint("AAA")
+          << "MP1        "
+          << " layerdisk=" << layerdisk_
+          << " N_LAYER=" << N_LAYER
+          << " barrel=" << barrel_
+          << " istep=" << istep
+          << " isMEbest=" << iMEbest
+          << " iSector=" << iSector
+          << " phimin=" << phimin
+          << " phiregion=" << phiregion_
+          << " tracklet=("
+          << " iseed=" << tracklet->getISeed()
+          << " rinv=" << tracklet->rinv()
+          << " phi0=" << tracklet->phi0()
+          << " d0=" << tracklet->d0()
+          << " t=" << tracklet->t()
+          << " z0=" << tracklet->z0()
+          << ") fpgastub=" << fpgastub->str()
+          << " match=" << match;
+      }
+
+
+
+
+
       if (settings_.debugTracklet() && match) {
         edm::LogVerbatim("Tracklet") << getName() << " have match";
       }
@@ -489,10 +518,47 @@ void MatchProcessor::execute(unsigned int iSector, double phimin) {
   if (settings_.writeMonitorData("MC")) {
     globals_->ofstream("matchcalculator.txt") << getName() << " " << countall << " " << countsel << endl;
   }
+
+
+
+
+//!!
+//!!  int fm_idx = -1;
+//!!  for (auto* fm : fullmatches_) {
+//!!    ++fm_idx;
+//!!
+//!!    if (fm == nullptr) continue;
+//!!
+//!!    edm::LogPrint("AAA") << "MP0       (index = " << fm_idx << ", layer = " << fm->layer() << ", disk = " << fm->disk() << ", nMatches = " << fm->nMatches() << ")";
+//!!    for (unsigned int idx = 0; idx < fm->nMatches(); ++idx) {
+//!!      auto match = fm->getMatch(idx);
+//!!      auto const* aTrack = match.first;
+//!!      auto const* aStub = match.second;
+//!!
+//!!      if (aTrack == nullptr) continue;
+//!!
+//!!      edm::LogPrint("AAA") << "MP0         tracklet[" << idx << "]: "
+//!!        << " rinv=" << aTrack->rinv()
+//!!        << " phi0=" << aTrack->phi0()
+//!!        << " d0=" << aTrack->d0()
+//!!        << " t=" << aTrack->t()
+//!!        << " z0=" << aTrack->z0()
+//!!      ;
+//!!
+//!!      if (aStub == nullptr) continue;
+//!!
+//!!      edm::LogPrint("AAA") << "MP0          stub[" << idx << "]: " << aStub->str();
+//!!    }
+//!!  }
+
 }
 
 bool MatchProcessor::matchCalculator(Tracklet* tracklet, const Stub* fpgastub, bool, unsigned int istep) {
   const L1TStub* stub = fpgastub->l1tstub();
+
+  edm::LogPrint("Tracklet") << "                  * (this) = " << this;
+  edm::LogPrint("Tracklet") << "                  * matchCounter = " << matchCounter_;
+  ++matchCounter_;
 
   if (layerdisk_ < N_LAYER) {
     const Projection& proj = tracklet->proj(layerdisk_);
@@ -543,7 +609,19 @@ bool MatchProcessor::matchCalculator(Tracklet* tracklet, const Stub* fpgastub, b
 
     // Do we have a new tracklet?
     bool newtracklet = (!first_ || next_tracklet != curr_tracklet);
+
+    edm::LogPrint("Tracklet") << "                  - "
+                              << getName() << " first=" << first_
+                              << " diff=" << (next_tracklet != curr_tracklet)
+                              << " newtracklet=" << newtracklet;
+
+    edm::LogPrint("Tracklet") << "                      "
+                              << " curr_tracklet=" << curr_tracklet
+                              << " next_tracklet=" << next_tracklet
+                              << " tracklet=" << tracklet;
+
     first_ = newtracklet ? true : first_;
+
     if (istep == 0)
       best_ideltar_disk = (1 << (fpgastub->r().nbits() - 1));  // Set to the maximum possible
     // If so, replace the "best" values with the cut tables
@@ -583,10 +661,15 @@ bool MatchProcessor::matchCalculator(Tracklet* tracklet, const Stub* fpgastub, b
     bool imatch = (std::abs(ideltaphi) <= best_ideltaphi_barrel && (ideltaz << dzshift_ < best_ideltaz_barrel) &&
                    (ideltaz << dzshift_ >= -best_ideltaz_barrel));
 
-    if (settings_.debugTracklet()) {
-      edm::LogVerbatim("Tracklet") << getName() << " imatch = " << imatch << " ideltaphi cut " << ideltaphi << " "
-                                   << phimatchcuttable_.lookup(seedindex) << " ideltaz<<dzshift cut "
-                                   << (ideltaz << dzshift_) << " " << zmatchcuttable_.lookup(seedindex);
+    if (true or settings_.debugTracklet()) {
+      edm::LogPrint("Tracklet") << "                    "
+                                << getName() << " imatch = " << imatch << " ideltaphi cut " << ideltaphi << " "
+                                << phimatchcuttable_.lookup(seedindex) << " " << best_ideltaphi_barrel << " ideltaz<<dzshift cut "
+                                << (ideltaz << dzshift_) << " " << zmatchcuttable_.lookup(seedindex) << " " << best_ideltaz_barrel
+                                << " newtracklet=" << newtracklet
+                                << " cond1=" << (std::abs(ideltaphi) <= best_ideltaphi_barrel)
+                                << " cond2=" << (ideltaz << dzshift_ < best_ideltaz_barrel)
+                                << " cond3=" << (ideltaz << dzshift_ >= -best_ideltaz_barrel);
     }
 
     //This would catch significant consistency problems in the configuration - helps to debug if there are problems.
@@ -745,7 +828,20 @@ bool MatchProcessor::matchCalculator(Tracklet* tracklet, const Stub* fpgastub, b
     next_tracklet = tracklet;
     // Do we have a new tracklet?
     bool newtracklet = (!first_ || next_tracklet != curr_tracklet);
+
+    edm::LogPrint("Tracklet") << "                  - "
+                              << getName() << " first=" << first_
+                              << " diff=" << (next_tracklet != curr_tracklet)
+                              << " newtracklet=" << newtracklet;
+
+    edm::LogPrint("Tracklet") << "                      "
+                              << " curr_tracklet=" << curr_tracklet
+                              << " next_tracklet=" << next_tracklet
+                              << " tracklet=" << tracklet;
+
+
     first_ = newtracklet ? true : first_;
+
     // If so, replace the "best" values with the cut tables
     if (newtracklet) {
       best_ideltaphi_disk = idrphicut;
@@ -768,10 +864,14 @@ bool MatchProcessor::matchCalculator(Tracklet* tracklet, const Stub* fpgastub, b
     bool match = (std::abs(drphi) < drphicut) && (std::abs(deltar) < drcut);
     bool imatch = (std::abs(ideltaphi * irstub) < best_ideltaphi_disk) && (std::abs(ideltar) < best_ideltar_disk);
 
-    if (settings_.debugTracklet()) {
-      edm::LogVerbatim("Tracklet") << "imatch match disk: " << imatch << " " << match << " " << std::abs(ideltaphi)
+    if (true or settings_.debugTracklet()) {
+      edm::LogPrint("Tracklet") << "                    "
+                                   << "imatch match disk: " << imatch << " " << match << " " << std::abs(ideltaphi)
                                    << " " << drphicut / (settings_.kphi() * stub->r()) << " " << std::abs(ideltar)
-                                   << " " << drcut / settings_.krprojshiftdisk() << " r = " << stub->r();
+                                   << " " << drcut / settings_.krprojshiftdisk() << " r = " << stub->r()
+<< " cond1( " << std::abs(ideltaphi * irstub) << " < " << best_ideltaphi_disk << " )=" << (std::abs(ideltaphi * irstub) < best_ideltaphi_disk)
+<< " cond2( " << std::abs(ideltar) << " < " << best_ideltar_disk << " )=" << (std::abs(ideltar) < best_ideltar_disk)
+;
     }
 
     bool keep = true;

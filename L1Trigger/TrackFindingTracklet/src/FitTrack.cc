@@ -820,19 +820,19 @@ void FitTrack::trackFitFake(Tracklet* tracklet, std::vector<const Stub*>&, std::
 std::vector<Tracklet*> FitTrack::orderedMatches(vector<FullMatchMemory*>& fullmatch) {
   std::vector<Tracklet*> tmp;
 
-for(auto* fm : fullmatch) {
-  edm::LogPrint("AAA") << "FT0       (layer = " << fm->layer() << ", disk = " << fm->disk() << ", nMatches = " << fm->nMatches() << ")";
-  for (unsigned int idx = 0; idx < fm->nMatches(); ++idx) {
-    Tracklet* aTrack = fm->getTracklet(idx);
-    edm::LogPrint("AAA") << "FT0         tracklet[" << idx << "]: "
-      << " rinv=" << aTrack->rinv()
-      << " phi0=" << aTrack->phi0()
-      << " d0=" << aTrack->d0()
-      << " t=" << aTrack->t()
-      << " z0=" << aTrack->z0()
-    ;
-  }
-}
+//!!for(auto* fm : fullmatch) {
+//!!  edm::LogPrint("AAA") << "FT0       (layer = " << fm->layer() << ", disk = " << fm->disk() << ", nMatches = " << fm->nMatches() << ")";
+//!!  for (unsigned int idx = 0; idx < fm->nMatches(); ++idx) {
+//!!    Tracklet* aTrack = fm->getTracklet(idx);
+//!!    edm::LogPrint("AAA") << "FT0         tracklet[" << idx << "]: "
+//!!      << " rinv=" << aTrack->rinv()
+//!!      << " phi0=" << aTrack->phi0()
+//!!      << " d0=" << aTrack->d0()
+//!!      << " t=" << aTrack->t()
+//!!      << " z0=" << aTrack->z0()
+//!!    ;
+//!!  }
+//!!}
 
   std::vector<unsigned int> indexArray;
   for (auto& imatch : fullmatch) {
@@ -893,24 +893,24 @@ for(auto* fm : fullmatch) {
 void FitTrack::execute(deque<string>& streamTrackRaw,
                        vector<deque<StubStreamData>>& streamsStubRaw,
                        unsigned int iSector) {
-  // merge
-edm::LogPrint("AAA") << "FT0     fullmatch1";
+//!!  // merge
+//!!edm::LogPrint("AAA") << "FT0     fullmatch1";
   const std::vector<Tracklet*>& matches1 = orderedMatches(fullmatch1_);
-edm::LogPrint("AAA") << "FT0     fullmatch2";
+//!!edm::LogPrint("AAA") << "FT0     fullmatch2";
   const std::vector<Tracklet*>& matches2 = orderedMatches(fullmatch2_);
-edm::LogPrint("AAA") << "FT0     fullmatch3";
+//!!edm::LogPrint("AAA") << "FT0     fullmatch3";
   const std::vector<Tracklet*>& matches3 = orderedMatches(fullmatch3_);
-edm::LogPrint("AAA") << "FT0     fullmatch4";
+//!!edm::LogPrint("AAA") << "FT0     fullmatch4";
   const std::vector<Tracklet*>& matches4 = orderedMatches(fullmatch4_);
 
   iSector_ = iSector;
 
-edm::LogPrint("AAA") << "FT0   execute (sector = " << iSector << ")"
- << ": matches1 = " << matches1.size() << " (" << fullmatch1_.size() << ")"
- << ": matches2 = " << matches2.size() << " (" << fullmatch2_.size() << ")"
- << ": matches3 = " << matches3.size() << " (" << fullmatch3_.size() << ")"
- << ": matches4 = " << matches4.size() << " (" << fullmatch4_.size() << ")"
-;
+//!!edm::LogPrint("AAA") << "FT0   execute (sector = " << iSector << ")"
+//!! << ": matches1 = " << matches1.size() << " (" << fullmatch1_.size() << ")"
+//!! << ": matches2 = " << matches2.size() << " (" << fullmatch2_.size() << ")"
+//!! << ": matches3 = " << matches3.size() << " (" << fullmatch3_.size() << ")"
+//!! << ": matches4 = " << matches4.size() << " (" << fullmatch4_.size() << ")"
+//!!;
 
   if (settings_.debugTracklet() && (matches1.size() + matches2.size() + matches3.size() + matches4.size()) > 0) {
     for (auto& imatch : fullmatch1_) {
@@ -1120,16 +1120,16 @@ edm::LogPrint("AAA") << "FT0   execute (sector = " << iSector << ")"
     globals_->ofstream("fittrack.txt") << getName() << " " << countAll << " " << countFit << endl;
   }
 
-edm::LogPrint("AAA") << "FT1   trackfit (sector = " << iSector << ", nTracks = " << trackfit_->nTracks() << ")";
-      for (unsigned int j = 0; j < trackfit_->nTracks(); j++) {
-        Tracklet* aTrack = trackfit_->getTrack(j);
-edm::LogPrint("AAA") << "FT2   trackfit[" << j << "]: "
-<< " rinv=" << aTrack->rinv()
-<< " phi0=" << aTrack->phi0()
-<< " d0=" << aTrack->d0()
-<< " t=" << aTrack->t()
-<< " z0=" << aTrack->z0()
-;
-      }
+//!edm::LogPrint("AAA") << "FT1   trackfit (sector = " << iSector << ", nTracks = " << trackfit_->nTracks() << ")";
+//!      for (unsigned int j = 0; j < trackfit_->nTracks(); j++) {
+//!        Tracklet* aTrack = trackfit_->getTrack(j);
+//!edm::LogPrint("AAA") << "FT2   trackfit[" << j << "]: "
+//!<< " rinv=" << aTrack->rinv()
+//!<< " phi0=" << aTrack->phi0()
+//!<< " d0=" << aTrack->d0()
+//!<< " t=" << aTrack->t()
+//!<< " z0=" << aTrack->z0()
+//!;
+//!      }
 
 }

@@ -27,6 +27,7 @@ namespace tmtt {
   /* Helix state seed  */
 
   TVectorD KFParamsComb::seedX(const L1track3D& l1track3D) const {
+edm::LogPrint("AAA") << "HHH nHelixPar_=" << nHelixPar_;
     TVectorD vecX(nHelixPar_);
     vecX[INV2R] = settings_->invPtToInvR() * l1track3D.qOverPt() / 2;
     vecX[PHI0] = reco::deltaPhi(l1track3D.phi0() - sectorPhi(), 0.);
