@@ -1,5 +1,5 @@
-#ifndef L1TGlobal_TriggerMenuParser_h
-#define L1TGlobal_TriggerMenuParser_h
+#ifndef L1Trigger_L1TGlobal_TriggerMenuParser_h
+#define L1Trigger_L1TGlobal_TriggerMenuParser_h
 
 /**
  * \class TriggerMenuParser
@@ -27,6 +27,7 @@
  */
 
 // system include files
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -371,6 +372,10 @@ namespace l1t {
                             TrigFunc_t func,
                             unsigned int prec);
 
+    // Multiply two doubles, and return the result as a long-long integer
+    //  - The output value is clamped to the min/max values of the long-long integer type
+    long long multiply_and_clamp_longlong(double const d1, double const d2) const;
+
   private:
     /// hardware limits
 
@@ -441,7 +446,11 @@ namespace l1t {
 
     // class containing the scales from the L1 Menu XML
     GlobalScales m_gtScales;
+
+    // constants
+    static constexpr double kMinLongLongAsDouble = std::numeric_limits<long long>::min();
+    static constexpr double kMaxLongLongAsDouble = std::numeric_limits<long long>::max();
   };
 
 }  // namespace l1t
-#endif /*L1TGlobal_TriggerMenuParser_h*/
+#endif
