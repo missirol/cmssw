@@ -427,11 +427,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                         fake.xx() = x;
                         fake.yy() = y;
                         fake.moduleId() = thisModuleId;
+#ifdef GPU_DEBUG
                       } else {
                         printf("Too many pixels recovered by digi morphing in module %u: %u > %u\n",
                                thisModuleId,
                                index,
                                maxFakesInModule);
+#endif
                       }
                     }
                   }
@@ -453,11 +455,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                         fake.xx() = x + j;
                         fake.yy() = y;
                         fake.moduleId() = thisModuleId;
+#ifdef GPU_DEBUG
                       } else {
                         printf("Too many pixels recovered by digi morphing in module %u: %u > %u\n",
                                thisModuleId,
                                index,
                                maxFakesInModule);
+#endif
                       }
                     }
                   }
@@ -481,17 +485,34 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                         fake.xx() = x + valuesPerWord - 1;
                         fake.yy() = y;
                         fake.moduleId() = thisModuleId;
+#ifdef GPU_DEBUG
                       } else {
                         printf("Too many pixels recovered by digi morphing in module %u: %u > %u\n",
                                thisModuleId,
                                index,
                                maxFakesInModule);
+#endif
                       }
                     }
                   }
                 }
               }
               alpaka::syncBlockThreads(acc);
+
+              if (cms::alpakatools::once_per_block(acc)) {
+                if (fakePixels > maxFakesInModule) {
+                  printf(
+                      "WARNING: too many pixels recovered by digi-morphing in module %u (%u > %u)"
+                      ", only the first %u recovered pixels will be used !!\n",
+                      thisModuleId,
+                      fakePixels,
+                      maxFakesInModule,
+                      maxFakesInModule);
+                  fakePixels = maxFakesInModule;
+                }
+              }
+              alpaka::syncBlockThreads(acc);
+              ALPAKA_ASSERT_ACC(fakePixels <= maxFakesInModule);
 
             }  // if (applyDigiMorphing)
           }  // if (lastPixel > 1)
