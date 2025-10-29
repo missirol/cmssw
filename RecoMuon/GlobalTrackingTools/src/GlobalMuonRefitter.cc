@@ -23,6 +23,8 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <functional>
+#include <numeric>
 
 //-------------------------------
 // Collaborating Class Headers --
@@ -67,6 +69,48 @@
 
 using namespace std;
 using namespace edm;
+
+namespace {
+  //
+  // Sort function optimized for the case where the desired comparison
+  // is extravagantly expensive, copied from the implementation by Dan Riley for
+  // https://github.com/cms-sw/cmssw/pull/40675
+  //
+  // This calculates the values to be compared once in O(n) time, instead of
+  // O(n*log(n)) times in the comparison function.
+  //
+  // Introduced in order to solve
+  // https://github.com/cms-sw/cmssw/issues/49064
+  //
+  template <typename RandomAccessSequence, typename Predicate, typename Transform>
+  RandomAccessSequence sort_all_indexed(const RandomAccessSequence& s, Predicate p, Transform t) {
+    std::vector<size_t> idx(s.size());
+    std::iota(idx.begin(), idx.end(), 0);
+
+    // fill the cache of the values to be sorted
+    using valueCacheType = std::invoke_result_t<decltype(t), typename RandomAccessSequence::value_type>;
+    std::vector<valueCacheType> valcache(s.size());
+    std::transform(s.begin(), s.end(), valcache.begin(), t);
+
+    // sort the indices of the value cache
+    auto idxComp = [&valcache, p](auto i1, auto i2) { return p(valcache[i1], valcache[i2]); };
+    std::stable_sort(idx.begin(), idx.end(), idxComp);
+
+    // fill the sorted output vector
+    RandomAccessSequence r(s.size());
+    for (size_t i = 0; i < s.size(); ++i) {
+      r[i] = s[idx[i]];
+    }
+    return r;
+  }
+
+  struct RecHitGlobalPositionMag2 {
+    bool operator()(GlobalMuonRefitter::ConstRecHitPointer const& hit) const {
+      return hit->surface()->toGlobal(hit->localPosition()).mag2();
+    }
+  };
+
+}  // namespace
 
 //----------------
 // Constructors --
@@ -279,7 +323,7 @@ vector<Trajectory> GlobalMuonRefitter::refit(const reco::Track& globalTrack,
       dytInfo->CopyFrom(dytRefit.getDYTInfo());
       if ((DYTRecHits.size() > 1) &&
           (DYTRecHits.front()->globalPosition().mag() > DYTRecHits.back()->globalPosition().mag()))
-        stable_sort(DYTRecHits.begin(), DYTRecHits.end(), RecHitLessByDet(alongMomentum));
+        DYTRecHits = sort_all_indexed(DYTRecHits, std::less(), RecHitGlobalPositionMag2());
       outputTraj = transform(globalTrack, track, DYTRecHits);
     }
 
@@ -518,7 +562,7 @@ void GlobalMuonRefitter::checkMuonHits(const reco::Track& muon,
   // check order of muon measurements
   if ((all.size() > 1) && (all.front()->globalPosition().mag() > all.back()->globalPosition().mag())) {
     LogTrace(theCategory) << "reverse order: ";
-    stable_sort(all.begin(), all.end(), RecHitLessByDet(alongMomentum));
+    all = sort_all_indexed(all, std::less(), RecHitGlobalPositionMag2());
   }
 }
 
