@@ -11,11 +11,12 @@ PtAssignmentEngineDxy::PtAssignmentEngineDxy() {}
 PtAssignmentEngineDxy::~PtAssignmentEngineDxy() {}
 
 void PtAssignmentEngineDxy::configure(int verbose, const std::string nnModel) {
-  nnModel_ = nnModel;
   verbose_ = verbose;
-  std::string nnModelDxy_ = nnModel_;
-  loader = std::make_unique<hls4mlEmulator::ModelLoader>(nnModelDxy_);
-  model = loader->load_model();
+  if (loader == nullptr or nnModel_ != nnModel) {
+    nnModel_ = nnModel;
+    loader = std::make_unique<hls4mlEmulator::ModelLoader>(nnModel_);
+    model = loader->load_model();
+  }
 }
 
 const PtAssignmentEngineAux2017& PtAssignmentEngineDxy::aux() const {
