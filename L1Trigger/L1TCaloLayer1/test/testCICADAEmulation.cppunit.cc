@@ -12,11 +12,10 @@
 //TODO: might also be nice to have a test for model integrity? Known test cases producing known outputs?
 //This may not be appropriate for unit testing however.
 
-#include "hls4ml/emulator.h"
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
+#include "Utilities/Testing/interface/CppUnit_testdriver.icpp"
 
 #include "cppunit/extensions/HelperMacros.h"
-#include <memory>
-#include "Utilities/Testing/interface/CppUnit_testdriver.icpp"
 
 class test_CICADA : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(test_CICADA);
@@ -33,11 +32,11 @@ public:
 
 CPPUNIT_TEST_SUITE_REGISTRATION(test_CICADA);
 
-void test_CICADA::doModelV1Load() { auto wrapper = hls4mlEmulator::ModelWrapper("CICADAModel_v1"); }
+void test_CICADA::doModelV1Load() { auto wrapper = l1t::HLS4MLModelWrapper("CICADAModel_v1"); }
 
-void test_CICADA::doModelV2Load() { auto wrapper = hls4mlEmulator::ModelWrapper("CICADAModel_v2"); }
+void test_CICADA::doModelV2Load() { auto wrapper = l1t::HLS4MLModelWrapper("CICADAModel_v2"); }
 
 void test_CICADA::doMultiModelLoad() {
-  auto wrapper_v1 = hls4mlEmulator::ModelWrapper("CICADAModel_v1");
-  auto wrapper_v2 = hls4mlEmulator::ModelWrapper("CICADAModel_v2");
+  auto wrapper_v1 = l1t::HLS4MLModelWrapper("CICADAModel_v1");
+  auto wrapper_v2 = l1t::HLS4MLModelWrapper("CICADAModel_v2");
 }

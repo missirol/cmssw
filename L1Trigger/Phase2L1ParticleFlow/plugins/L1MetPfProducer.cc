@@ -1,5 +1,4 @@
 #include <string>
-#include <stdexcept>
 #include <vector>
 
 #include "FWCore/Framework/interface/global/EDProducer.h"
@@ -8,7 +7,6 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "FWCore/Utilities/interface/Exception.h"
 
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
 // For HLS MET Data Formats
@@ -18,11 +16,11 @@
 #include "DataFormats/L1Trigger/interface/EtSum.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/jetmet/L1PFMetEmulator.h"
 
 #include "ap_int.h"
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
 
 using namespace l1t;
 
@@ -45,7 +43,7 @@ private:
 
   // hls4ml emulator objects
   bool useMlModel_;
-  hls4mlEmulator::ModelWrapper modelWrapper_;
+  l1t::HLS4MLModelWrapper modelWrapper_;
   std::string modelVersion_;
 
   typedef ap_fixed<32, 16> input_t;
@@ -70,12 +68,7 @@ L1MetPfProducer::L1MetPfProducer(const edm::ParameterSet& cfg)
   auto const& modelVersion = cfg.getParameter<std::string>("modelVersion");
   useMlModel_ = (not modelVersion.empty());
   if (useMlModel_) {
-    try {
-      modelWrapper_.reset(modelVersion_);
-    } catch (std::runtime_error const& e) {
-      throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \"" << modelVersion_
-                                         << "\". Model not found in cms-hls4ml externals.";
-    }
+    modelWrapper_.reset(modelVersion_);
   } else {
     edm::FileInPath f = cfg.getParameter<edm::FileInPath>("Poly2File");
     L1METEmu::SetPoly2File(f.fullPath());
@@ -192,14 +185,9 @@ void L1MetPfProducer::CalcMlMet(const std::vector<l1t::PFCandidate>& pfcands,
     input[maxCands_ * (numContInputs_ + numPxPyInputs_ + 1) + i] = (abs(charge[i]) <= 1) ? (charge[i] + 2) : 0;
   }
 
-  try {
-    modelWrapper_.prepare_input(input);
-    modelWrapper_.predict();
-    modelWrapper_.read_result(result);
-  } catch (std::runtime_error const& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to run inference on hls4ml model \""
-                                       << modelWrapper_.model_name() << "\". Error message: " << e.what();
-  }
+  modelWrapper_.prepare_input(input);
+  modelWrapper_.predict();
+  modelWrapper_.read_result(result);
 
   double met_px = -result[0].to_double();
   double met_py = -result[1].to_double();

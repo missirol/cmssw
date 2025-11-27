@@ -9,11 +9,9 @@
 
 #include <ostream>
 #include <string>
-#include <utility>
-
-#include "hls4ml/emulator.h"
 
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
 class GlobalCondition;
 class AXOL1TLTemplate;
@@ -75,7 +73,7 @@ namespace l1t {
 
     static constexpr char const* kModelNamePrefix = "GTADModel_";
 
-    hls4mlEmulator::ModelWrapper m_model_wrapper;
+    HLS4MLModelWrapper m_model_wrapper;
 
     ///axo score for possible score saving
     mutable float m_savedscore;
