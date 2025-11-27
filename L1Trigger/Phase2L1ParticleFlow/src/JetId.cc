@@ -1,12 +1,12 @@
-#include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
-#include <cmath>
+#include "FWCore/Utilities/interface/Exception.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
 
-JetId::JetId(const std::string &iInput,
-             const std::string &iOutput,
-             const std::shared_ptr<hls4mlEmulator::Model> model,
-             int iNParticles)
-    : modelRef_(model) {
+#include <cmath>
+#include <stdexcept>
+
+JetId::JetId(const std::string &iInput, const std::string &iOutput, const std::string &modelName, int iNParticles) try
+    : modelWrapper_{modelName} {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
 
@@ -20,6 +20,9 @@ JetId::JetId(const std::string &iInput,
   fDY_ = std::make_unique<float[]>(fNParticles_);
   fInput_ = iInput;
   fOutput_ = iOutput;
+} catch (std::runtime_error const &e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \"" << modelName
+                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 //--BJet algo specific constructor
@@ -80,9 +83,10 @@ ap_fixed<16, 6> JetId::EvaluateNNFixed() {
   }
   ap_fixed<16, 6> modelResult[1] = {-1};
 
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(modelResult);
+  modelWrapper_.prepare_input(modelInput);
+  modelWrapper_.predict();
+  modelWrapper_.read_result(modelResult);
+
   ap_fixed<16, 6> modelResult_ = modelResult[0];
   return modelResult_;
 }  //end EvaluateNNFixed

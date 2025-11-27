@@ -7,59 +7,43 @@
  * Author: Melissa Quinnan
  *
  **/
-
-// this class header
-#include "L1Trigger/L1TGlobal/interface/CorrCondition.h"
-
-// system include files
+#include <algorithm>
+#include <array>
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 
-#include <string>
-#include <vector>
-#include <algorithm>
 #include "ap_fixed.h"
 
-// user include files
-//   base classes
+#include "DataFormats/L1Trigger/interface/L1Candidate.h"
+#include "FWCore/Utilities/interface/Exception.h"
+#include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
 #include "L1Trigger/L1TGlobal/interface/AXOL1TLTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-
-#include "L1Trigger/L1TGlobal/interface/MuCondition.h"
-#include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
-#include "L1Trigger/L1TGlobal/interface/CaloCondition.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumCondition.h"
-#include "L1Trigger/L1TGlobal/interface/MuonTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/CaloTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/GlobalScales.h"
-
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
-
 #include "L1Trigger/L1TGlobal/interface/GlobalBoard.h"
-
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/MessageLogger/interface/MessageDrop.h"
 
 namespace {
   //template function for reading results
   template <typename ResultType, typename LossType>
-  LossType readResult(hls4mlEmulator::Model& model) {
+  LossType readResult(hls4mlEmulator::ModelWrapper const& modelWrapper) {
     std::pair<ResultType, LossType> ADModelResult;  //model outputs a pair of the (result vector, loss)
-    model.read_result(&ADModelResult);
+    modelWrapper.read_result(&ADModelResult);
     return ADModelResult.second;
   }
 }  // namespace
 
 l1t::AXOL1TLCondition::AXOL1TLCondition()
-    : ConditionEvaluation(), m_gtAXOL1TLTemplate{nullptr}, m_gtGTB{nullptr}, m_model{nullptr} {}
+    : ConditionEvaluation(), m_gtAXOL1TLTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{} {}
 
-l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB)
+l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB) try
     : ConditionEvaluation(),
       m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
       m_gtGTB(ptrGTB),
-      m_model_loader{kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()} {
-  loadModel();
+      m_model_wrapper{kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()} {
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load AXOL1TL model version \""
+                                     << kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()
+                                     << "\". Model version not found in cms-hls4ml externals.";
 }
 
 // copy constructor
@@ -73,8 +57,7 @@ void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
 
   m_verbosity = cp.m_verbosity;
 
-  m_model_loader.reset(cp.model_loader().model_name());
-  loadModel();
+  m_model_wrapper.reset(cp.model_name());
 }
 
 l1t::AXOL1TLCondition::AXOL1TLCondition(const l1t::AXOL1TLCondition& cp) : ConditionEvaluation() { copy(cp); }
@@ -99,22 +82,7 @@ void l1t::AXOL1TLCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGT
 /// set score for score saving
 void l1t::AXOL1TLCondition::setScore(const float scoreval) const { m_savedscore = scoreval; }
 
-void l1t::AXOL1TLCondition::loadModel() {
-  try {
-    m_model = m_model_loader.load_model();
-  } catch (std::runtime_error& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to load AXOL1TL model version \""
-                                       << m_model_loader.model_name()
-                                       << "\". Model version not found in cms-hls4ml externals.";
-  }
-}
-
 const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
-  if (m_model == nullptr) {
-    throw cms::Exception("ModelError") << " ERROR: no model was loaded for AXOL1TL model version \""
-                                       << m_model_loader.model_name() << "\".";
-  }
-
   bool condResult = false;
   int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
@@ -239,16 +207,21 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   }
 
   //now run the inference
-  m_model->prepare_input(ADModelInput);  //scaling internal here
-  m_model->predict();
-  // m_model->read_result(&ADModelResult);  // this should be the square sum model result
-  if ((m_model_loader.model_name() == "GTADModel_v3") ||
-      (m_model_loader.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
-    using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
-    loss = readResult<resulttype, losstype>(*m_model);
-  } else {  //v5 default
-    using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
-    loss = readResult<resulttype, losstype>(*m_model);
+  try {
+    m_model_wrapper.prepare_input(ADModelInput);  //scaling internal here
+    m_model_wrapper.predict();
+    // model->read_result(&ADModelResult);  // this should be the square sum model result
+    if ((m_model_wrapper.model_name() == "GTADModel_v3") ||
+        (m_model_wrapper.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
+      using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
+      loss = readResult<resulttype, losstype>(m_model_wrapper);
+    } else {  //v5 default
+      using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
+      loss = readResult<resulttype, losstype>(m_model_wrapper);
+    }
+  } catch (std::runtime_error const& e) {
+    throw cms::Exception("ModelError") << " ERROR: failed to run inference on hls4ml model \""
+                                       << m_model_wrapper.model_name() << "\". Error message: " << e.what();
   }
 
   // result = ADModelResult.first;

@@ -7,53 +7,35 @@
  * Author: Melissa Quinnan, Lukas Ebeling, Artur Lobanov
  *
  **/
-
-// this class header
-#include "L1Trigger/L1TGlobal/interface/CorrCondition.h"
-
-// system include files
-#include <iostream>
-#include <iomanip>
+#include <algorithm>
 #include <fstream>
-
+#include <iomanip>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <algorithm>
+
 #include "ap_fixed.h"
 
-// user include files
-//   base classes
-#include "L1Trigger/L1TGlobal/interface/TOPOTemplate.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-
-#include "L1Trigger/L1TGlobal/interface/MuCondition.h"
-#include "L1Trigger/L1TGlobal/interface/TOPOCondition.h"
-#include "L1Trigger/L1TGlobal/interface/CaloCondition.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumCondition.h"
-#include "L1Trigger/L1TGlobal/interface/MuonTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/CaloTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/GlobalScales.h"
-
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
-
 #include "L1Trigger/L1TGlobal/interface/GlobalBoard.h"
-
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/MessageLogger/interface/MessageDrop.h"
+#include "L1Trigger/L1TGlobal/interface/TOPOCondition.h"
+#include "L1Trigger/L1TGlobal/interface/TOPOTemplate.h"
 
 l1t::TOPOCondition::TOPOCondition()
-    : ConditionEvaluation(), m_gtTOPOTemplate{nullptr}, m_gtGTB{nullptr}, m_model{nullptr} {}
+    : ConditionEvaluation(), m_gtTOPOTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{} {}
 
-l1t::TOPOCondition::TOPOCondition(const GlobalCondition* topoTemplate, const GlobalBoard* ptrGTB)
+l1t::TOPOCondition::TOPOCondition(const GlobalCondition* topoTemplate, const GlobalBoard* ptrGTB) try
     : ConditionEvaluation(),
       m_gtTOPOTemplate(static_cast<const TOPOTemplate*>(topoTemplate)),
       m_gtGTB(ptrGTB),
-      m_model_loader{kModelNamePrefix + m_gtTOPOTemplate->modelVersion()} {
-  loadModel();
+      m_model_wrapper{kModelNamePrefix + m_gtTOPOTemplate->modelVersion()} {
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load TOPO model version \""
+                                     << kModelNamePrefix + m_gtTOPOTemplate->modelVersion()
+                                     << "\". Model version not found in cms-hls4ml externals.";
 }
 
-// copy constructor
 void l1t::TOPOCondition::copy(const l1t::TOPOCondition& cp) {
   m_gtTOPOTemplate = cp.gtTOPOTemplate();
   m_gtGTB = cp.gtGTB();
@@ -64,50 +46,23 @@ void l1t::TOPOCondition::copy(const l1t::TOPOCondition& cp) {
 
   m_verbosity = cp.m_verbosity;
 
-  m_model_loader.reset(cp.model_loader().model_name());
-  loadModel();
+  m_model_wrapper.reset(cp.model_name());
 }
 
 l1t::TOPOCondition::TOPOCondition(const l1t::TOPOCondition& cp) : ConditionEvaluation() { copy(cp); }
 
-// destructor
-l1t::TOPOCondition::~TOPOCondition() {
-  // empty
-}
+l1t::TOPOCondition::~TOPOCondition() {}
 
-// equal operator
 l1t::TOPOCondition& l1t::TOPOCondition::operator=(const l1t::TOPOCondition& cp) {
   copy(cp);
   return *this;
 }
 
-// methods
 void l1t::TOPOCondition::setGtTOPOTemplate(const TOPOTemplate* caloTempl) { m_gtTOPOTemplate = caloTempl; }
 
-///   set the pointer to uGT GlobalBoard
 void l1t::TOPOCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
 
-/// set score for score saving
-void l1t::TOPOCondition::setScore(const float scoreval) const { m_savedscore = scoreval; }
-
-void l1t::TOPOCondition::loadModel() {
-  try {
-    m_model = m_model_loader.load_model();
-    // std::string TOPOmodelversion = "/afs/desy.de/user/e/ebelingl/topo/compile/topo_v1";
-    // hls4mlEmulator::ModelLoader loader(TOPOmodelversion);
-    // m_model = loader.load_model();
-  } catch (std::runtime_error& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to load TOPO model version \"" << m_model_loader.model_name()
-                                       << "\". Model version not found in cms-hls4ml externals.";
-  }
-}
-
 const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
-  if (m_model == nullptr) {
-    throw cms::Exception("ModelError") << " ERROR: no model was loaded for TOPO model version \""
-                                       << m_model_loader.model_name() << "\".";
-  }
-
   bool condResult = false;
   int useBx = bxEval + m_gtTOPOTemplate->condRelativeBx();
 
@@ -147,7 +102,6 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
 
   //declare result vectors +score
   losstype loss;
-  float score = -1.0;
 
   //check number of input objects we actually have (muons, jets etc)
   int NCandMu = candMuVec->size(useBx);
@@ -221,11 +175,16 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
   }
 
   //now run the inference
-  m_model->prepare_input(ModelInput);  //scaling internal here
-  m_model->predict();
-  m_model->read_result(&loss);  //store result as loss variable
-  score = ((loss).to_float() * 1023);
-  setScore(score);
+  try {
+    m_model_wrapper.prepare_input(ModelInput);  //scaling internal here
+    m_model_wrapper.predict();
+    m_model_wrapper.read_result(&loss);  //store result as loss variable
+  } catch (std::runtime_error const& e) {
+    throw cms::Exception("ModelError") << "ERROR: failed to run inference on hls4ml model \""
+                                       << m_model_wrapper.model_name() << "\". Error message: " << e.what();
+  }
+
+  float const score = ((loss).to_float() * 1023);
 
   //number of objects/thrsholds to check
   int iCondition = 0;  // number of conditions: there is only one

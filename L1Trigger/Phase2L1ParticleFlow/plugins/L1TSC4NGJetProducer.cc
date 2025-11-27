@@ -38,9 +38,6 @@ private:
   bool const isDebugEnabled = false;
 
   std::vector<l1ct::JetTagClass> classes_;
-
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
 };
 
 L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg)
@@ -50,19 +47,13 @@ L1TSC4NGJetProducer::L1TSC4NGJetProducer(const edm::ParameterSet& cfg)
       fMaxEta_(cfg.getParameter<double>("maxEta")),
       fMaxJets_(cfg.getParameter<int>("maxJets")),
       fNParticles_(cfg.getParameter<int>("nParticles")),
-      isDebugEnabled(edm::isDebugEnabled()),
-      loader(hls4mlEmulator::ModelLoader(cfg.getParameter<string>("l1tSC4NGJetModelPath"))) {
-  std::vector<std::string> classes = cfg.getParameter<std::vector<std::string>>("classes");
+      isDebugEnabled(edm::isDebugEnabled()) {
+  auto const& classes = cfg.getParameter<std::vector<std::string>>("classes");
   for (unsigned i = 0; i < classes.size(); i++) {
     classes_.push_back(l1ct::JetTagClass(classes[i]));
   }
-  try {
-    model = loader.load_model();
-  } catch (std::runtime_error& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to load L1TSC4NGJet model version \"" << loader.model_name()
-                                       << "\". Model version not found in cms-hls4ml externals.";
-  }
-  fJetId_ = std::make_unique<L1TSC4NGJetID>(model, fNParticles_, isDebugEnabled);
+  fJetId_ =
+      std::make_unique<L1TSC4NGJetID>(cfg.getParameter<string>("l1tSC4NGJetModelPath"), fNParticles_, isDebugEnabled);
   produces<l1t::PFJetCollection>("l1tSC4NGJets");
 }
 

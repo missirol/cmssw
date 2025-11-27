@@ -17,8 +17,6 @@
 #include <vector>
 
 #include <string>
-#include "ap_fixed.h"
-#include "hls4ml/emulator.h"
 
 using namespace l1t;
 
@@ -40,9 +38,6 @@ private:
   unsigned int const fMaxJets_;
   int const fNParticles_;
   edm::EDGetTokenT<std::vector<l1t::VertexWord>> const fVtxEmu_;
-
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
 };
 
 TOoLLiPProducer::TOoLLiPProducer(const edm::ParameterSet& cfg)
@@ -52,11 +47,11 @@ TOoLLiPProducer::TOoLLiPProducer(const edm::ParameterSet& cfg)
       fMaxEta_(cfg.getParameter<double>("maxEta")),
       fMaxJets_(cfg.getParameter<int>("maxJets")),
       fNParticles_(cfg.getParameter<int>("nParticles")),
-      fVtxEmu_(consumes<std::vector<l1t::VertexWord>>(cfg.getParameter<edm::InputTag>("vtx"))),
-      loader(hls4mlEmulator::ModelLoader(cfg.getParameter<string>("TOoLLiPVersion"))) {
-  model = loader.load_model();
-  fJetId_ = std::make_unique<JetId>(
-      cfg.getParameter<std::string>("NNInput"), cfg.getParameter<std::string>("NNOutput"), model, fNParticles_);
+      fVtxEmu_(consumes<std::vector<l1t::VertexWord>>(cfg.getParameter<edm::InputTag>("vtx"))) {
+  fJetId_ = std::make_unique<JetId>(cfg.getParameter<std::string>("NNInput"),
+                                    cfg.getParameter<std::string>("NNOutput"),
+                                    cfg.getParameter<string>("TOoLLiPVersion"),
+                                    fNParticles_);
   produces<edm::ValueMap<float>>("L1PFLLPJets");
 }
 

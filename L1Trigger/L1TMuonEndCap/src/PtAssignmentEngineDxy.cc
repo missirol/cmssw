@@ -1,14 +1,19 @@
+#include <array>
+#include <stdexcept>
+
+#include "ap_int.h"
+
+#include "FWCore/Utilities/interface/Exception.h"
+#include "L1Trigger/L1TMuonEndCap/interface/DebugTools.h"
+#include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngineAux2017.h"
 #include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngineDxy.h"
 
-#include <cassert>
-#include <iostream>
-#include <sstream>
-
-#include "helper.h"  // assert_no_abort
-
-PtAssignmentEngineDxy::PtAssignmentEngineDxy(std::shared_ptr<hls4mlEmulator::Model> model) { model_ = model; }
-
-PtAssignmentEngineDxy::~PtAssignmentEngineDxy() {}
+PtAssignmentEngineDxy::PtAssignmentEngineDxy(std::string const& modelName) try
+    : modelWrapper_{modelName}, verbose_{false} {
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \"" << modelName
+                                     << "\". Model version not found in cms-hls4ml externals.";
+}
 
 void PtAssignmentEngineDxy::configure(int verbose) { verbose_ = verbose; }
 
@@ -137,9 +142,16 @@ void PtAssignmentEngineDxy::call_hls_dxy(const emtf::Feature& feature, emtf::Pre
     nn_input[i] = feature[i];
   }
   ap_uint<8> nn_output[2];
-  model_->prepare_input(nn_input);
-  model_->predict();
-  model_->read_result(nn_output);
+
+  try {
+    modelWrapper_.prepare_input(nn_input);
+    modelWrapper_.predict();
+    modelWrapper_.read_result(nn_output);
+  } catch (std::runtime_error const& e) {
+    throw cms::Exception("ModelError") << "ERROR: failed to run inference on hls4ml model \""
+                                       << modelWrapper_.model_name() << "\". Error message: " << e.what();
+  }
+
   ap_uint<8> pT = nn_output[0];
   ap_uint<7> dxy = (nn_output[1] > 127) ? ap_uint<7>(127) : ap_uint<7>(nn_output[1]);
 

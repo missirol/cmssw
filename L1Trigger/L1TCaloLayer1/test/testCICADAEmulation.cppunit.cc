@@ -12,7 +12,6 @@
 //TODO: might also be nice to have a test for model integrity? Known test cases producing known outputs?
 //This may not be appropriate for unit testing however.
 
-#include "ap_fixed.h"
 #include "hls4ml/emulator.h"
 
 #include "cppunit/extensions/HelperMacros.h"
@@ -34,19 +33,11 @@ public:
 
 CPPUNIT_TEST_SUITE_REGISTRATION(test_CICADA);
 
-void test_CICADA::doModelV1Load() {
-  auto loader = hls4mlEmulator::ModelLoader("CICADAModel_v1");
-  auto model = loader.load_model();
-}
+void test_CICADA::doModelV1Load() { auto wrapper = hls4mlEmulator::ModelWrapper("CICADAModel_v1"); }
 
-void test_CICADA::doModelV2Load() {
-  auto loader = hls4mlEmulator::ModelLoader("CICADAModel_v2");
-  auto model = loader.load_model();
-}
+void test_CICADA::doModelV2Load() { auto wrapper = hls4mlEmulator::ModelWrapper("CICADAModel_v2"); }
 
 void test_CICADA::doMultiModelLoad() {
-  auto loader_v1 = hls4mlEmulator::ModelLoader("CICADAModel_v1");
-  auto loader_v2 = hls4mlEmulator::ModelLoader("CICADAModel_v2");
-  auto model_v1 = loader_v1.load_model();
-  auto model_v2 = loader_v2.load_model();
+  auto wrapper_v1 = hls4mlEmulator::ModelWrapper("CICADAModel_v1");
+  auto wrapper_v2 = hls4mlEmulator::ModelWrapper("CICADAModel_v2");
 }

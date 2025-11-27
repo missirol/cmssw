@@ -7,22 +7,19 @@
  * Description: evaluation of a CondAXOL1TL condition.
  */
 
-#include <iosfwd>
+#include <ostream>
 #include <string>
 #include <utility>
 
-#include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
-
 #include "hls4ml/emulator.h"
 
-// forward declarations
+#include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
+
 class GlobalCondition;
 class AXOL1TLTemplate;
 
 namespace l1t {
 
-  class L1Candidate;
   class GlobalBoard;
 
   // class declaration
@@ -59,14 +56,12 @@ namespace l1t {
 
     void setuGtB(const GlobalBoard*);
 
+    std::string const& model_name() const { return m_model_wrapper.model_name(); }
+
     /// get/set score value
     void setScore(const float scoreval) const;
 
     inline float getScore() const { return m_savedscore; }
-
-    void loadModel();
-
-    inline hls4mlEmulator::ModelLoader const& model_loader() const { return m_model_loader; }
 
   private:
     /// copy function for copy constructor and operator=
@@ -80,8 +75,7 @@ namespace l1t {
 
     static constexpr char const* kModelNamePrefix = "GTADModel_";
 
-    hls4mlEmulator::ModelLoader m_model_loader;
-    std::shared_ptr<hls4mlEmulator::Model> m_model;
+    hls4mlEmulator::ModelWrapper m_model_wrapper;
 
     ///axo score for possible score saving
     mutable float m_savedscore;

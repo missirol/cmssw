@@ -18,15 +18,15 @@
 
 // system include files
 #include <memory>
+#include <stdexcept>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/Exception.h"
 
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
 #include "DataFormats/HcalDigi/interface/HcalDigiCollections.h"
@@ -111,8 +111,7 @@ private:
 
   UCTLayer1* layer1;
 
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
+  hls4mlEmulator::ModelWrapper const modelWrapper_;
 
   bool overwriteWithTestPatterns;
   std::vector<edm::ParameterSet> testPatterns;
@@ -130,7 +129,7 @@ private:
 // constructors and destructor
 //
 template <class INPUT, class OUTPUT>
-L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
+L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig) try
     : nPumBins(iConfig.getParameter<unsigned int>("nPumBins")),
       pumLUT(nPumBins, std::vector<std::vector<uint32_t>>(2, std::vector<uint32_t>(13))),
       caloScaleFactor(iConfig.getParameter<double>("caloScaleFactor")),
@@ -145,7 +144,7 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
       regionToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("caloLayer1Regions"))),
       //backupRegionToken(consumes<L1CaloRegionCollection>(edm::InputTag("simCaloStage2Layer1Digis"))),
       backupRegionToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("backupRegionToken"))),
-      loader(hls4mlEmulator::ModelLoader(iConfig.getParameter<string>("CICADAModelVersion"))),
+      modelWrapper_(hls4mlEmulator::ModelWrapper(iConfig.getParameter<string>("CICADAModelVersion"))),
       overwriteWithTestPatterns(iConfig.getParameter<bool>("useTestPatterns")),
       testPatterns(iConfig.getParameter<std::vector<edm::ParameterSet>>("testPatterns")) {
   std::vector<double> pumLUTData;
@@ -168,9 +167,11 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
   }
   produces<L1JetParticleCollection>("Boosted");
 
-  //anomaly trigger loading
-  model = loader.load_model();
   produces<l1t::CICADABxCollection>("CICADAScore");
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \""
+                                     << iConfig.getParameter<string>("CICADAModelVersion")
+                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 //
@@ -259,11 +260,12 @@ void L1TCaloSummary<INPUT, OUTPUT>::produce(edm::Event& iEvent, const edm::Event
   }
 
   //Extract model output
-  OUTPUT modelResult[1] = {
-      OUTPUT("0.0", 10)};  //the 10 here refers to the fact that we read in "0.0" as a decimal number
-  model->prepare_input(modelInput);
-  model->predict();
-  model->read_result(modelResult);
+  //the 10 here refers to the fact that we read in "0.0" as a decimal number
+  OUTPUT modelResult[1] = {OUTPUT("0.0", 10)};
+
+  modelWrapper_.prepare_input(modelInput);
+  modelWrapper_.predict();
+  modelWrapper_.read_result(modelResult);
 
   CICADAScore->push_back(0, modelResult[0].to_float());
 

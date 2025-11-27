@@ -1,9 +1,11 @@
-#include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
-#include <cmath>
+#include "FWCore/Utilities/interface/Exception.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
 
-L1TSC4NGJetID::L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug)
-    : modelRef_(model) {
+#include <cmath>
+#include <stdexcept>
+
+L1TSC4NGJetID::L1TSC4NGJetID(std::string const& modelName, int iNParticles, bool debug) try : modelWrapper_{modelName} {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
   isDebugEnabled_ = debug;
@@ -23,6 +25,9 @@ L1TSC4NGJetID::L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model,
 
   fId_ = std::make_unique<int[]>(fNParticles_);
   fCharge_ = std::make_unique<int[]>(fNParticles_);
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \"" << modelName
+                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 void L1TSC4NGJetID::setNNVectorVar() {
@@ -134,9 +139,9 @@ std::vector<float> L1TSC4NGJetID::EvaluateNNFixed() {
 
   pairtype modelResult;
 
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(&modelResult);
+  modelWrapper_.prepare_input(modelInput);
+  modelWrapper_.predict();
+  modelWrapper_.read_result(&modelResult);
 
   std::vector<float> modelResult_;
   if (isDebugEnabled_) {
@@ -157,7 +162,7 @@ std::vector<float> L1TSC4NGJetID::EvaluateNNFixed() {
   return modelResult_;
 }  //end EvaluateNNFixed
 
-std::vector<float> L1TSC4NGJetID::computeFixed(const l1t::PFJet &iJet, bool useRawPt) {
+std::vector<float> L1TSC4NGJetID::computeFixed(const l1t::PFJet& iJet, bool useRawPt) {
   for (int i0 = 0; i0 < fNParticles_; i0++) {
     fPt_rel_.get()[i0] = 0;
     fPt_.get()[i0] = 0;
