@@ -211,8 +211,12 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
             hit.zGlobal() = gz;
             hit.rGlobal() = sqrt(gx * gx + gy * gy);
             hit.iphi() = unsafe_atan2s<7>(gy, gx);
-            hit.chargeAndStatus().charge = 0;
-            hit.chargeAndStatus().status = {false, false, false, false, 0};
+            hit.chargeAndStatus().set_charge(0);
+            hit.chargeAndStatus().status().set_isBigX(false);
+            hit.chargeAndStatus().status().set_isOneX(false);
+            hit.chargeAndStatus().status().set_isBigY(false);
+            hit.chargeAndStatus().status().set_isOneY(false);
+            hit.chargeAndStatus().status().set_qBin(0);
             hit.clusterSizeX() = -1;
             hit.clusterSizeY() = -1;
             hit.detectorIndex() = modulesInPixel_ + offset;

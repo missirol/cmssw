@@ -185,8 +185,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                   cpeParams->commonParams(), cpeParams->detParams(me), clusParams, ic);
 
               // store it
-              hits[h].chargeAndStatus().charge = clusParams.charge[ic];
-              hits[h].chargeAndStatus().status = clusParams.status[ic];
+              hits[h].chargeAndStatus().set_charge(clusParams.charge[ic]);
+              hits[h].chargeAndStatus().set_status(clusParams.status[ic]);
               hits[h].detectorIndex() = me;
 
               // local coordinates for computations

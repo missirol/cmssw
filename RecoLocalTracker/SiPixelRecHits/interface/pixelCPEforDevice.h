@@ -360,11 +360,11 @@ namespace pixelCPEforDevice {
     // in detParams qBins are reversed bin0 -> smallest charge, bin4-> largest charge
     // whereas in CondFormats/SiPixelTransient/src/SiPixelGenError.cc it is the opposite
     // so we reverse the bin here -> kGenErrorQBins - 1 - bin
-    cp.status[ic].qBin = kGenErrorQBins - 1 - bin;
-    cp.status[ic].isOneX = isOneX;
-    cp.status[ic].isBigX = (isOneX & isBigX) | isEdgeX;
-    cp.status[ic].isOneY = isOneY;
-    cp.status[ic].isBigY = (isOneY & isBigY) | isEdgeY;
+    cp.status[ic].set_qBin(kGenErrorQBins - 1 - bin);
+    cp.status[ic].set_isOneX(isOneX);
+    cp.status[ic].set_isBigX((isOneX & isBigX) | isEdgeX);
+    cp.status[ic].set_isOneY(isOneY);
+    cp.status[ic].set_isBigY((isOneY & isBigY) | isEdgeY);
 
     auto xoff = -float(TrackerTraits::xOffset) * detParams.thePitchX;
     int low_value = 0;
