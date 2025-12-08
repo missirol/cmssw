@@ -640,6 +640,9 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                     << " threadsPerBlockOrElementsPerThread\n";
 #endif
 
+          auto const morphingImagesScratchSize = digiMorphingConfig.applyDigiMorphing ? (blocks * pixelStatus::size) : 0;
+          auto morphingImagesScratch = cms::alpakatools::make_device_buffer<uint32_t[]>(queue, morphingImagesScratchSize);
+
           // Use device buffer created by producer and the module count stored in digiMorphingConfig
           alpaka::exec<Acc1D>(queue,
                               workDivFindClus,
@@ -650,6 +653,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                               morphingModulesDevice,
                               digiMorphingConfig.numMorphingModules,
                               digiMorphingConfig.maxFakesInModule,
+                              morphingImagesScratch.data(),
                               clusters_d->view(),
                               wordCounter);
 #ifdef GPU_DEBUG
@@ -750,6 +754,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                           static_cast<uint32_t *>(nullptr),
                           static_cast<uint32_t>(0),
                           static_cast<uint32_t>(0),
+                          static_cast<uint32_t *>(nullptr),
                           clusters_d->view(),
                           numDigis);
 #ifdef GPU_DEBUG

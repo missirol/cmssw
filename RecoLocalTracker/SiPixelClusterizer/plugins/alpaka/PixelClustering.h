@@ -190,6 +190,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                                   uint32_t* morphingModules,
                                   uint32_t nMorphingModules,
                                   uint32_t maxFakesInModule,
+                                  uint32_t* morphingImagesScratch,
                                   SiPixelClustersSoAView clus_view,
                                   const unsigned int numElements) const {
       static_assert(TrackerTraits::numberOfModules < ::pixelClustering::maxNumModules);
@@ -334,6 +335,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
               constexpr uint32_t rowSize = pixelSizeX / valuesPerWord;  // 160 / 16 = 10 words per row
 
               // Mark all duplicate pixels as empty in the image, to let the morphing attempt to recover them.
+              // Use "imageScratch" (instead of "image") to store intermediate values of the status words.
+              auto* const imageScratch = morphingImagesScratch + block * size;
               for (uint32_t i : cms::alpakatools::independent_group_elements(acc, size)) {
                 uint32_t value = image[i];
                 // Duplicate pixels are marked as kDuplicate = 0b11.
@@ -341,7 +344,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                 uint32_t masked = value & 0b10'10'10'10'10'10'10'10'10'10'10'10'10'10'10'10;
                 masked |= (masked >> 1);
                 value &= ~masked;
-                image[i] = value;
+                imageScratch[i] = value;
               }
               alpaka::syncBlockThreads(acc);
 
@@ -352,36 +355,37 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
               // ....##  ##.##.##.##.##.##.##.##.##.##.##.##.##.##.##.##  ##...
               // ......  ...............................................  .....
 
-              // first step: expand and mark expanded pixels as kFake
-              // size = pixelSizeX * pixelSizeY / valuesPerWord;  // 160 x 416 / 16 = 4160 32-bit words
+              // First step: expand and mark expanded pixels as kFake.
+              //  - Read status words from "imageScratch", and write updated words into "image".
+              //  - size = pixelSizeX * pixelSizeY / valuesPerWord;  // 160 x 416 / 16 = 4160 32-bit words
               for (uint32_t i : cms::alpakatools::independent_group_elements(acc, size)) {
                 uint16_t x = i % rowSize * valuesPerWord;  // 0..9 x 16    = 0, 16, 32, ..., 144
                 uint16_t y = i / rowSize;                  // 0..4159 / 10 = 0..415
-                uint32_t value = image[i];
+                uint32_t value = imageScratch[i];
                 uint64_t buffer = static_cast<uint64_t>(value) << 2;
                 if (y > 0) {
                   // merge the word above
-                  buffer |= static_cast<uint64_t>(image[i - rowSize]) << 2;
+                  buffer |= static_cast<uint64_t>(imageScratch[i - rowSize]) << 2;
                 }
                 if (y < pixelSizeY - 1) {
                   // merge the word below
-                  buffer |= static_cast<uint64_t>(image[i + rowSize]) << 2;
+                  buffer |= static_cast<uint64_t>(imageScratch[i + rowSize]) << 2;
                 }
                 if (x > 0) {
                   // extract the pixels from the previous column, and merge them in the buffer
-                  buffer |= static_cast<uint64_t>(image[i - 1]) >> 30 & mask;
+                  buffer |= static_cast<uint64_t>(imageScratch[i - 1]) >> 30 & mask;
                   if (y > 0)
-                    buffer |= static_cast<uint64_t>(image[i - rowSize - 1]) >> 30 & mask;
+                    buffer |= static_cast<uint64_t>(imageScratch[i - rowSize - 1]) >> 30 & mask;
                   if (y < pixelSizeY - 1)
-                    buffer |= static_cast<uint64_t>(image[i + rowSize - 1]) >> 30 & mask;
+                    buffer |= static_cast<uint64_t>(imageScratch[i + rowSize - 1]) >> 30 & mask;
                 }
                 if (x < pixelSizeX - valuesPerWord) {
                   // extract the pixels from the following column, and merge them in the buffer
-                  buffer |= static_cast<uint64_t>(image[i + 1] & mask) << 34;
+                  buffer |= static_cast<uint64_t>(imageScratch[i + 1] & mask) << 34;
                   if (y > 0)
-                    buffer |= static_cast<uint64_t>(image[i - rowSize + 1] & mask) << 34;
+                    buffer |= static_cast<uint64_t>(imageScratch[i - rowSize + 1] & mask) << 34;
                   if (y < pixelSizeY - 1)
-                    buffer |= static_cast<uint64_t>(image[i + rowSize + 1] & mask) << 34;
+                    buffer |= static_cast<uint64_t>(imageScratch[i + rowSize + 1] & mask) << 34;
                 }
                 // mark kEmpty pixels as kFake if any neighbour is non-empty (kFound or kDuplicate)
                 for (uint32_t j = 0; j < valuesPerWord; ++j) {
@@ -396,7 +400,6 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                     value |= kFake << shift;
                   }
                 }
-                // store the result back into the buffer
                 image[i] = value;
               }
               alpaka::syncBlockThreads(acc);
@@ -427,11 +430,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                         fake.xx() = x;
                         fake.yy() = y;
                         fake.moduleId() = thisModuleId;
+#ifdef GPU_DEBUG
                       } else {
                         printf("Too many pixels recovered by digi morphing in module %u: %u > %u\n",
                                thisModuleId,
                                index,
                                maxFakesInModule);
+#endif
                       }
                     }
                   }
@@ -453,11 +458,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                         fake.xx() = x + j;
                         fake.yy() = y;
                         fake.moduleId() = thisModuleId;
+#ifdef GPU_DEBUG
                       } else {
                         printf("Too many pixels recovered by digi morphing in module %u: %u > %u\n",
                                thisModuleId,
                                index,
                                maxFakesInModule);
+#endif
                       }
                     }
                   }
@@ -481,11 +488,13 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
                         fake.xx() = x + valuesPerWord - 1;
                         fake.yy() = y;
                         fake.moduleId() = thisModuleId;
+#ifdef GPU_DEBUG
                       } else {
                         printf("Too many pixels recovered by digi morphing in module %u: %u > %u\n",
                                thisModuleId,
                                index,
                                maxFakesInModule);
+#endif
                       }
                     }
                   }
@@ -495,10 +504,18 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::pixelClustering {
 
               // Clamp fakePixels to maxFakesInModule
               if (fakePixels > maxFakesInModule) {
-                fakePixels = maxFakesInModule;
+                if (cms::alpakatools::once_per_block(acc)) {
+                  printf(
+                      "WARNING: too many pixels recovered by digi-morphing in module %u (%u > %u)"
+                      ", only the first %u recovered pixels will be used !!\n",
+                      thisModuleId,
+                      fakePixels,
+                      maxFakesInModule,
+                      maxFakesInModule);
+                  fakePixels = maxFakesInModule;
+                }
                 alpaka::syncBlockThreads(acc);
               }
-
             }  // if (applyDigiMorphing)
           }  // if (lastPixel > 1)
         }  // if constexpr (not isPhase2)
