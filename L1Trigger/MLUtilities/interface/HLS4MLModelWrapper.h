@@ -2,6 +2,7 @@
 #define L1Trigger_MLUtilities_HLS4MLModelWrapper_h
 
 #include <any>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -21,6 +22,11 @@ namespace l1t {
     HLS4MLModelWrapper(std::string const& model_name);
     ~HLS4MLModelWrapper();
 
+    HLS4MLModelWrapper(HLS4MLModelWrapper const&) = delete;
+    HLS4MLModelWrapper& operator=(HLS4MLModelWrapper const&) = delete;
+    HLS4MLModelWrapper(HLS4MLModelWrapper&&) = delete;
+    HLS4MLModelWrapper& operator=(HLS4MLModelWrapper&&) = delete;
+
     void reset();
     void reset(std::string const& model_name);
 
@@ -33,19 +39,15 @@ namespace l1t {
     bool model_loaded() const { return (model_ != nullptr); }
 
   private:
-    struct Library {
-      void* const ptr = nullptr;
-      explicit Library(std::string const& name);
-      ~Library();
-    };
-
     using create_model_cls = HLS4MLModel*();
     using destroy_model_cls = void(HLS4MLModel*);
+    using model_ptr = std::unique_ptr<HLS4MLModel, std::function<destroy_model_cls>>;
 
     void load();
 
+    void* model_lib_;
+    model_ptr model_;
     std::string model_name_;
-    std::shared_ptr<HLS4MLModel> model_;
   };
 
 }  // namespace l1t
