@@ -3,26 +3,31 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
-l1t::HLS4MLModelWrapper::HLS4MLModelWrapper() : model_lib_{nullptr}, model_{nullptr}, model_name_{""} {}
+l1t::HLS4MLModelWrapper::HLS4MLModelWrapper() : model_name_{""}, model_{nullptr} {}
 
-l1t::HLS4MLModelWrapper::HLS4MLModelWrapper(std::string const& model_name)
-    : model_lib_{nullptr}, model_{nullptr}, model_name_{model_name} {
+l1t::HLS4MLModelWrapper::HLS4MLModelWrapper(std::string const& model_name) : model_name_{model_name}, model_{nullptr} {
   load();
 }
 
 l1t::HLS4MLModelWrapper::~HLS4MLModelWrapper() { reset(); }
 
+l1t::HLS4MLModelWrapper::Library::Library(std::string const& name) : ptr{dlopen(name.c_str(), RTLD_LAZY | RTLD_LOCAL)} {
+  if (!ptr) {
+    throw cms::Exception("InvalidInput") << "hls4ml model library dlopen failure: cannot load library \"" << name
+                                         << "\" !";
+  }
+}
+l1t::HLS4MLModelWrapper::Library::~Library() {
+  if (ptr) {
+    dlclose(ptr);
+  }
+}
+
 void l1t::HLS4MLModelWrapper::reset() {
+  model_name_ = "";
   if (model_loaded()) {
     model_.reset();
   }
-
-  if (model_lib_ != nullptr) {
-    dlclose(model_lib_);
-    model_lib_ = nullptr;
-  }
-
-  model_name_ = "";
 }
 
 void l1t::HLS4MLModelWrapper::reset(std::string const& model_name) {
@@ -62,28 +67,28 @@ void l1t::HLS4MLModelWrapper::load() {
 
   // open the shared library containing the implementation of the model
   std::string const model_lib_name = model_name_ + ".so";
-  model_lib_ = dlopen(model_lib_name.c_str(), RTLD_LAZY | RTLD_LOCAL);
-  if (model_lib_ == nullptr) {
-    throw cms::Exception("InvalidInput") << "hls4ml model library dlopen failure: cannot load library \""
-                                         << model_lib_name << "\" !";
-  }
+  auto const shared_lib = std::make_shared<Library>(model_lib_name);
 
   // "create_model" function: it creates an instance of the model and returns a pointer to the model
-  create_model_cls* create_model = (create_model_cls*)dlsym(model_lib_, "create_model");
+  create_model_cls* create_model = (create_model_cls*)dlsym(shared_lib->ptr, "create_model");
   if (dlerror()) {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load 'create_model' symbol from library \""
                                          << model_lib_name << "\" !";
   }
 
   // "destroy_model" function: deletes the model
-  destroy_model_cls* destroy_model = (destroy_model_cls*)dlsym(model_lib_, "destroy_model");
+  destroy_model_cls* destroy_model = (destroy_model_cls*)dlsym(shared_lib->ptr, "destroy_model");
   if (dlerror()) {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load 'destroy_model' symbol from library \""
                                          << model_lib_name << "\" !";
   }
 
   // smart pointer to the model with its own custom deleter
-  model_ = model_ptr(create_model(), destroy_model);
+  model_ = std::shared_ptr<HLS4MLModel>(create_model(), [shared_lib, destroy_model](HLS4MLModel* model) {
+    if (model != nullptr) {
+      destroy_model(model);
+    }
+  });
   if (model_ == nullptr) {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load model (nullptr) from library \""
                                          << model_lib_name << "\" !";
