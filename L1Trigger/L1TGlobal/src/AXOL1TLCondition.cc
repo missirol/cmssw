@@ -182,7 +182,9 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
         // have to do hwPt/2 in order to match original et inputs
         // For index==1: input corresponding to ETM pseudorapidity must be zero, so do not update it
         EtSumInput[0] = (candEtSumVec->at(useBx, iEtSum))->hwPt() * .5;
+edm::LogPrint("AAA") << "XXX EtSumInput[0] = " << EtSumInput[0] << " " << ((candEtSumVec->at(useBx, iEtSum))->hwPt() * .5);
         EtSumInput[2] = (candEtSumVec->at(useBx, iEtSum))->hwPhi();
+edm::LogPrint("AAA") << "XXX EtSumInput[2] = " << EtSumInput[2] << " " << ((candEtSumVec->at(useBx, iEtSum))->hwPhi());
       }
     }
   }
@@ -193,8 +195,11 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
       if (iEG < NEgammas) {  //stop if fill the Nobjects we need
         // have to do hwPt/2 in order to match original et inputs
         EgammaInput[0 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwPt() * .5;  // index 0,3,6,9
+edm::LogPrint("AAA") << "XXX EgammaInput[" << (0 + (3 * iEG)) << "] = " << EgammaInput[0 + (3 * iEG)] << " " << ((candEGVec->at(useBx, iEG))->hwPt() * .5) << " " << (candEGVec->at(useBx, iEG))->et();
         EgammaInput[1 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwEta();      // index 1,4,7,10
+edm::LogPrint("AAA") << "XXX EgammaInput[" << (1 + (3 * iEG)) << "] = " << EgammaInput[1 + (3 * iEG)] << " " << ((candEGVec->at(useBx, iEG))->hwEta());
         EgammaInput[2 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwPhi();      // index 2,5,8,11
+edm::LogPrint("AAA") << "XXX EgammaInput[" << (2 + (3 * iEG)) << "] = " << EgammaInput[2 + (3 * iEG)] << " " << ((candEGVec->at(useBx, iEG))->hwPhi());
       }
     }
   }
@@ -204,9 +209,12 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
     for (int iMu = 0; iMu < NCandMu; iMu++) {
       if (iMu < NMuons) {  //stop if fill the Nobjects we need
         // have to do hwPt/2 in order to match original et inputs
-        MuInput[0 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPt() * .5;   // index 0,3,6,9
+        MuInput[0 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->pt();   // index 0,3,6,9
+edm::LogPrint("AAA") << "XXX MuInput[" << (0 + (3 * iMu)) << "] = " << MuInput[0 + (3 * iMu)] << " " << ((candMuVec->at(useBx, iMu))->hwPt() * .5) << " " << candMuVec->at(useBx, iMu)->pt();
         MuInput[1 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwEtaAtVtx();  // index 1,4,7,10
+edm::LogPrint("AAA") << "XXX MuInput[" << (1 + (3 * iMu)) << "] = " << MuInput[1 + (3 * iMu)] << " " << ((candMuVec->at(useBx, iMu))->hwEtaAtVtx());
         MuInput[2 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPhiAtVtx();  // index 2,5,8,11
+edm::LogPrint("AAA") << "XXX MuInput[" << (2 + (3 * iMu)) << "] = " << MuInput[2 + (3 * iMu)] << " " << ((candMuVec->at(useBx, iMu))->hwPhiAtVtx());
       }
     }
   }
@@ -217,8 +225,11 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
       if (iJet < NJets) {  //stop if fill the Nobjects we need
         // have to do hwPt/2 in order to match original et inputs
         JetInput[0 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwPt() * .5;  // index 0,3,6,9
+edm::LogPrint("AAA") << "XXX JetInput[" << (0 + (3 * iJet)) << "] = " << JetInput[0 + (3 * iJet)] << " " << ((candJetVec->at(useBx, iJet))->hwPt() * .5) << " " << (candJetVec->at(useBx, iJet))->et();
         JetInput[1 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwEta();      // index 1,4,7,10...28
+edm::LogPrint("AAA") << "XXX JetInput[" << (1 + (3 * iJet)) << "] = " << JetInput[1 + (3 * iJet)] << " " << ((candJetVec->at(useBx, iJet))->hwEta());
         JetInput[2 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwPhi();      // index 2,5,8,11...29
+edm::LogPrint("AAA") << "XXX JetInput[" << (2 + (3 * iJet)) << "] = " << JetInput[2 + (3 * iJet)] << " " << ((candJetVec->at(useBx, iJet))->hwPhi());
       }
     }
   }
@@ -254,6 +265,9 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   // result = ADModelResult.first;
   // loss = ADModelResult.second;
   score = ((loss).to_float()) * 16.0;  //scaling to match threshold
+
+edm::LogPrint("AAA") << "XXX score: " << score << " " << float(((loss).to_float()) * 16.0) << " " << double(loss) * 16;
+
   //save score to class variable in case score saving needed
   setScore(score);
 

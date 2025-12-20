@@ -1,1 +1,5 @@
 <test name="testL1TGlobalProducer" command="testL1TGlobalProducer.sh"/>
+
+<bin name="testApForAXO" file="testApForAXO.cc">
+    <use name="hls"/>
+</bin>
