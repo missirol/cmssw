@@ -45,7 +45,7 @@ namespace l1t {
 
     void load();
 
-    void* model_lib_;
+    std::shared_ptr<void> model_lib_;
     model_ptr model_;
     std::string model_name_;
   };

@@ -1,5 +1,6 @@
 #include <dlfcn.h>
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
@@ -13,16 +14,12 @@ l1t::HLS4MLModelWrapper::HLS4MLModelWrapper(std::string const& model_name)
 l1t::HLS4MLModelWrapper::~HLS4MLModelWrapper() { reset(); }
 
 void l1t::HLS4MLModelWrapper::reset() {
-  if (model_loaded()) {
-    model_.reset();
-  }
-
-  if (model_lib_ != nullptr) {
-    dlclose(model_lib_);
-    model_lib_ = nullptr;
-  }
+  model_.reset();
+  model_lib_.reset();
 
   model_name_ = "";
+
+  edm::LogPrint("HLS4MLModelWrapper") << "HLS4MLModelWrapper -- reset completed";
 }
 
 void l1t::HLS4MLModelWrapper::reset(std::string const& model_name) {
@@ -62,21 +59,21 @@ void l1t::HLS4MLModelWrapper::load() {
 
   // open the shared library containing the implementation of the model
   std::string const model_lib_name = model_name_ + ".so";
-  model_lib_ = dlopen(model_lib_name.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  model_lib_ = std::shared_ptr<void>(dlopen(model_lib_name.c_str(), RTLD_LAZY | RTLD_LOCAL), [](void* lib){ if(lib != nullptr){ dlclose(lib); } });
   if (model_lib_ == nullptr) {
     throw cms::Exception("InvalidInput") << "hls4ml model library dlopen failure: cannot load library \""
                                          << model_lib_name << "\" !";
   }
 
   // "create_model" function: it creates an instance of the model and returns a pointer to the model
-  create_model_cls* create_model = (create_model_cls*)dlsym(model_lib_, "create_model");
+  create_model_cls* create_model = (create_model_cls*)dlsym(model_lib_.get(), "create_model");
   if (dlerror()) {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load 'create_model' symbol from library \""
                                          << model_lib_name << "\" !";
   }
 
   // "destroy_model" function: deletes the model
-  destroy_model_cls* destroy_model = (destroy_model_cls*)dlsym(model_lib_, "destroy_model");
+  destroy_model_cls* destroy_model = (destroy_model_cls*)dlsym(model_lib_.get(), "destroy_model");
   if (dlerror()) {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load 'destroy_model' symbol from library \""
                                          << model_lib_name << "\" !";
@@ -88,4 +85,6 @@ void l1t::HLS4MLModelWrapper::load() {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load model (nullptr) from library \""
                                          << model_lib_name << "\" !";
   }
+
+  edm::LogPrint("HLS4MLModelWrapper") << "HLS4MLModelWrapper -- load completed";
 }
