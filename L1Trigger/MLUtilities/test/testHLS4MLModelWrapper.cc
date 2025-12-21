@@ -3,7 +3,6 @@
 #include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
 int main(int, char**) {
-
   l1t::HLS4MLModelWrapper mw1{"GTADModel_v1"};
   l1t::HLS4MLModelWrapper mw3{"GTADModel_v3"};
   l1t::HLS4MLModelWrapper mw4{"GTADModel_v4"};
