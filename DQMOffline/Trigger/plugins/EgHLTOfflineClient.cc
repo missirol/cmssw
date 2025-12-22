@@ -16,6 +16,10 @@
 #include <boost/algorithm/string.hpp>
 
 #include "TGraphAsymmErrors.h"
+#include <TPRegexp.h>
+
+using namespace std;
+using namespace edm;
 
 EgHLTOfflineClient::EgHLTOfflineClient(const edm::ParameterSet& iConfig) : isSetup_(false) {
   eleHLTFilterNames_ = iConfig.getParameter<std::vector<std::string> >("eleHLTFilterNames");
@@ -47,6 +51,8 @@ EgHLTOfflineClient::EgHLTOfflineClient(const edm::ParameterSet& iConfig) : isSet
 
   filterInactiveTriggers_ = iConfig.getParameter<bool>("filterInactiveTriggers");
   hltTag_ = iConfig.getParameter<std::string>("hltTag");
+
+  edm::LogPrint("") << "--- CTOR";
 }
 
 EgHLTOfflineClient::~EgHLTOfflineClient() = default;
@@ -57,6 +63,8 @@ void EgHLTOfflineClient::dqmEndJob(DQMStore::IBooker& ibooker_, DQMStore::IGette
 }
 
 void EgHLTOfflineClient::beginRun(const edm::Run& run, const edm::EventSetup& c) {
+  edm::LogPrint("") << "--- beginRun";
+
   if (!isSetup_) {
     if (filterInactiveTriggers_) {
       HLTConfigProvider hltConfig;
@@ -84,11 +92,14 @@ void EgHLTOfflineClient::dqmEndLuminosityBlock(DQMStore::IBooker& ibooker_,
                                                DQMStore::IGetter& igetter_,
                                                edm::LuminosityBlock const& iLumi,
                                                edm::EventSetup const& iSetup) {
+  edm::LogPrint("") << "--- dqmEndLuminosityBlock";
   if (runClientEndLumiBlock_)
     runClient_(ibooker_, igetter_);
 }
 
 void EgHLTOfflineClient::runClient_(DQMStore::IBooker& ibooker, DQMStore::IGetter& igetter) {
+  checkDirs_(ibooker, igetter);
+
   ibooker.setCurrentFolder(dirName_ + "/Client_Histos");
 
   std::vector<std::string> regions;
@@ -641,4 +652,81 @@ EgHLTOfflineClient::MonitorElement* EgHLTOfflineClient::makeEffMonElemFromPassAn
     delete effHist;
   }
   return eff;
+}
+
+void EgHLTOfflineClient::findAllSubdirectories(DQMStore::IBooker& ibooker,
+                                             DQMStore::IGetter& igetter,
+                                             std::string dir,
+                                             std::set<std::string>* myList,
+                                             const TString& _pattern = TString("")) {
+  TString pattern = _pattern;
+  if (!igetter.dirExists(dir)) {
+    LogError("DQMGenericClient") << " DQMGenericClient::findAllSubdirectories ==> Missing folder " << dir << " !!!";
+    return;
+  }
+
+  TPRegexp nonPerlWildcard_("\\w\\*|^\\*");
+
+  if (pattern != "") {
+    if (pattern.Contains(nonPerlWildcard_))
+      pattern.ReplaceAll("*", ".*");
+    TPRegexp regexp(pattern);
+    ibooker.cd(dir);
+    vector<string> foundDirs = igetter.getSubdirs();
+    for (vector<string>::const_iterator iDir = foundDirs.begin(); iDir != foundDirs.end(); ++iDir) {
+      TString dirName = iDir->substr(iDir->rfind('/') + 1, iDir->length());
+      if (dirName.Contains(regexp))
+        findAllSubdirectories(ibooker, igetter, *iDir, myList);
+    }
+  }
+  //std::cout << "Looking for directory " << dir ;
+  else if (igetter.dirExists(dir)) {
+    //std::cout << "... it exists! Inserting it into the list ";
+    myList->insert(dir);
+    //std::cout << "... now list has size " << myList->size() << std::endl;
+    ibooker.cd(dir);
+    findAllSubdirectories(ibooker, igetter, dir, myList, "*");
+  } else {
+    //std::cout << "... DOES NOT EXIST!!! Skip bogus dir" << std::endl;
+
+    LogInfo("DQMGenericClient") << "Trying to find sub-directories of " << dir << " failed because " << dir
+                                << " does not exist";
+  }
+  return;
+}
+
+void EgHLTOfflineClient::checkDirs_(DQMStore::IBooker& ibooker, DQMStore::IGetter& igetter) {
+  edm::LogPrint("") << "--- checkDirs_";
+
+  // Process wildcard in the sub-directory
+  std::set<std::string> subDirSet;
+
+  std::vector<std::string> subDirs_({
+    dirName_+"/Source_Histos/*",
+  });
+
+  TPRegexp metacharacters_("[\\^\\$\\.\\*\\+\\?\\|\\(\\)\\{\\}\\[\\]]");
+
+  for (auto subDir : subDirs_){
+
+    if (subDir[subDir.size() - 1] == '/')
+      subDir.erase(subDir.size() - 1);
+
+    if (TString(subDir).Contains(metacharacters_)) {
+
+      const std::string::size_type shiftPos = subDir.rfind('/');
+      const std::string searchPath = subDir.substr(0, shiftPos);
+      const std::string pattern = subDir.substr(shiftPos + 1, subDir.length());
+      //std::cout << "\n\n\n\nLooking for all subdirs of " << subDir << std::endl;
+
+      findAllSubdirectories(ibooker, igetter, searchPath, &subDirSet, pattern);
+
+    } else {
+      subDirSet.insert(subDir);
+    }
+  }
+
+  for(auto const& sdir : subDirSet){
+    edm::LogPrint("") << "!!! " << sdir;
+  }
 }

@@ -179,8 +179,15 @@ public:
                                      DQMStore::IBooker&,
                                      DQMStore::IGetter&);
 
+  void findAllSubdirectories(DQMStore::IBooker& ibooker,
+                             DQMStore::IGetter& igetter,
+                             std::string dir,
+                             std::set<std::string>* myList,
+                             const TString& pattern);
+
 private:
   void runClient_(DQMStore::IBooker&, DQMStore::IGetter&);  //master function which runs the client
+  void checkDirs_(DQMStore::IBooker&, DQMStore::IGetter&);
 };
 
 #endif

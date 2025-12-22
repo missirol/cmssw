@@ -157,7 +157,7 @@ void EgHLTOfflineSummaryClient::splitStringsToPairs_(const std::vector<std::stri
     } else {
       edm::LogWarning("EgHLTOfflineSummaryClient")
           << " Error : entry " << stringNr
-          << " is not of form A:B, ignoring (ie this quailty test isnt being included in the sumamry hist) ";
+          << " is not of form A:B, ignoring (ie this quality test is not being included in the summary hist) ";
     }
   }
 }
