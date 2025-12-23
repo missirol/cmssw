@@ -10,8 +10,6 @@ l1t::HLS4MLModelWrapper::HLS4MLModelWrapper(std::string const& model_name) : mod
   load();
 }
 
-l1t::HLS4MLModelWrapper::~HLS4MLModelWrapper() { reset(); }
-
 void l1t::HLS4MLModelWrapper::reset() {
   model_.reset();
 
@@ -81,7 +79,9 @@ void l1t::HLS4MLModelWrapper::load() {
                                          << model_lib_name << "\" !";
   }
 
-  // smart pointer to the model with its own custom deleter
+  // smart pointer to the model with its own custom deleter;
+  // the custom deleter holds a smart pointer to the model's shared library,
+  // so that the shared library will be closed right after the model is deleted
   model_ = model_ptr(create_model(), [model_lib, destroy_model](HLS4MLModel* m) { destroy_model(m); });
   if (model_ == nullptr) {
     throw cms::Exception("InvalidInput") << "hls4ml emulator failed to load model (nullptr) from library \""

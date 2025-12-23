@@ -20,12 +20,12 @@ namespace l1t {
   public:
     HLS4MLModelWrapper();
     HLS4MLModelWrapper(std::string const& model_name);
-    ~HLS4MLModelWrapper();
+    ~HLS4MLModelWrapper() = default;
 
     HLS4MLModelWrapper(HLS4MLModelWrapper const&) = delete;
     HLS4MLModelWrapper& operator=(HLS4MLModelWrapper const&) = delete;
-    HLS4MLModelWrapper(HLS4MLModelWrapper&&) = delete;
-    HLS4MLModelWrapper& operator=(HLS4MLModelWrapper&&) = delete;
+    HLS4MLModelWrapper(HLS4MLModelWrapper&&) noexcept = default;
+    HLS4MLModelWrapper& operator=(HLS4MLModelWrapper&&) noexcept = default;
 
     void reset();
     void reset(std::string const& model_name);
