@@ -16,6 +16,7 @@
 <use name="FWCore/ParameterSet"/>
 <use name="FWCore/Utilities"/>
 <use name="L1Trigger/DemonstratorTools"/>
+<use name="L1Trigger/MLUtilities"/>
 <use name="PhysicsTools/TensorFlow"/>
 <flags ADD_SUBDIR="1"/>
 <export>

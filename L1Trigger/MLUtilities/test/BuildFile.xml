@@ -1,0 +1,3 @@
+<bin name="testHLS4MLModelWrapper" file="testHLS4MLModelWrapper.cc">
+    <use name="L1Trigger/MLUtilities"/>
+</bin>

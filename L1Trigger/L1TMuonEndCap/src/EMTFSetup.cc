@@ -13,9 +13,8 @@ EMTFSetup::EMTFSetup(const edm::ParameterSet& iConfig, edm::ConsumesCollector iC
       condition_helper_(iCollector),
       version_control_(iConfig),
       sector_processor_lut_(),
-      loader(version_control_.nnModelDxy()),
       pt_assign_engine_(nullptr),
-      pt_assign_engine_dxy_(nullptr),
+      pt_assign_engine_dxy_(std::make_unique<PtAssignmentEngineDxy>(version_control_.nnModelDxy())),
       fw_ver_(0),
       pt_lut_ver_(0),
       pc_lut_ver_(0) {
@@ -29,15 +28,9 @@ EMTFSetup::EMTFSetup(const edm::ParameterSet& iConfig, edm::ConsumesCollector iC
     throw cms::Exception("L1TMuonEndCap") << "Cannot recognize the era option: " << era();
   }
 
-  // No era setup for displaced pT assignment engine
-  model = loader.load_model();
-  pt_assign_engine_dxy_ = std::make_unique<PtAssignmentEngineDxy>(model);
-
   emtf_assert(pt_assign_engine_ != nullptr);
   emtf_assert(pt_assign_engine_dxy_ != nullptr);
 }
-
-EMTFSetup::~EMTFSetup() {}
 
 void EMTFSetup::reload(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // Get the geometry for TP conversions

@@ -7,22 +7,17 @@
  * Description: evaluation of a CondTOPO condition.
  */
 
-#include <iosfwd>
+#include <ostream>
 #include <string>
-#include <utility>
 
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
-#include "hls4ml/emulator.h"
-
-// forward declarations
 class GlobalCondition;
 class TOPOTemplate;
 
 namespace l1t {
 
-  class L1Candidate;
   class GlobalBoard;
 
   // class declaration
@@ -59,14 +54,7 @@ namespace l1t {
 
     void setuGtB(const GlobalBoard*);
 
-    /// get/set score value
-    void setScore(const float scoreval) const;
-
-    inline float getScore() const { return m_savedscore; }
-
-    void loadModel();
-
-    inline hls4mlEmulator::ModelLoader const& model_loader() const { return m_model_loader; }
+    std::string const& model_name() const { return m_model_wrapper.model_name(); }
 
   private:
     /// copy function for copy constructor and operator=
@@ -80,12 +68,9 @@ namespace l1t {
 
     static constexpr char const* kModelNamePrefix = "topo_";
 
-    hls4mlEmulator::ModelLoader m_model_loader;
-    std::shared_ptr<hls4mlEmulator::Model> m_model;
-
-    ///axo score for possible score saving
-    mutable float m_savedscore;
+    HLS4MLModelWrapper m_model_wrapper;
   };
 
 }  // namespace l1t
+
 #endif

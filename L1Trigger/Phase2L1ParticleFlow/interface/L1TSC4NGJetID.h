@@ -2,19 +2,19 @@
 #define L1TRIGGER_PHASE2L1PARTICLEFLOWS_L1TSC4NGJetID_H
 
 #include <string>
+
 #include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
 #include "DataFormats/L1TParticleFlow/interface/PFJet.h"
 #include "DataFormats/L1TParticleFlow/interface/datatypes.h"
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/jetmet/L1SeedConePFJetEmulator.h"
 
-//HLS4ML compiled emulator modeling
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
 
 class L1TSC4NGJetID {
 public:
-  L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug);
+  L1TSC4NGJetID(std::string const& modelName, int iNParticles, bool debug);
 
   typedef ap_fixed<24, 12, AP_RND, AP_SAT, 0> inputtype;
   typedef std::array<ap_ufixed<24, 12, AP_RND, AP_SAT, 0>, 8> classtype;
@@ -23,7 +23,7 @@ public:
 
   void setNNVectorVar();
   std::vector<float> EvaluateNNFixed();
-  std::vector<float> computeFixed(const l1t::PFJet &iJet, bool useRawPt);
+  std::vector<float> computeFixed(const l1t::PFJet& iJet, bool useRawPt);
 
 private:
   std::vector<inputtype> NNvectorVar_;
@@ -43,7 +43,8 @@ private:
 
   unique_ptr<int[]> fCharge_;
   unique_ptr<int[]> fId_;
-  std::shared_ptr<hls4mlEmulator::Model> modelRef_;
+
+  l1t::HLS4MLModelWrapper const modelWrapper_;
 
   bool isDebugEnabled_;
 };

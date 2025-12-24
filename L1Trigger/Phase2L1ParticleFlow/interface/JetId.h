@@ -2,14 +2,13 @@
 #define L1TRIGGER_PHASE2L1PARTICLEFLOWS_JETID_H
 
 #include <string>
-#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
+
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
 #include "DataFormats/L1TParticleFlow/interface/PFJet.h"
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
+#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 
-//HLS4ML compiled emulator modeling
-#include <string>
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
 
 struct BJetTFCache {
   BJetTFCache(const std::string &graphPath) : graphDef(tensorflow::loadGraphDef(graphPath)) {
@@ -22,10 +21,7 @@ struct BJetTFCache {
 
 class JetId {
 public:
-  JetId(const std::string &iInput,
-        const std::string &iOutput,
-        const std::shared_ptr<hls4mlEmulator::Model> model,
-        int iNParticles);
+  JetId(const std::string &iInput, const std::string &iOutput, const std::string &modelName, int iNParticles);
   JetId(const std::string &iInput, const std::string &iOutput, const BJetTFCache *cache, int iNParticles);
   ~JetId() = default;
 
@@ -49,6 +45,6 @@ private:
   unique_ptr<float[]> fDX_;
   unique_ptr<float[]> fDY_;
   tensorflow::Session *sessionRef_;
-  std::shared_ptr<hls4mlEmulator::Model> modelRef_;
+  l1t::HLS4MLModelWrapper const modelWrapper_;
 };
 #endif

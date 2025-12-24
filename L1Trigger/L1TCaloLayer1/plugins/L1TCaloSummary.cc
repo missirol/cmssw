@@ -22,10 +22,8 @@
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
@@ -56,14 +54,14 @@
 #include "DataFormats/Math/interface/LorentzVector.h"
 
 #include "L1Trigger/L1TCaloLayer1/src/UCTLogging.hh"
-#include <bitset>
 
+#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
+
+#include <bitset>
 #include <string>
 #include <sstream>
 
-//Anomaly detection includes
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
 
 using namespace l1tcalo;
 using namespace l1extra;
@@ -111,8 +109,7 @@ private:
 
   UCTLayer1* layer1;
 
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
+  l1t::HLS4MLModelWrapper const modelWrapper_;
 
   bool overwriteWithTestPatterns;
   std::vector<edm::ParameterSet> testPatterns;
@@ -145,7 +142,7 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
       regionToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("caloLayer1Regions"))),
       //backupRegionToken(consumes<L1CaloRegionCollection>(edm::InputTag("simCaloStage2Layer1Digis"))),
       backupRegionToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("backupRegionToken"))),
-      loader(hls4mlEmulator::ModelLoader(iConfig.getParameter<string>("CICADAModelVersion"))),
+      modelWrapper_(l1t::HLS4MLModelWrapper(iConfig.getParameter<string>("CICADAModelVersion"))),
       overwriteWithTestPatterns(iConfig.getParameter<bool>("useTestPatterns")),
       testPatterns(iConfig.getParameter<std::vector<edm::ParameterSet>>("testPatterns")) {
   std::vector<double> pumLUTData;
@@ -168,8 +165,6 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
   }
   produces<L1JetParticleCollection>("Boosted");
 
-  //anomaly trigger loading
-  model = loader.load_model();
   produces<l1t::CICADABxCollection>("CICADAScore");
 }
 
@@ -259,11 +254,12 @@ void L1TCaloSummary<INPUT, OUTPUT>::produce(edm::Event& iEvent, const edm::Event
   }
 
   //Extract model output
-  OUTPUT modelResult[1] = {
-      OUTPUT("0.0", 10)};  //the 10 here refers to the fact that we read in "0.0" as a decimal number
-  model->prepare_input(modelInput);
-  model->predict();
-  model->read_result(modelResult);
+  //the 10 here refers to the fact that we read in "0.0" as a decimal number
+  OUTPUT modelResult[1] = {OUTPUT("0.0", 10)};
+
+  modelWrapper_.prepare_input(modelInput);
+  modelWrapper_.predict();
+  modelWrapper_.read_result(modelResult);
 
   CICADAScore->push_back(0, modelResult[0].to_float());
 

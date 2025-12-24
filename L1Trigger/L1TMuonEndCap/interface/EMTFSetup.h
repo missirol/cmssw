@@ -1,27 +1,22 @@
-#ifndef L1TMuonEndCap_EMTFSetup_h
-#define L1TMuonEndCap_EMTFSetup_h
+#ifndef L1Trigger_L1TMuonEndCap_EMTFSetup_h
+#define L1Trigger_L1TMuonEndCap_EMTFSetup_h
 
 #include <memory>
 #include <string>
 
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
 #include "L1Trigger/L1TMuon/interface/GeometryTranslator.h"
 #include "L1Trigger/L1TMuonEndCap/interface/ConditionHelper.h"
 #include "L1Trigger/L1TMuonEndCap/interface/VersionControl.h"
 #include "L1Trigger/L1TMuonEndCap/interface/SectorProcessorLUT.h"
 #include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngine.h"
 #include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngineDxy.h"
-#include "hls4ml/emulator.h"
 
 class EMTFSetup {
 public:
   explicit EMTFSetup(const edm::ParameterSet& iConfig, edm::ConsumesCollector iCollector);
-  ~EMTFSetup();
 
   // Check and update geometry, conditions, versions, sp LUTs, and pt assignment engine
   void reload(const edm::Event& iEvent, const edm::EventSetup& iSetup);
@@ -64,14 +59,10 @@ private:
 
   SectorProcessorLUT sector_processor_lut_;
 
-  // Declare before pt_assign_engine_dxy_ to avoid library deletion
-  hls4mlEmulator::ModelLoader loader;
-  std::shared_ptr<hls4mlEmulator::Model> model;
-
   // Polymorphic class
   std::unique_ptr<PtAssignmentEngine> pt_assign_engine_;
   // Displaced muon pT assignment
-  std::unique_ptr<PtAssignmentEngineDxy> pt_assign_engine_dxy_;
+  std::unique_ptr<PtAssignmentEngineDxy> const pt_assign_engine_dxy_;
 
   // Version numbers. Note: may be different from those in ConditionHelper
   unsigned fw_ver_;

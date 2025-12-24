@@ -1,4 +1,5 @@
 <use name="L1Trigger/L1TCaloLayer1"/>
+
 <bin name="testUCTGeometry" file="testUCTGeometry.cpp">
 </bin>
 
@@ -9,8 +10,7 @@
 </bin>
 
 <bin name="testCICADAEmulation" file="testCICADAEmulation.cppunit.cc">
-    <use name="hls"/>
-    <use name="hls4mlEmulatorExtras"/>
-    <use name="CICADA"/>
     <use name="cppunit"/>
+    <use name="hls"/>
+    <use name="L1Trigger/MLUtilities"/>
 </bin>

@@ -10,4 +10,5 @@
 <use name="MagneticField/Records"/>
 <use name="CommonTools/Utils"/>
 <use name="CommonTools/UtilAlgos"/>
+<use name="FWCore/Utilities"/>
 <flags EDM_PLUGIN="1"/>
