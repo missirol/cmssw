@@ -10,8 +10,9 @@
 #include <ostream>
 #include <string>
 
+#include "hls4ml/emulator.h"
+
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
 class GlobalCondition;
 class TOPOTemplate;
@@ -68,7 +69,7 @@ namespace l1t {
 
     static constexpr char const* kModelNamePrefix = "topo_";
 
-    HLS4MLModelWrapper m_model_wrapper;
+    hls4mlEmulator::ModelWrapper m_model_wrapper;
   };
 
 }  // namespace l1t

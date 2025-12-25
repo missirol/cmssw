@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include "hls4ml/emulator.h"
+
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"

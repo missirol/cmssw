@@ -28,7 +28,7 @@ Only then the actual fixed point algorithm emulation arrives.
 ** INFO : THE NNs ARE APPLIED USING THE TENSORFLOW SOFTWARE
           the implementation of full emulation via hls4ml is ongoing
           (it has already been shown in other contexts that tensorflow 
-          software and full emulation are very close to each other)
+          softwrae and full emulation are very close to each other)
 
 Original Author: Jona Motta
 Created: Tue June 7th 2023
@@ -44,7 +44,7 @@ Created: Tue June 7th 2023
 
 #include "ap_int.h"
 #include "ap_fixed.h"
-// #include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
+// #include "hls4ml/emulator.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"

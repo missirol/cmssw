@@ -1,9 +1,11 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
 
 #include <cmath>
+#include <stdexcept>
 
-L1TSC4NGJetID::L1TSC4NGJetID(std::string const& modelName, int iNParticles, bool debug) : modelWrapper_{modelName} {
+L1TSC4NGJetID::L1TSC4NGJetID(std::string const& modelName, int iNParticles, bool debug) try : modelWrapper_{modelName} {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
   isDebugEnabled_ = debug;
@@ -23,6 +25,9 @@ L1TSC4NGJetID::L1TSC4NGJetID(std::string const& modelName, int iNParticles, bool
 
   fId_ = std::make_unique<int[]>(fNParticles_);
   fCharge_ = std::make_unique<int[]>(fNParticles_);
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \"" << modelName
+                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 void L1TSC4NGJetID::setNNVectorVar() {

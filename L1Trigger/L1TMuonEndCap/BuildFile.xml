@@ -1,3 +1,6 @@
+<export>
+  <lib name="1"/>
+</export>
 <flags ADD_SUBDIR="1"/>
 <flags LDFLAGS="-lXMLIO"/>
 <use name="FWCore/Framework"/>
@@ -5,9 +8,6 @@
 <use name="FWCore/Utilities"/>
 <use name="DataFormats/L1TMuon"/>
 <use name="L1Trigger/L1TMuon"/>
-<use name="L1Trigger/MLUtilities"/>
 <use name="PhysicsTools/TensorFlow"/>
 <use name="hls"/>
-<export>
-  <lib name="1"/>
-</export>
+<use name="hls4mlEmulatorExtras"/>

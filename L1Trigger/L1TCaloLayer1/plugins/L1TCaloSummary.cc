@@ -18,6 +18,7 @@
 
 // system include files
 #include <memory>
+#include <stdexcept>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -25,6 +26,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/Exception.h"
 
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
 #include "DataFormats/HcalDigi/interface/HcalDigiCollections.h"
@@ -54,14 +56,14 @@
 #include "DataFormats/Math/interface/LorentzVector.h"
 
 #include "L1Trigger/L1TCaloLayer1/src/UCTLogging.hh"
-
-#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
-
 #include <bitset>
+
 #include <string>
 #include <sstream>
 
+//Anomaly detection includes
 #include "ap_fixed.h"
+#include "hls4ml/emulator.h"
 
 using namespace l1tcalo;
 using namespace l1extra;
@@ -109,7 +111,7 @@ private:
 
   UCTLayer1* layer1;
 
-  l1t::HLS4MLModelWrapper const modelWrapper_;
+  hls4mlEmulator::ModelWrapper const modelWrapper_;
 
   bool overwriteWithTestPatterns;
   std::vector<edm::ParameterSet> testPatterns;
@@ -127,7 +129,7 @@ private:
 // constructors and destructor
 //
 template <class INPUT, class OUTPUT>
-L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
+L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig) try
     : nPumBins(iConfig.getParameter<unsigned int>("nPumBins")),
       pumLUT(nPumBins, std::vector<std::vector<uint32_t>>(2, std::vector<uint32_t>(13))),
       caloScaleFactor(iConfig.getParameter<double>("caloScaleFactor")),
@@ -142,7 +144,7 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
       regionToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("caloLayer1Regions"))),
       //backupRegionToken(consumes<L1CaloRegionCollection>(edm::InputTag("simCaloStage2Layer1Digis"))),
       backupRegionToken(consumes<L1CaloRegionCollection>(iConfig.getParameter<edm::InputTag>("backupRegionToken"))),
-      modelWrapper_(l1t::HLS4MLModelWrapper(iConfig.getParameter<string>("CICADAModelVersion"))),
+      modelWrapper_(hls4mlEmulator::ModelWrapper(iConfig.getParameter<string>("CICADAModelVersion"))),
       overwriteWithTestPatterns(iConfig.getParameter<bool>("useTestPatterns")),
       testPatterns(iConfig.getParameter<std::vector<edm::ParameterSet>>("testPatterns")) {
   std::vector<double> pumLUTData;
@@ -166,6 +168,10 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
   produces<L1JetParticleCollection>("Boosted");
 
   produces<l1t::CICADABxCollection>("CICADAScore");
+} catch (std::runtime_error const& e) {
+  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \""
+                                     << iConfig.getParameter<string>("CICADAModelVersion")
+                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 //

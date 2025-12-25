@@ -3,9 +3,10 @@
 
 #include <string>
 
+#include "hls4ml/emulator.h"
+
 #include "DataFormats/L1TMuon/interface/EMTFTrack.h"
 #include "L1Trigger/L1TMuonEndCap/interface/Common.h"
-#include "L1Trigger/MLUtilities/interface/HLS4MLModelWrapper.h"
 
 class PtAssignmentEngineAux2017;
 
@@ -25,7 +26,7 @@ public:
   virtual void call_hls_dxy(const emtf::Feature& feature, emtf::Prediction& prediction) const;
 
 protected:
-  l1t::HLS4MLModelWrapper const modelWrapper_;
+  hls4mlEmulator::ModelWrapper const modelWrapper_;
   int verbose_;
 };
 
