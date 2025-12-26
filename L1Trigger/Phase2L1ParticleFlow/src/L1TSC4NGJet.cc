@@ -1,9 +1,9 @@
-#include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/L1TSC4NGJetID.h"
+
 #include <cmath>
 
-L1TSC4NGJetID::L1TSC4NGJetID(const std::shared_ptr<hls4mlEmulator::Model> model, int iNParticles, bool debug)
-    : modelRef_(model) {
+L1TSC4NGJetID::L1TSC4NGJetID(std::string const& modelName, int iNParticles, bool debug) : modelWrapper_{modelName} {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
   isDebugEnabled_ = debug;
@@ -134,9 +134,7 @@ std::vector<float> L1TSC4NGJetID::EvaluateNNFixed() {
 
   pairtype modelResult;
 
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(&modelResult);
+  modelWrapper_.run_inference(modelInput, &modelResult);
 
   std::vector<float> modelResult_;
   if (isDebugEnabled_) {
@@ -157,7 +155,7 @@ std::vector<float> L1TSC4NGJetID::EvaluateNNFixed() {
   return modelResult_;
 }  //end EvaluateNNFixed
 
-std::vector<float> L1TSC4NGJetID::computeFixed(const l1t::PFJet &iJet, bool useRawPt) {
+std::vector<float> L1TSC4NGJetID::computeFixed(const l1t::PFJet& iJet, bool useRawPt) {
   for (int i0 = 0; i0 < fNParticles_; i0++) {
     fPt_rel_.get()[i0] = 0;
     fPt_.get()[i0] = 0;

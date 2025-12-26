@@ -1,23 +1,19 @@
-#ifndef L1TMuonEndCap_PtAssignmentEngineDxy_h
-#define L1TMuonEndCap_PtAssignmentEngineDxy_h
+#ifndef L1Trigger_L1TMuonEndCap_PtAssignmentEngineDxy_h
+#define L1Trigger_L1TMuonEndCap_PtAssignmentEngineDxy_h
 
-#include <cstdint>
-#include <cstdlib>
-#include <cmath>
 #include <string>
-#include <vector>
-#include <array>
 
+#include "hls4ml/ModelWrapper.h"
+
+#include "DataFormats/L1TMuon/interface/EMTFTrack.h"
 #include "L1Trigger/L1TMuonEndCap/interface/Common.h"
-#include "L1Trigger/L1TMuonEndCap/interface/PtAssignmentEngineAux2017.h"
-#include "FWCore/ParameterSet/interface/FileInPath.h"
-#include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+
+class PtAssignmentEngineAux2017;
 
 class PtAssignmentEngineDxy {
 public:
-  explicit PtAssignmentEngineDxy(std::shared_ptr<hls4mlEmulator::Model> model);
-  virtual ~PtAssignmentEngineDxy();
+  explicit PtAssignmentEngineDxy(std::string const& modelName);
+  virtual ~PtAssignmentEngineDxy() = default;
 
   void configure(int verbose);
 
@@ -30,8 +26,8 @@ public:
   virtual void call_hls_dxy(const emtf::Feature& feature, emtf::Prediction& prediction) const;
 
 protected:
+  hls4mlEmulator::ModelWrapper const modelWrapper_;
   int verbose_;
-  std::shared_ptr<hls4mlEmulator::Model> model_;
 };
 
 #endif

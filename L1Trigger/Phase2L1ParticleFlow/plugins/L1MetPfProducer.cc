@@ -1,12 +1,8 @@
-#include <vector>
 #include <string>
-#include <ap_int.h>
-#include <ap_fixed.h>
-#include <TVector2.h>
+#include <vector>
 
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
@@ -17,20 +13,21 @@
 #include "DataFormats/L1TParticleFlow/interface/puppi.h"
 #include "DataFormats/L1TParticleFlow/interface/sums.h"
 #include "DataFormats/L1TParticleFlow/interface/layer1_emulator.h"
-
 #include "DataFormats/L1Trigger/interface/EtSum.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 
 #include "L1Trigger/Phase2L1ParticleFlow/interface/jetmet/L1PFMetEmulator.h"
 
-#include "hls4ml/emulator.h"
+#include "ap_int.h"
+#include "ap_fixed.h"
+#include "hls4ml/ModelWrapper.h"
 
 using namespace l1t;
 
 class L1MetPfProducer : public edm::global::EDProducer<> {
 public:
   explicit L1MetPfProducer(const edm::ParameterSet&);
-  ~L1MetPfProducer() override;
+
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
@@ -46,8 +43,7 @@ private:
 
   // hls4ml emulator objects
   bool useMlModel_;
-  std::shared_ptr<hls4mlEmulator::Model> model;
-  std::string modelVersion_;
+  hls4mlEmulator::ModelWrapper modelWrapper_;
 
   typedef ap_fixed<32, 16> input_t;
   typedef ap_fixed<32, 16> result_t;
@@ -66,12 +62,12 @@ private:
 L1MetPfProducer::L1MetPfProducer(const edm::ParameterSet& cfg)
     : _l1PFToken(consumes<std::vector<l1t::PFCandidate>>(cfg.getParameter<edm::InputTag>("L1PFObjects"))),
       maxCands_(cfg.getParameter<int>("maxCands")),
-      modelVersion_(cfg.getParameter<std::string>("modelVersion")) {
+      modelWrapper_{} {
   produces<std::vector<l1t::EtSum>>();
-  useMlModel_ = (!modelVersion_.empty());
+  auto const& modelVersion = cfg.getParameter<std::string>("modelVersion");
+  useMlModel_ = (not modelVersion.empty());
   if (useMlModel_) {
-    hls4mlEmulator::ModelLoader loader(modelVersion_);
-    model = loader.load_model();
+    modelWrapper_.reset(modelVersion);
   } else {
     edm::FileInPath f = cfg.getParameter<edm::FileInPath>("Poly2File");
     L1METEmu::SetPoly2File(f.fullPath());
@@ -188,9 +184,7 @@ void L1MetPfProducer::CalcMlMet(const std::vector<l1t::PFCandidate>& pfcands,
     input[maxCands_ * (numContInputs_ + numPxPyInputs_ + 1) + i] = (abs(charge[i]) <= 1) ? (charge[i] + 2) : 0;
   }
 
-  model->prepare_input(input);
-  model->predict();
-  model->read_result(result);
+  modelWrapper_.run_inference(input, result);
 
   double met_px = -result[0].to_double();
   double met_py = -result[1].to_double();
@@ -199,6 +193,5 @@ void L1MetPfProducer::CalcMlMet(const std::vector<l1t::PFCandidate>& pfcands,
   metVector.SetEta(0);
 }
 
-L1MetPfProducer::~L1MetPfProducer() {}
-
+#include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(L1MetPfProducer);

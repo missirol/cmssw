@@ -9,7 +9,7 @@
 //HLS4ML compiled emulator modeling
 #include <string>
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 struct BJetTFCache {
   BJetTFCache(const std::string &graphPath) : graphDef(tensorflow::loadGraphDef(graphPath)) {
@@ -22,10 +22,7 @@ struct BJetTFCache {
 
 class JetId {
 public:
-  JetId(const std::string &iInput,
-        const std::string &iOutput,
-        const std::shared_ptr<hls4mlEmulator::Model> model,
-        int iNParticles);
+  JetId(const std::string &iInput, const std::string &iOutput, const std::string &modelName, int iNParticles);
   JetId(const std::string &iInput, const std::string &iOutput, const BJetTFCache *cache, int iNParticles);
   ~JetId() = default;
 
@@ -49,6 +46,6 @@ private:
   unique_ptr<float[]> fDX_;
   unique_ptr<float[]> fDY_;
   tensorflow::Session *sessionRef_;
-  std::shared_ptr<hls4mlEmulator::Model> modelRef_;
+  hls4mlEmulator::ModelWrapper const modelWrapper_;
 };
 #endif

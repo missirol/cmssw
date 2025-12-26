@@ -1,12 +1,10 @@
-#include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
+
 #include <cmath>
 
-JetId::JetId(const std::string &iInput,
-             const std::string &iOutput,
-             const std::shared_ptr<hls4mlEmulator::Model> model,
-             int iNParticles)
-    : modelRef_(model) {
+JetId::JetId(const std::string &iInput, const std::string &iOutput, const std::string &modelName, int iNParticles)
+    : modelWrapper_{modelName} {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
 
@@ -80,9 +78,8 @@ ap_fixed<16, 6> JetId::EvaluateNNFixed() {
   }
   ap_fixed<16, 6> modelResult[1] = {-1};
 
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(modelResult);
+  modelWrapper_.run_inference(modelInput, modelResult);
+
   ap_fixed<16, 6> modelResult_ = modelResult[0];
   return modelResult_;
 }  //end EvaluateNNFixed

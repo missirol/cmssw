@@ -14,7 +14,7 @@
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
 #include "DataFormats/L1Trigger/interface/L1Candidate.h"
 
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 // forward declarations
 class GlobalCondition;
@@ -64,9 +64,7 @@ namespace l1t {
 
     inline float getScore() const { return m_savedscore; }
 
-    void loadModel();
-
-    inline hls4mlEmulator::ModelLoader const& model_loader() const { return m_model_loader; }
+    inline hls4mlEmulator::ModelWrapper const& model_wrapper() const { return m_model_wrapper; }
 
   private:
     /// copy function for copy constructor and operator=
@@ -80,8 +78,7 @@ namespace l1t {
 
     static constexpr char const* kModelNamePrefix = "topo_";
 
-    hls4mlEmulator::ModelLoader m_model_loader;
-    std::shared_ptr<hls4mlEmulator::Model> m_model;
+    hls4mlEmulator::ModelWrapper m_model_wrapper;
 
     ///axo score for possible score saving
     mutable float m_savedscore;
