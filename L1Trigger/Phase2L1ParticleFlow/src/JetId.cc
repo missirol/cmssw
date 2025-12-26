@@ -1,11 +1,9 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
-#include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/Phase2L1ParticleFlow/interface/JetId.h"
 
 #include <cmath>
-#include <stdexcept>
 
-JetId::JetId(const std::string &iInput, const std::string &iOutput, const std::string &modelName, int iNParticles) try
+JetId::JetId(const std::string &iInput, const std::string &iOutput, const std::string &modelName, int iNParticles)
     : modelWrapper_{modelName} {
   NNvectorVar_.clear();
   fNParticles_ = iNParticles;
@@ -20,9 +18,6 @@ JetId::JetId(const std::string &iInput, const std::string &iOutput, const std::s
   fDY_ = std::make_unique<float[]>(fNParticles_);
   fInput_ = iInput;
   fOutput_ = iOutput;
-} catch (std::runtime_error const &e) {
-  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \"" << modelName
-                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 //--BJet algo specific constructor

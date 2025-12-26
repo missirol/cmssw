@@ -18,7 +18,6 @@
 
 // system include files
 #include <memory>
-#include <stdexcept>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -26,7 +25,6 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Utilities/interface/Exception.h"
 
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
 #include "DataFormats/HcalDigi/interface/HcalDigiCollections.h"
@@ -129,7 +127,7 @@ private:
 // constructors and destructor
 //
 template <class INPUT, class OUTPUT>
-L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig) try
+L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig)
     : nPumBins(iConfig.getParameter<unsigned int>("nPumBins")),
       pumLUT(nPumBins, std::vector<std::vector<uint32_t>>(2, std::vector<uint32_t>(13))),
       caloScaleFactor(iConfig.getParameter<double>("caloScaleFactor")),
@@ -168,10 +166,6 @@ L1TCaloSummary<INPUT, OUTPUT>::L1TCaloSummary(const edm::ParameterSet& iConfig) 
   produces<L1JetParticleCollection>("Boosted");
 
   produces<l1t::CICADABxCollection>("CICADAScore");
-} catch (std::runtime_error const& e) {
-  throw cms::Exception("ModelError") << " ERROR: failed to load hls4ml model \""
-                                     << iConfig.getParameter<string>("CICADAModelVersion")
-                                     << "\". Model not found in cms-hls4ml externals.";
 }
 
 //

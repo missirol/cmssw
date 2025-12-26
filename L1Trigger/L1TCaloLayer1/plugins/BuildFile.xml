@@ -1,6 +1,5 @@
 <use name="FWCore/Framework"/>
 <use name="FWCore/ParameterSet"/>
-<use name="FWCore/Utilities"/>
 <use name="DataFormats/HcalDigi"/>
 <use name="DataFormats/EcalDigi"/>
 <use name="DataFormats/L1TCalorimeter"/>
@@ -8,5 +7,4 @@
 <use name="L1Trigger/L1TCaloLayer1"/>
 <use name="hls"/>
 <use name="hls4mlEmulatorExtras"/>
-<use name="CICADA"/>
 <flags EDM_PLUGIN="1"/>

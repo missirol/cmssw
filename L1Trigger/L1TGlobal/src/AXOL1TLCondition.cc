@@ -11,13 +11,11 @@
 #include <array>
 #include <iostream>
 #include <iomanip>
-#include <stdexcept>
 #include <utility>
 
 #include "ap_fixed.h"
 
 #include "DataFormats/L1Trigger/interface/L1Candidate.h"
-#include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
 #include "L1Trigger/L1TGlobal/interface/AXOL1TLTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
@@ -37,16 +35,11 @@ namespace {
 l1t::AXOL1TLCondition::AXOL1TLCondition()
     : ConditionEvaluation(), m_gtAXOL1TLTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{} {}
 
-l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB) try
+l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB)
     : ConditionEvaluation(),
       m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
       m_gtGTB(ptrGTB),
-      m_model_wrapper{kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()} {
-} catch (std::runtime_error const& e) {
-  throw cms::Exception("ModelError") << " ERROR: failed to load AXOL1TL model version \""
-                                     << kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()
-                                     << "\". Model version not found in cms-hls4ml externals.";
-}
+      m_model_wrapper{kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()} {}
 
 // copy constructor
 void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
@@ -207,18 +200,12 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
   }
 
   //now run the inference
-  try {
-    if ((m_model_wrapper.model_name() == "GTADModel_v3") ||
-        (m_model_wrapper.model_name() == "GTADModel_v4")) {
-      using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
-      loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
-    } else {
-      using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
-      loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
-    }
-  } catch (std::runtime_error const& e) {
-    throw cms::Exception("ModelError") << " ERROR: failed to run inference on hls4ml model \""
-                                       << m_model_wrapper.model_name() << "\". Error message: " << e.what();
+  if ((m_model_wrapper.model_name() == "GTADModel_v3") || (m_model_wrapper.model_name() == "GTADModel_v4")) {
+    using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
+    loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
+  } else {
+    using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
+    loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
   }
 
   // result = ADModelResult.first;

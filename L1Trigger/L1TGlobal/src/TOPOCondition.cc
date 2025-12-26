@@ -10,13 +10,11 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "ap_fixed.h"
 
-#include "FWCore/Utilities/interface/Exception.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
 #include "L1Trigger/L1TGlobal/interface/GlobalBoard.h"
 #include "L1Trigger/L1TGlobal/interface/TOPOCondition.h"
@@ -25,16 +23,11 @@
 l1t::TOPOCondition::TOPOCondition()
     : ConditionEvaluation(), m_gtTOPOTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{} {}
 
-l1t::TOPOCondition::TOPOCondition(const GlobalCondition* topoTemplate, const GlobalBoard* ptrGTB) try
+l1t::TOPOCondition::TOPOCondition(const GlobalCondition* topoTemplate, const GlobalBoard* ptrGTB)
     : ConditionEvaluation(),
       m_gtTOPOTemplate(static_cast<const TOPOTemplate*>(topoTemplate)),
       m_gtGTB(ptrGTB),
-      m_model_wrapper{kModelNamePrefix + m_gtTOPOTemplate->modelVersion()} {
-} catch (std::runtime_error const& e) {
-  throw cms::Exception("ModelError") << " ERROR: failed to load TOPO model version \""
-                                     << kModelNamePrefix + m_gtTOPOTemplate->modelVersion()
-                                     << "\". Model version not found in cms-hls4ml externals.";
-}
+      m_model_wrapper{kModelNamePrefix + m_gtTOPOTemplate->modelVersion()} {}
 
 void l1t::TOPOCondition::copy(const l1t::TOPOCondition& cp) {
   m_gtTOPOTemplate = cp.gtTOPOTemplate();
@@ -175,12 +168,7 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
   }
 
   //now run the inference
-  try {
-    m_model_wrapper.run_inference(ModelInput, &loss);
-  } catch (std::runtime_error const& e) {
-    throw cms::Exception("ModelError") << "ERROR: failed to run inference on hls4ml model \""
-                                       << m_model_wrapper.model_name() << "\". Error message: " << e.what();
-  }
+  m_model_wrapper.run_inference(ModelInput, &loss);
 
   float const score = ((loss).to_float() * 1023);
 
