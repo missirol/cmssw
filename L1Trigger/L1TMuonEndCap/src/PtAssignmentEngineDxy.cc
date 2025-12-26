@@ -144,9 +144,7 @@ void PtAssignmentEngineDxy::call_hls_dxy(const emtf::Feature& feature, emtf::Pre
   ap_uint<8> nn_output[2];
 
   try {
-    modelWrapper_.prepare_input(nn_input);
-    modelWrapper_.predict();
-    modelWrapper_.read_result(nn_output);
+    modelWrapper_.run_inference(nn_input, nn_output);
   } catch (std::runtime_error const& e) {
     throw cms::Exception("ModelError") << "ERROR: failed to run inference on hls4ml model \""
                                        << modelWrapper_.model_name() << "\". Error message: " << e.what();

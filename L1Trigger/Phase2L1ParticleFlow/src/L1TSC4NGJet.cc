@@ -139,9 +139,7 @@ std::vector<float> L1TSC4NGJetID::EvaluateNNFixed() {
 
   pairtype modelResult;
 
-  modelWrapper_.prepare_input(modelInput);
-  modelWrapper_.predict();
-  modelWrapper_.read_result(&modelResult);
+  modelWrapper_.run_inference(modelInput, &modelResult);
 
   std::vector<float> modelResult_;
   if (isDebugEnabled_) {

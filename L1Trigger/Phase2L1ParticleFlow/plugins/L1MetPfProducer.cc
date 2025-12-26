@@ -22,7 +22,7 @@
 
 #include "ap_int.h"
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 using namespace l1t;
 
@@ -193,9 +193,7 @@ void L1MetPfProducer::CalcMlMet(const std::vector<l1t::PFCandidate>& pfcands,
   }
 
   try {
-    modelWrapper_.prepare_input(input);
-    modelWrapper_.predict();
-    modelWrapper_.read_result(result);
+    modelWrapper_.run_inference(input, result);
   } catch (std::runtime_error const& e) {
     throw cms::Exception("ModelError") << " ERROR: failed to run inference on hls4ml model \""
                                        << modelWrapper_.model_name() << "\". Error message: " << e.what();

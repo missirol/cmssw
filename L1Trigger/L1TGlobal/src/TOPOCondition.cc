@@ -176,9 +176,7 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
 
   //now run the inference
   try {
-    m_model_wrapper.prepare_input(ModelInput);  //scaling internal here
-    m_model_wrapper.predict();
-    m_model_wrapper.read_result(&loss);  //store result as loss variable
+    m_model_wrapper.run_inference(ModelInput, &loss);
   } catch (std::runtime_error const& e) {
     throw cms::Exception("ModelError") << "ERROR: failed to run inference on hls4ml model \""
                                        << m_model_wrapper.model_name() << "\". Error message: " << e.what();

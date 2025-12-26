@@ -9,7 +9,7 @@
 //HLS4ML compiled emulator modeling
 #include <string>
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 struct BJetTFCache {
   BJetTFCache(const std::string &graphPath) : graphDef(tensorflow::loadGraphDef(graphPath)) {

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 #include "DataFormats/L1TMuon/interface/EMTFTrack.h"
 #include "L1Trigger/L1TMuonEndCap/interface/Common.h"

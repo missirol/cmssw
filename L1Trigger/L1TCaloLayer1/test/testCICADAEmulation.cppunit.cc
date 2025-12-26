@@ -12,7 +12,7 @@
 //TODO: might also be nice to have a test for model integrity? Known test cases producing known outputs?
 //This may not be appropriate for unit testing however.
 
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 #include "cppunit/extensions/HelperMacros.h"
 #include <memory>

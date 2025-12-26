@@ -11,7 +11,7 @@
 #include <string>
 #include <utility>
 
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
 

@@ -63,7 +63,7 @@
 
 //Anomaly detection includes
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 using namespace l1tcalo;
 using namespace l1extra;
@@ -263,9 +263,7 @@ void L1TCaloSummary<INPUT, OUTPUT>::produce(edm::Event& iEvent, const edm::Event
   //the 10 here refers to the fact that we read in "0.0" as a decimal number
   OUTPUT modelResult[1] = {OUTPUT("0.0", 10)};
 
-  modelWrapper_.prepare_input(modelInput);
-  modelWrapper_.predict();
-  modelWrapper_.read_result(modelResult);
+  modelWrapper_.run_inference(modelInput, modelResult);
 
   CICADAScore->push_back(0, modelResult[0].to_float());
 

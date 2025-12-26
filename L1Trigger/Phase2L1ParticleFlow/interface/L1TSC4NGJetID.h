@@ -10,7 +10,7 @@
 
 //HLS4ML compiled emulator modeling
 #include "ap_fixed.h"
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 class L1TSC4NGJetID {
 public:

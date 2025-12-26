@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "hls4ml/emulator.h"
+#include "hls4ml/ModelWrapper.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
+#include <utility>
 
 #include "ap_fixed.h"
 
@@ -24,10 +25,11 @@
 
 namespace {
   //template function for reading results
-  template <typename ResultType, typename LossType>
-  LossType readResult(hls4mlEmulator::ModelWrapper const& modelWrapper) {
-    std::pair<ResultType, LossType> ADModelResult;  //model outputs a pair of the (result vector, loss)
-    modelWrapper.read_result(&ADModelResult);
+  template <typename InputType, typename ResultType, typename LossType>
+  LossType readResult(hls4mlEmulator::ModelWrapper const& modelWrapper, InputType const inputs[]) {
+    // model outputs a pair of the (result vector, loss)
+    std::pair<ResultType, LossType> ADModelResult;
+    modelWrapper.run_inference(inputs, &ADModelResult);
     return ADModelResult.second;
   }
 }  // namespace
@@ -56,8 +58,6 @@ void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
   m_combinationsInCond = cp.getCombinationsInCond();
 
   m_verbosity = cp.m_verbosity;
-
-  m_model_wrapper.reset(cp.model_name());
 }
 
 l1t::AXOL1TLCondition::AXOL1TLCondition(const l1t::AXOL1TLCondition& cp) : ConditionEvaluation() { copy(cp); }
@@ -208,16 +208,13 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
 
   //now run the inference
   try {
-    m_model_wrapper.prepare_input(ADModelInput);  //scaling internal here
-    m_model_wrapper.predict();
-    // model->read_result(&ADModelResult);  // this should be the square sum model result
     if ((m_model_wrapper.model_name() == "GTADModel_v3") ||
-        (m_model_wrapper.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
+        (m_model_wrapper.model_name() == "GTADModel_v4")) {
       using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
-      loss = readResult<resulttype, losstype>(m_model_wrapper);
-    } else {  //v5 default
+      loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
+    } else {
       using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
-      loss = readResult<resulttype, losstype>(m_model_wrapper);
+      loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
     }
   } catch (std::runtime_error const& e) {
     throw cms::Exception("ModelError") << " ERROR: failed to run inference on hls4ml model \""

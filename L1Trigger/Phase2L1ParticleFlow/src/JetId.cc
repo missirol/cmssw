@@ -83,9 +83,7 @@ ap_fixed<16, 6> JetId::EvaluateNNFixed() {
   }
   ap_fixed<16, 6> modelResult[1] = {-1};
 
-  modelWrapper_.prepare_input(modelInput);
-  modelWrapper_.predict();
-  modelWrapper_.read_result(modelResult);
+  modelWrapper_.run_inference(modelInput, modelResult);
 
   ap_fixed<16, 6> modelResult_ = modelResult[0];
   return modelResult_;

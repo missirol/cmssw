@@ -44,7 +44,7 @@ Created: Tue June 7th 2023
 
 #include "ap_int.h"
 #include "ap_fixed.h"
-// #include "hls4ml/emulator.h"
+// #include "hls4ml/ModelWrapper.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
