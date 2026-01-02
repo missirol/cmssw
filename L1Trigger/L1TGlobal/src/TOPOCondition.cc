@@ -7,40 +7,17 @@
  * Author: Melissa Quinnan, Lukas Ebeling, Artur Lobanov
  *
  **/
-
-// this class header
-#include "L1Trigger/L1TGlobal/interface/CorrCondition.h"
-
-// system include files
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-
-#include <string>
-#include <vector>
 #include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <string>
+
 #include "ap_fixed.h"
 
-// user include files
-//   base classes
-#include "L1Trigger/L1TGlobal/interface/TOPOTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-
-#include "L1Trigger/L1TGlobal/interface/MuCondition.h"
-#include "L1Trigger/L1TGlobal/interface/TOPOCondition.h"
-#include "L1Trigger/L1TGlobal/interface/CaloCondition.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumCondition.h"
-#include "L1Trigger/L1TGlobal/interface/MuonTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/CaloTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/GlobalScales.h"
-
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
-
 #include "L1Trigger/L1TGlobal/interface/GlobalBoard.h"
-
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/MessageLogger/interface/MessageDrop.h"
+#include "L1Trigger/L1TGlobal/interface/TOPOCondition.h"
+#include "L1Trigger/L1TGlobal/interface/TOPOTemplate.h"
 
 l1t::TOPOCondition::TOPOCondition()
     : ConditionEvaluation(), m_gtTOPOTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{} {}
@@ -51,141 +28,111 @@ l1t::TOPOCondition::TOPOCondition(const GlobalCondition* topoTemplate, const Glo
       m_gtGTB(ptrGTB),
       m_model_wrapper{kModelNamePrefix + m_gtTOPOTemplate->modelVersion()} {}
 
-// copy constructor
 void l1t::TOPOCondition::copy(const l1t::TOPOCondition& cp) {
-  m_gtTOPOTemplate = cp.gtTOPOTemplate();
-  m_gtGTB = cp.gtGTB();
-
   m_condMaxNumberObjects = cp.condMaxNumberObjects();
   m_condLastResult = cp.condLastResult();
   m_combinationsInCond = cp.getCombinationsInCond();
-
   m_verbosity = cp.m_verbosity;
 
-  m_model_wrapper.reset(cp.model_wrapper().model_name());
+  m_gtTOPOTemplate = cp.gtTOPOTemplate();
+  m_gtGTB = cp.gtGTB();
+  m_model_wrapper.reset(cp.model_name());
 }
 
 l1t::TOPOCondition::TOPOCondition(const l1t::TOPOCondition& cp) : ConditionEvaluation() { copy(cp); }
 
-// destructor
-l1t::TOPOCondition::~TOPOCondition() {
-  // empty
-}
-
-// equal operator
 l1t::TOPOCondition& l1t::TOPOCondition::operator=(const l1t::TOPOCondition& cp) {
   copy(cp);
   return *this;
 }
 
-// methods
-void l1t::TOPOCondition::setGtTOPOTemplate(const TOPOTemplate* caloTempl) { m_gtTOPOTemplate = caloTempl; }
-
-///   set the pointer to uGT GlobalBoard
-void l1t::TOPOCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
-
-/// set score for score saving
-void l1t::TOPOCondition::setScore(const float scoreval) const { m_savedscore = scoreval; }
-
 const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
-  bool condResult = false;
-  int useBx = bxEval + m_gtTOPOTemplate->condRelativeBx();
+  int const useBx = bxEval + m_gtTOPOTemplate->condRelativeBx();
 
-  // //pointers to objects
+  // pointers to objects
+  const BXVector<const l1t::EtSum*>* candEtSumVec = m_gtGTB->getCandL1EtSum();
+  const BXVector<const l1t::L1Candidate*>* candEGVec = m_gtGTB->getCandL1EG();
   const BXVector<const l1t::Muon*>* candMuVec = m_gtGTB->getCandL1Mu();
   const BXVector<const l1t::L1Candidate*>* candJetVec = m_gtGTB->getCandL1Jet();
-  const BXVector<const l1t::L1Candidate*>* candEGVec = m_gtGTB->getCandL1EG();
-  const BXVector<const l1t::EtSum*>* candEtSumVec = m_gtGTB->getCandL1EtSum();
 
-  const int NMuons = 2;
-  const int NJets = 4;
-  const int NEgammas = 0;
-  const int NEtSums = 1;
+  // number of objects and input features
+  // total: (1*1 + 0*3 + 2*4 + 4*3) = 21
+  int const NEtSums = 1;
+  int const NEgammas = 0;
+  int const NMuons = 2;
+  int const NJets = 4;
 
-  //number of indices in vector is #objects * 3 for et, eta, phi
-  const int MuVecSize = NMuons * 3;      //so 6
-  const int JVecSize = NJets * 3;        //so 12
-  const int EGVecSize = NEgammas * 3;    //so 0
-  const int EtSumVecSize = NEtSums * 2;  //no eta
+  int const EtSumVecSize = NEtSums * 1;
+  int const EGVecSize = NEgammas * 3;
+  int const MuVecSize = NMuons * 4;
+  int const JVecSize = NJets * 3;
 
-  //total # inputs in vector
-  const int NInputs = MuVecSize + JVecSize + EGVecSize + EtSumVecSize;  //so 20
+  int const NInputs = EtSumVecSize + EGVecSize + MuVecSize + JVecSize;
 
-  //types of inputs and outputs modified for topo
+  // types of inputs and outputs
   typedef ap_fixed<23, 23> inputtype;
   typedef ap_fixed<16, 6> losstype;
 
-  //input vector declaration, will fill later
-  inputtype ModelInput[NInputs];
-  inputtype fillzero = 0.0;
-
-  //initializing vector by type for my sanity
+  // arrays of input features per object
+  double EtSumInput[EtSumVecSize];
+  double EgammaInput[EGVecSize];
   double MuInput[MuVecSize];
   double JetInput[JVecSize];
-  double EgammaInput[EGVecSize];
-  double EtSumInput[EtSumVecSize];
+  inputtype ModelInput[NInputs];
 
-  //declare result vectors +score
+  // output object
   losstype loss;
-  float score = -1.0;
 
-  //check number of input objects we actually have (muons, jets etc)
-  int NCandMu = candMuVec->size(useBx);
-  int NCandJet = candJetVec->size(useBx);
-  int NCandEG = candEGVec->size(useBx);
-  int NCandEtSum = candEtSumVec->size(useBx);
+  // check number of input objects we actually have (muons, jets etc)
+  int const NCandEtSum = candEtSumVec->size(useBx);
+  int const NCandEG = candEGVec->size(useBx);
+  int const NCandMu = candMuVec->size(useBx);
+  int const NCandJet = candJetVec->size(useBx);
 
-  //initialize arrays to zero (std::fill(first, last, value);)
-  std::fill(EtSumInput, EtSumInput + EtSumVecSize, 0.0);
-  std::fill(MuInput, MuInput + MuVecSize, 0.0);
-  std::fill(JetInput, JetInput + JVecSize, 0.0);
-  std::fill(EgammaInput, EgammaInput + EGVecSize, 0.0);
+  // initialize arrays to zero (std::fill(first, last, value))
+  inputtype const fillzero = 0.0;
+  std::fill(EtSumInput, EtSumInput + EtSumVecSize, fillzero);
+  std::fill(EgammaInput, EgammaInput + EGVecSize, fillzero);
+  std::fill(MuInput, MuInput + MuVecSize, fillzero);
+  std::fill(JetInput, JetInput + JVecSize, fillzero);
   std::fill(ModelInput, ModelInput + NInputs, fillzero);
 
-  //then fill the object vectors
-  if (NCandEtSum > 0) {  //check if not empty
-    for (int iEtSum = 0; iEtSum < NCandEtSum; iEtSum++) {
-      if ((candEtSumVec->at(useBx, iEtSum))->getType() == 1) {
-        EtSumInput[0] = (candEtSumVec->at(useBx, iEtSum))->hwPt();
-        EtSumInput[1] = 0.0;  //no phi for ht
-      }
+  // fill EtSum array
+  for (int iEtSum = 0; iEtSum < NCandEtSum; iEtSum++) {
+    if (iEtSum < NEtSums and candEtSumVec->at(useBx, iEtSum)->getType() == l1t::EtSum::EtSumType::kTotalHt) {
+      EtSumInput[0 + (1 * iEtSum)] = candEtSumVec->at(useBx, iEtSum)->hwPt();
     }
   }
 
-  //next egammas
-  if (NCandEG > 0) {  //check if not empty
-    for (int iEG = 0; iEG < NCandEG; iEG++) {
-      if (iEG < NEgammas) {                                                 //stop if fill the Nobjects we need
-        EgammaInput[0 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwPt();   //index 0,3,6,9
-        EgammaInput[1 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwEta();  //index 1,4,7,10
-        EgammaInput[2 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwPhi();  //index 2,5,8,11
-      }
+  // next egammas
+  for (int iEG = 0; iEG < NCandEG; iEG++) {
+    if (iEG < NEgammas) {
+      EgammaInput[0 + (3 * iEG)] = candEGVec->at(useBx, iEG)->hwPt();
+      EgammaInput[1 + (3 * iEG)] = candEGVec->at(useBx, iEG)->hwEta();
+      EgammaInput[2 + (3 * iEG)] = candEGVec->at(useBx, iEG)->hwPhi();
     }
   }
 
-  //next muons
-  if (NCandMu > 0) {  //check if not empty
-    for (int iMu = 0; iMu < NCandMu; iMu++) {
-      if (iMu < NMuons) {                                               //stop if fill the Nobjects we need
-        MuInput[0 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPt();   //index 0,3,6,9
-        MuInput[1 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwEta();  //index 1,4,7,10
-        MuInput[2 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPhi();  //index 2,5,8,11
-      }
+  // next muons
+  for (int iMu = 0; iMu < NCandMu; iMu++) {
+    if (iMu < NMuons) {
+      MuInput[0 + (4 * iMu)] = candMuVec->at(useBx, iMu)->hwPt();
+      MuInput[1 + (4 * iMu)] = candMuVec->at(useBx, iMu)->hwEtaAtVtx();
+      MuInput[2 + (4 * iMu)] = candMuVec->at(useBx, iMu)->hwPhiAtVtx();
+      MuInput[3 + (4 * iMu)] = candMuVec->at(useBx, iMu)->hwQual();
     }
   }
 
-  //next jets
-  if (NCandJet > 0) {  //check if not empty
-    for (int iJet = 0; iJet < NCandJet; iJet++) {
-      if (iJet < NJets) {                                                   //stop if fill the Nobjects we need
-        JetInput[0 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwPt();   //index 0,3,6,9
-        JetInput[1 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwEta();  //index 1,4,7,10
-        JetInput[2 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwPhi();  //index 2,5,8,11
-      }
+  // next jets
+  for (int iJet = 0; iJet < NCandJet; iJet++) {
+    if (iJet < NJets) {
+      JetInput[0 + (3 * iJet)] = candJetVec->at(useBx, iJet)->hwPt();
+      JetInput[1 + (3 * iJet)] = candJetVec->at(useBx, iJet)->hwEta();
+      JetInput[2 + (3 * iJet)] = candJetVec->at(useBx, iJet)->hwPhi();
     }
   }
 
-  //now put it all together-> EtSum+EGamma+Muon+Jet into ModelInput
+  // now put it all together -> EtSum+EGamma+Muon+Jet into ModelInput
   int index = 0;
   for (int idET = 0; idET < EtSumVecSize; idET++) {
     ModelInput[index++] = EtSumInput[idET];
@@ -200,30 +147,29 @@ const bool l1t::TOPOCondition::evaluateCondition(const int bxEval) const {
     ModelInput[index++] = JetInput[idJ];
   }
 
-  //now run the inference
-  m_model_wrapper.run_inference(ModelInput, &loss);  //store result as loss variable
-  score = ((loss).to_float() * 1023);
-  setScore(score);
+  // now run the inference
+  m_model_wrapper.run_inference(ModelInput, &loss);
 
-  //number of objects/thrsholds to check
-  int iCondition = 0;  // number of conditions: there is only one
-  int nObjInCond = m_gtTOPOTemplate->nrObjects();
+  float const score = loss.to_float() * 1023;
+
+  // number of objects/thresholds to check
+  int const nObjInCond = m_gtTOPOTemplate->nrObjects();
+
+  // number of conditions: there is only one
+  int const iCondition = 0;
 
   if (iCondition >= nObjInCond || iCondition < 0) {
     return false;
   }
 
-  const TOPOTemplate::ObjectParameter objPar = (*(m_gtTOPOTemplate->objectParameter()))[iCondition];
+  TOPOTemplate::ObjectParameter const objPar = (*(m_gtTOPOTemplate->objectParameter()))[iCondition];
 
   // condGEqVal indicates the operator used for the condition (>=, =): true for >=
-  bool condGEqVal = m_gtTOPOTemplate->condGEq();
-  bool passCondition = false;
+  bool const condGEqVal = m_gtTOPOTemplate->condGEq();
 
-  passCondition = checkCut(objPar.minTOPOThreshold, score, condGEqVal);
+  bool const condResult = checkCut(objPar.minTOPOThreshold, score, condGEqVal);
 
-  condResult |= passCondition;  //condresult true if passCondition true else it is false
-
-  //return result
+  // return result
   return condResult;
 }
 

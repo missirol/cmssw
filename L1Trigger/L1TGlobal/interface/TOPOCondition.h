@@ -7,82 +7,72 @@
  * Description: evaluation of a CondTOPO condition.
  */
 
-#include <iosfwd>
+#include <ostream>
 #include <string>
-#include <utility>
-
-#include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
 
 #include "hls4ml/ModelWrapper.h"
 
-// forward declarations
+#include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
+
 class GlobalCondition;
 class TOPOTemplate;
 
 namespace l1t {
 
-  class L1Candidate;
   class GlobalBoard;
 
   // class declaration
   class TOPOCondition : public ConditionEvaluation {
   public:
-    /// constructors
-    ///     default
+    // default constructor
     TOPOCondition();
 
-    ///     from base template condition (from event setup usually)
+    // constructor from base template condition (from event setup usually)
     TOPOCondition(const GlobalCondition*, const GlobalBoard*);
 
     // copy constructor
     TOPOCondition(const TOPOCondition&);
+
     // destructor
-    ~TOPOCondition() override;
+    ~TOPOCondition() override = default;
 
     // assign operator
     TOPOCondition& operator=(const TOPOCondition&);
 
-    /// the core function to check if the condition matches
+    // the core function to check if the condition matches
     const bool evaluateCondition(const int bxEval) const override;
 
-    /// print condition
+    // print condition
     void print(std::ostream& myCout) const override;
 
-    ///   get / set the pointer to a Condition
-    inline const TOPOTemplate* gtTOPOTemplate() const { return m_gtTOPOTemplate; }
+    // get/set the pointer to a Condition
+    const TOPOTemplate* gtTOPOTemplate() const { return m_gtTOPOTemplate; }
 
-    void setGtTOPOTemplate(const TOPOTemplate*);
+    void setGtTOPOTemplate(const TOPOTemplate* ptr) { m_gtTOPOTemplate = ptr; }
 
-    ///   get / set the pointer to GTL
-    inline const GlobalBoard* gtGTB() const { return m_gtGTB; }
+    // get/set the pointer to GTL
+    const GlobalBoard* gtGTB() const { return m_gtGTB; }
 
-    void setuGtB(const GlobalBoard*);
+    void setuGtB(const GlobalBoard* ptr) { m_gtGTB = ptr; }
 
-    /// get/set score value
-    void setScore(const float scoreval) const;
-
-    inline float getScore() const { return m_savedscore; }
-
-    inline hls4mlEmulator::ModelWrapper const& model_wrapper() const { return m_model_wrapper; }
+    // name of the model
+    std::string const& model_name() const { return m_model_wrapper.model_name(); }
 
   private:
-    /// copy function for copy constructor and operator=
+    // copy function for copy constructor and operator=
     void copy(const TOPOCondition& cp);
 
-    /// pointer to a TOPOTemplate
+    // pointer to a TOPOTemplate
     const TOPOTemplate* m_gtTOPOTemplate;
 
-    /// pointer to uGt GlobalBoard, to be able to get the trigger objects
+    // pointer to uGt GlobalBoard, to be able to get the trigger objects
     const GlobalBoard* m_gtGTB;
 
     static constexpr char const* kModelNamePrefix = "topo_";
 
     hls4mlEmulator::ModelWrapper m_model_wrapper;
-
-    ///axo score for possible score saving
-    mutable float m_savedscore;
   };
 
 }  // namespace l1t
+
 #endif

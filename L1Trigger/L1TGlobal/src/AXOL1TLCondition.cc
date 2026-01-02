@@ -7,205 +7,156 @@
  * Author: Melissa Quinnan
  *
  **/
-
-// this class header
-#include "L1Trigger/L1TGlobal/interface/CorrCondition.h"
-
-// system include files
+#include <algorithm>
+#include <array>
 #include <iostream>
 #include <iomanip>
+#include <utility>
 
-#include <string>
-#include <vector>
-#include <algorithm>
 #include "ap_fixed.h"
 
-// user include files
-//   base classes
+#include "DataFormats/L1Trigger/interface/L1Candidate.h"
+#include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
 #include "L1Trigger/L1TGlobal/interface/AXOL1TLTemplate.h"
 #include "L1Trigger/L1TGlobal/interface/ConditionEvaluation.h"
-
-#include "L1Trigger/L1TGlobal/interface/MuCondition.h"
-#include "L1Trigger/L1TGlobal/interface/AXOL1TLCondition.h"
-#include "L1Trigger/L1TGlobal/interface/CaloCondition.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumCondition.h"
-#include "L1Trigger/L1TGlobal/interface/MuonTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/CaloTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/EnergySumTemplate.h"
-#include "L1Trigger/L1TGlobal/interface/GlobalScales.h"
-
-#include "DataFormats/L1Trigger/interface/L1Candidate.h"
-
 #include "L1Trigger/L1TGlobal/interface/GlobalBoard.h"
 
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/MessageLogger/interface/MessageDrop.h"
-
 namespace {
-  //template function for reading results
+  // template function for reading results
   template <typename InputType, typename ResultType, typename LossType>
   LossType readResult(hls4mlEmulator::ModelWrapper const& modelWrapper, InputType inputs[]) {
-    std::pair<ResultType, LossType> ADModelResult;  //model outputs a pair of the (result vector, loss)
+    // model outputs a pair of the (result vector, loss)
+    std::pair<ResultType, LossType> ADModelResult;
     modelWrapper.run_inference(inputs, &ADModelResult);
     return ADModelResult.second;
   }
 }  // namespace
 
 l1t::AXOL1TLCondition::AXOL1TLCondition()
-    : ConditionEvaluation(), m_gtAXOL1TLTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{} {}
+    : ConditionEvaluation(), m_gtAXOL1TLTemplate{nullptr}, m_gtGTB{nullptr}, m_model_wrapper{}, m_saved_score{0} {}
 
 l1t::AXOL1TLCondition::AXOL1TLCondition(const GlobalCondition* axol1tlTemplate, const GlobalBoard* ptrGTB)
     : ConditionEvaluation(),
       m_gtAXOL1TLTemplate(static_cast<const AXOL1TLTemplate*>(axol1tlTemplate)),
       m_gtGTB(ptrGTB),
-      m_model_wrapper{kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()} {}
+      m_model_wrapper{kModelNamePrefix + m_gtAXOL1TLTemplate->modelVersion()},
+      m_saved_score{0} {}
 
 // copy constructor
 void l1t::AXOL1TLCondition::copy(const l1t::AXOL1TLCondition& cp) {
-  m_gtAXOL1TLTemplate = cp.gtAXOL1TLTemplate();
-  m_gtGTB = cp.gtGTB();
-
   m_condMaxNumberObjects = cp.condMaxNumberObjects();
   m_condLastResult = cp.condLastResult();
   m_combinationsInCond = cp.getCombinationsInCond();
-
   m_verbosity = cp.m_verbosity;
 
-  m_model_wrapper.reset(cp.model_wrapper().model_name());
+  m_gtAXOL1TLTemplate = cp.gtAXOL1TLTemplate();
+  m_gtGTB = cp.gtGTB();
+  m_model_wrapper.reset(cp.model_name());
+  m_saved_score = cp.getScore();
 }
 
 l1t::AXOL1TLCondition::AXOL1TLCondition(const l1t::AXOL1TLCondition& cp) : ConditionEvaluation() { copy(cp); }
 
-// destructor
-l1t::AXOL1TLCondition::~AXOL1TLCondition() {
-  // empty
-}
-
-// equal operator
 l1t::AXOL1TLCondition& l1t::AXOL1TLCondition::operator=(const l1t::AXOL1TLCondition& cp) {
   copy(cp);
   return *this;
 }
 
-// methods
-void l1t::AXOL1TLCondition::setGtAXOL1TLTemplate(const AXOL1TLTemplate* caloTempl) { m_gtAXOL1TLTemplate = caloTempl; }
-
-///   set the pointer to uGT GlobalBoard
-void l1t::AXOL1TLCondition::setuGtB(const GlobalBoard* ptrGTB) { m_gtGTB = ptrGTB; }
-
-/// set score for score saving
-void l1t::AXOL1TLCondition::setScore(const float scoreval) const { m_savedscore = scoreval; }
-
 const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
-  bool condResult = false;
-  int useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
+  int const useBx = bxEval + m_gtAXOL1TLTemplate->condRelativeBx();
 
-  // //pointers to objects
+  // pointers to objects
+  const BXVector<const l1t::EtSum*>* candEtSumVec = m_gtGTB->getCandL1EtSum();
+  const BXVector<const l1t::L1Candidate*>* candEGVec = m_gtGTB->getCandL1EG();
   const BXVector<const l1t::Muon*>* candMuVec = m_gtGTB->getCandL1Mu();
   const BXVector<const l1t::L1Candidate*>* candJetVec = m_gtGTB->getCandL1Jet();
-  const BXVector<const l1t::L1Candidate*>* candEGVec = m_gtGTB->getCandL1EG();
-  const BXVector<const l1t::EtSum*>* candEtSumVec = m_gtGTB->getCandL1EtSum();
 
-  const int NMuons = 4;
-  const int NJets = 10;
-  const int NEgammas = 4;
-  //const int NEtSums = 1;
+  int const NEtSums = 1;
+  int const NEgammas = 4;
+  int const NMuons = 4;
+  int const NJets = 10;
 
-  //number of indices in vector is #objects * 3 for et, eta, phi
-  const int MuVecSize = 12;    //NMuons * 3;      //so 12
-  const int JVecSize = 30;     //NJets * 3;        //so 30
-  const int EGVecSize = 12;    //NEgammas * 3;    //so 12
-  const int EtSumVecSize = 3;  //NEtSums * 3;    //so 3
+  // number of input features: #objects * 3 (for et, eta, phi)
+  // total: (1 + 4 + 4 + 10) * 3 = 57
+  int const EtSumVecSize = 3 * NEtSums;
+  int const EGVecSize = 3 * NEgammas;
+  int const MuVecSize = 3 * NMuons;
+  int const JVecSize = 3 * NJets;
 
-  //total # inputs in vector is (4+10+4+1)*3 = 57
-  const int NInputs = 57;
+  int const NInputs = EtSumVecSize + EGVecSize + MuVecSize + JVecSize;
 
-  //types of inputs and outputs
+  // types of inputs and outputs
   typedef ap_fixed<18, 13> inputtype;
   typedef ap_ufixed<18, 14> losstype;
 
-  //define zero
-  inputtype fillzero = 0.0;
-
-  //AD vector declaration, will fill later
-  inputtype ADModelInput[NInputs] = {};
-
-  //initializing vector by type for my sanity
+  // arrays of input features per object
+  inputtype EtSumInput[EtSumVecSize];
+  inputtype EgammaInput[EGVecSize];
   inputtype MuInput[MuVecSize];
   inputtype JetInput[JVecSize];
-  inputtype EgammaInput[EGVecSize];
-  inputtype EtSumInput[EtSumVecSize];
+  inputtype ADModelInput[NInputs] = {};
 
-  //declare result vectors +score
-  // resulttype result;
+  // output object
   losstype loss;
-  // pairtype ADModelResult;  //model outputs a pair of the (result vector, loss)
-  float score = -1.0;  //not sure what the best default is hm??
 
-  //check number of input objects we actually have (muons, jets etc)
-  int NCandMu = candMuVec->size(useBx);
-  int NCandJet = candJetVec->size(useBx);
-  int NCandEG = candEGVec->size(useBx);
-  int NCandEtSum = candEtSumVec->size(useBx);
+  // check number of input objects we actually have (muons, jets etc)
+  int const NCandEtSum = candEtSumVec->size(useBx);
+  int const NCandEG = candEGVec->size(useBx);
+  int const NCandMu = candMuVec->size(useBx);
+  int const NCandJet = candJetVec->size(useBx);
 
-  //initialize arrays to zero (std::fill(first, last, value);)
+  // initialize arrays to zero (std::fill(first, last, value);)
+  inputtype const fillzero = 0.0;
   std::fill(EtSumInput, EtSumInput + EtSumVecSize, fillzero);
+  std::fill(EgammaInput, EgammaInput + EGVecSize, fillzero);
   std::fill(MuInput, MuInput + MuVecSize, fillzero);
   std::fill(JetInput, JetInput + JVecSize, fillzero);
-  std::fill(EgammaInput, EgammaInput + EGVecSize, fillzero);
   std::fill(ADModelInput, ADModelInput + NInputs, fillzero);
 
-  //then fill the object vectors
-  //NOTE assume candidates are already sorted by pt
-  //loop over EtSums first, easy because there is max 1 of them
-  if (NCandEtSum > 0) {  //check if not empty
-    for (int iEtSum = 0; iEtSum < NCandEtSum; iEtSum++) {
-      if ((candEtSumVec->at(useBx, iEtSum))->getType() == l1t::EtSum::EtSumType::kMissingEt) {
-        EtSumInput[0] =
-            ((candEtSumVec->at(useBx, iEtSum))->hwPt()) / 2;  //have to do hwPt/2 in order to match original et inputs
-        // EtSumInput[1] = (candEtSumVec->at(useBx, iEtSum))->hwEta(); //this one is zero, so leave it zero
-        EtSumInput[2] = (candEtSumVec->at(useBx, iEtSum))->hwPhi();
-      }
+  // then fill the object arrays
+  // NOTE assume candidates are already sorted by pt
+
+  // loop over EtSums first
+  for (int iEtSum = 0; iEtSum < NCandEtSum; iEtSum++) {
+    if (iEtSum < NEtSums and candEtSumVec->at(useBx, iEtSum)->getType() == l1t::EtSum::EtSumType::kMissingEt) {
+      // have to do hwPt/2 in order to match original et inputs
+      EtSumInput[0 + (3 * iEtSum)] = candEtSumVec->at(useBx, iEtSum)->hwPt() / 2;
+      // leave EtSumInput[1 + (3 * iEtSum)] (eta) at zero
+      EtSumInput[2 + (3 * iEtSum)] = candEtSumVec->at(useBx, iEtSum)->hwPhi();
     }
   }
 
-  //next egammas
-  if (NCandEG > 0) {  //check if not empty
-    for (int iEG = 0; iEG < NCandEG; iEG++) {
-      if (iEG < NEgammas) {  //stop if fill the Nobjects we need
-        EgammaInput[0 + (3 * iEG)] = ((candEGVec->at(useBx, iEG))->hwPt()) /
-                                     2;  //index 0,3,6,9 //have to do hwPt/2 in order to match original et inputs
-        EgammaInput[1 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwEta();  //index 1,4,7,10
-        EgammaInput[2 + (3 * iEG)] = (candEGVec->at(useBx, iEG))->hwPhi();  //index 2,5,8,11
-      }
+  // next egammas
+  for (int iEG = 0; iEG < NCandEG; iEG++) {
+    if (iEG < NEgammas) {
+      // have to do hwPt/2 in order to match original et inputs
+      EgammaInput[0 + (3 * iEG)] = candEGVec->at(useBx, iEG)->hwPt() / 2;
+      EgammaInput[1 + (3 * iEG)] = candEGVec->at(useBx, iEG)->hwEta();
+      EgammaInput[2 + (3 * iEG)] = candEGVec->at(useBx, iEG)->hwPhi();
     }
   }
 
-  //next muons
-  if (NCandMu > 0) {  //check if not empty
-    for (int iMu = 0; iMu < NCandMu; iMu++) {
-      if (iMu < NMuons) {  //stop if fill the Nobjects we need
-        MuInput[0 + (3 * iMu)] = ((candMuVec->at(useBx, iMu))->hwPt()) /
-                                 2;  //index 0,3,6,9 //have to do hwPt/2 in order to match original et inputs
-        MuInput[1 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwEtaAtVtx();  //index 1,4,7,10
-        MuInput[2 + (3 * iMu)] = (candMuVec->at(useBx, iMu))->hwPhiAtVtx();  //index 2,5,8,11
-      }
+  // next muons
+  for (int iMu = 0; iMu < NCandMu; iMu++) {
+    if (iMu < NMuons) {
+      // have to do hwPt/2 in order to match original et inputs
+      MuInput[0 + (3 * iMu)] = candMuVec->at(useBx, iMu)->hwPt() / 2;
+      MuInput[1 + (3 * iMu)] = candMuVec->at(useBx, iMu)->hwEtaAtVtx();
+      MuInput[2 + (3 * iMu)] = candMuVec->at(useBx, iMu)->hwPhiAtVtx();
     }
   }
 
-  //next jets
-  if (NCandJet > 0) {  //check if not empty
-    for (int iJet = 0; iJet < NCandJet; iJet++) {
-      if (iJet < NJets) {  //stop if fill the Nobjects we need
-        JetInput[0 + (3 * iJet)] = ((candJetVec->at(useBx, iJet))->hwPt()) /
-                                   2;  //index 0,3,6,9...27 //have to do hwPt/2 in order to match original et inputs
-        JetInput[1 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwEta();  //index 1,4,7,10...28
-        JetInput[2 + (3 * iJet)] = (candJetVec->at(useBx, iJet))->hwPhi();  //index 2,5,8,11...29
-      }
+  // next jets
+  for (int iJet = 0; iJet < NCandJet; iJet++) {
+    if (iJet < NJets) {
+      // have to do hwPt/2 in order to match original et inputs
+      JetInput[0 + (3 * iJet)] = candJetVec->at(useBx, iJet)->hwPt() / 2;
+      JetInput[1 + (3 * iJet)] = candJetVec->at(useBx, iJet)->hwEta();
+      JetInput[2 + (3 * iJet)] = candJetVec->at(useBx, iJet)->hwPhi();
     }
   }
 
-  //now put it all together-> EtSum+EGamma+Muon+Jet into ADModelInput
+  // now put it all together-> EtSum+EGamma+Muon+Jet into ADModelInput
   int index = 0;
   for (int idET = 0; idET < EtSumVecSize; idET++) {
     ADModelInput[index++] = EtSumInput[idET];
@@ -220,41 +171,39 @@ const bool l1t::AXOL1TLCondition::evaluateCondition(const int bxEval) const {
     ADModelInput[index++] = JetInput[idJ];
   }
 
-  //now run the inference
-  if ((m_model_wrapper.model_name() == "GTADModel_v3") ||
-      (m_model_wrapper.model_name() == "GTADModel_v4")) {  //v3/v4 overwrite
+  // now run the inference
+  if (m_model_wrapper.model_name() == "GTADModel_v3" or m_model_wrapper.model_name() == "GTADModel_v4") {
     using resulttype = std::array<ap_fixed<10, 7, AP_RND_CONV, AP_SAT>, 8>;
     loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
-  } else {  //v5 default
+  } else {
     using resulttype = ap_fixed<18, 14, AP_RND_CONV, AP_SAT>;
     loss = readResult<inputtype, resulttype, losstype>(m_model_wrapper, ADModelInput);
   }
 
-  // result = ADModelResult.first;
-  // loss = ADModelResult.second;
-  score = ((loss).to_float()) * 16.0;  //scaling to match threshold
-  //save score to class variable in case score saving needed
+  // scaling to match threshold
+  float const score = loss.to_float() * 16;
+
+  // save score to class variable in case score saving needed
   setScore(score);
 
-  //number of objects/thrsholds to check
-  int iCondition = 0;  // number of conditions: there is only one
-  int nObjInCond = m_gtAXOL1TLTemplate->nrObjects();
+  // number of objects/thresholds to check
+  int const nObjInCond = m_gtAXOL1TLTemplate->nrObjects();
+
+  // number of conditions: there is only one
+  int const iCondition = 0;
 
   if (iCondition >= nObjInCond || iCondition < 0) {
     return false;
   }
 
-  const AXOL1TLTemplate::ObjectParameter objPar = (*(m_gtAXOL1TLTemplate->objectParameter()))[iCondition];
+  AXOL1TLTemplate::ObjectParameter const objPar = (*(m_gtAXOL1TLTemplate->objectParameter()))[iCondition];
 
   // condGEqVal indicates the operator used for the condition (>=, =): true for >=
-  bool condGEqVal = m_gtAXOL1TLTemplate->condGEq();
-  bool passCondition = false;
+  bool const condGEqVal = m_gtAXOL1TLTemplate->condGEq();
 
-  passCondition = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
+  bool const condResult = checkCut(objPar.minAXOL1TLThreshold, score, condGEqVal);
 
-  condResult |= passCondition;  //condresult true if passCondition true else it is false
-
-  //return result
+  // return result
   return condResult;
 }
 
