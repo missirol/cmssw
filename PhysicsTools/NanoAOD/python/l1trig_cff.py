@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from PhysicsTools.NanoAOD.nano_eras_cff import *
+
 from PhysicsTools.NanoAOD.common_cff import *
 
 l1_float_precision_=12

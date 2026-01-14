@@ -1,15 +1,10 @@
-from PhysicsTools.NanoAOD.common_cff import *
+import FWCore.ParameterSet.Config as cms
+
 from DPGAnalysis.L1TNanoAOD.l1tnanotables_cff import *
-from PhysicsTools.NanoAOD.l1trig_cff import *
+from PhysicsTools.NanoAOD.l1trig_cff import l1TablesTask
 from PhysicsTools.NanoAOD.nano_cff import *
 
-l1tnanoMetadata = cms.EDProducer("UniqueStringProducer",
-    strings = cms.PSet(
-        tag = cms.string("untagged"),
-    )
-)
-
-l1tNanoTask = cms.Task(nanoMetadata,l1TablesTask)
+l1tNanoTask = cms.Task(nanoMetadata, l1TablesTask)
 
 l1tNanoSequence = cms.Sequence(l1tNanoTask)
 
@@ -18,7 +13,6 @@ def addEmulObjects(process):
     process.l1tNanoTask.add(l1EmulObjTablesTask)
     
     return process
-
 
 def addUnpackedCaloTPs(process):
 
@@ -65,14 +59,3 @@ def addCaloFull(process):
     addEmulObjects(process)
 
     return process
-
-
-'''
-l1tNanoTask = cms.Task(
-    #nanoMetadata, 
-    l1CaloTPsNanoTask,
-    l1CaloLayer1NanoTask,
-    l1EmulCaloTPsNanoTask,
-    l1EmulCaloLayer1NanoTask,
-)
-'''

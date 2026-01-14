@@ -7,16 +7,9 @@ from PhysicsTools.NanoAOD.particlelevel_cff import *
 from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
 from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.common_cff import Var,CandVars
+from PhysicsTools.NanoAOD.nano_cff import nanoMetadata
 from PhysicsTools.NanoAOD.simpleSingletonCandidateFlatTableProducer_cfi import simpleSingletonCandidateFlatTableProducer
 from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
-
-nanoMetadata = cms.EDProducer("UniqueStringProducer",
-    strings = cms.PSet(
-        tag = cms.string("untagged"),
-    )
-)
-
-
 
 nanogenSequence = cms.Sequence(
     nanoMetadata+
