@@ -78,6 +78,15 @@ l1EmulEtSumTable = l1EtSumTable.clone(
     name = "L1EmulEtSum",
 )
 
+l1EmulAK4CTJetTable = l1JetTable.clone(
+    src = 'l1sAK4CTJetsEmu',
+    name = 'L1EmulAK4CTJet',
+    variables = cms.PSet(
+        l1P3Vars,
+        mass = Var("mass", float, precision=l1_float_precision_)
+    )
+)
+
 ##
 ## Tasks
 ##
@@ -91,5 +100,6 @@ l1EmulObjTablesTask = cms.Task(
     l1EmulEGTable,
     l1EmulTauTable,
     l1EmulJetTable,
-    l1EmulEtSumTable
+    l1EmulEtSumTable,
+    l1EmulAK4CTJetTable
 )
