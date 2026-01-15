@@ -174,7 +174,9 @@ def customizeNanoGENLite(process):
 
     # add pileup-related information
     process.puTable.src = 'addPileupInfo'
+    process.puTable.savePUDensityVars = False
     process.puTable.pvsrc = ''
+    process.puTable.zbins = []
     process.nanogenSequence.insert(0, process.puTable)
 
     return process
