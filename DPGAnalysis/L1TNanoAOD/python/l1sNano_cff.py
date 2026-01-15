@@ -13,33 +13,4 @@ l1sNanoSequence = cms.Sequence(l1sNanoTask)
 def customiseNanoForL1ScoutCaloTowersMC(process):
     process.l1sNanoTask.add(process.l1EmulCaloLayer1NanoTask)
     process.l1sNanoTask.add(process.l1EmulObjTablesTask)
-
-    # delete unnecessary GEN-related products (if present)
-    for genLabel in [
-        'trackGenJetAK4Table',
-        'HTXSCategoryTable',
-        'genParticlesForJetsCharged',
-        'ak4GenJetsChargedOnly',
-        'genParticles2HepMC',
-        'genParticles2HepMCHiggsVtx',
-        'genParticlesForJetsCharged',
-        'ak4GenJetsChargedOnly',
-        'tautagger',
-        'rivetProducerHTXS',
-        'rivetLeptonTable',
-        'rivetMetTable',
-        'rivetPhotonTable',
-    ]:
-        if hasattr(process, genLabel):
-            delattr(process, genLabel)
-
-    # restrict list of GenParticles in the output
-    try:
-       process.genParticleTablesTask.add(process.prunedGenParticles)
-       process.genParticleTablesTask.add(process.finalGenParticles)
-       process.prunedGenParticles.src = 'genParticles'
-       process.genParticleTable.src = 'finalGenParticles'
-    except:
-       pass
-
     return process

@@ -12,7 +12,7 @@ COMMON_OPTS+=" --no_exec"
 JOB_LABEL=nanoL1TCustom
 cmsDriver.py "${JOB_LABEL}" --process "${JOB_LABEL^^}" ${COMMON_OPTS} \
   --python_filename "${JOB_LABEL}"_cfg.py --fileout file:"${JOB_LABEL}"_out.root \
-  -s RAW2DIGI,NANO:@GEN+@L1ScoutCaloTowersMC \
+  -s RAW2DIGI,NANO:@GENLite+@L1ScoutCaloTowersMC \
   -n 10
 
 cat <<@EOF >> "${JOB_LABEL}"_cfg.py
@@ -21,6 +21,6 @@ process.NANOAODoutput.saveTriggerResults = cms.untracked.bool(False)
 
 edmConfigDump --prune "${JOB_LABEL}"_cfg.py > "${JOB_LABEL}"_cfg_dump.py
 
-cmsRun "${JOB_LABEL}"_cfg_dump.py 2>&1 | tee "${JOB_LABEL}"_cfg_dump.log
+#cmsRun "${JOB_LABEL}"_cfg_dump.py 2>&1 | tee "${JOB_LABEL}"_cfg_dump.log
 
 rm -rf __pycache__
