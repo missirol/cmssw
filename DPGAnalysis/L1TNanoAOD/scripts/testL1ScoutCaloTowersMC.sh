@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INPUT_FILE=/store/mc/Run3Winter25Digi/SinglePion_E-50_Eta-0to3-pythia8-gun/GEN-SIM-RAW/NoPU_142X_mcRun3_2025BOY_realistic_Candidate_2024_11_13_17_21_33-v2/2530000/0515ebc7-845c-4d78-8c34-f5ce68d68164.root
+INPUT_FILE=/store/mc/Run3Winter25Digi/QCD_Bin-PT-15to7000_Par-PT-flat2022_TuneCP5_13p6TeV_pythia8/GEN-SIM-RAW/FlatPU0to120_142X_mcRun3_2025_realistic_v9-v4/2520006/18ee11ae-e5e7-4091-a73b-bd33e889a2d5.root
 
 COMMON_OPTS=" --filein ${INPUT_FILE}"
 COMMON_OPTS+=" --mc --conditions auto:phase1_2025_realistic --geometry DB:Extended"
