@@ -150,6 +150,8 @@ def customizeNanoGENLite(process):
     process.nanogenSequence.insert(0, process.ak8GenJetsNoNuSoftDrop)
     process.nanogenSequence.insert(0, process.ak8GenJetsNoNuConstituents)
 
+    delattr(process.genParticleTable.externalVariables,"iso")
+
     nanoGenCommonCustomize(process)
 
     # delete unnecessary GEN-related products
