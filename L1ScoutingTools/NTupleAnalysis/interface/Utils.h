@@ -1,5 +1,5 @@
-#ifndef PhysicsTools_L1Scouting_Utils_h
-#define PhysicsTools_L1Scouting_Utils_h
+#ifndef L1ScoutingTools_NTupleAnalysis_Utils_h
+#define L1ScoutingTools_NTupleAnalysis_Utils_h
 
 #include <string>
 #include <vector>
@@ -15,15 +15,15 @@ namespace utils {
   bool stringStartsWith(const std::string& str, const std::string& substr);
   bool stringEndsWith(const std::string& str, const std::string& substr);
 
-  template<typename T1, typename T2>
+  template <typename T1, typename T2>
   std::vector<T1> mapKeys(std::map<T1, T2> const&);
-}
+}  // namespace utils
 
-template<typename T1, typename T2>
-std::vector<T1> utils::mapKeys(std::map<T1, T2> const& aMap){
+template <typename T1, typename T2>
+std::vector<T1> utils::mapKeys(std::map<T1, T2> const& aMap) {
   std::vector<T1> ret;
   ret.reserve(aMap.size());
-  for(auto const& mapEntry : aMap){
+  for (auto const& mapEntry : aMap) {
     ret.emplace_back(mapEntry.first);
   }
 
