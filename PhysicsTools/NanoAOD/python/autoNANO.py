@@ -51,6 +51,10 @@ autoNANO = {
                'customize': ','.join(['PhysicsTools/NanoAOD/l1trig_cff.nanoL1TrigObjCustomizeFull',
                                       'DPGAnalysis/L1TNanoAOD/l1tNano_cff.addCaloFull',
                                       'L1Trigger/Configuration/customiseReEmul.L1TReEmulFromRAW'])},
+    # L1Scouting - CaloTowers-related studies
+    'L1ScoutCaloTowersMC' : {'sequence': 'L1ScoutingTools/NanoAOD/l1sNano_cff.l1sNanoSequence',
+                             'customize': ','.join(['L1Trigger/Configuration/customiseReEmul.L1TReEmulFromRAW',
+                                                    'L1ScoutingTools/NanoAOD/l1sNano_cff.customiseNanoForL1ScoutCaloTowersMC'])},
     # Phase-2 L1 DPG (from RAW/DIGI)
     'Phase2L1DPG' : {'sequence': 'DPGAnalysis/Phase2L1TNanoAOD/l1tPh2Nano_cff.l1tPh2NanoSequence',
                      'customize': ','.join([
@@ -93,6 +97,9 @@ autoNANO = {
     # NANOGEN (from LHE/GEN/AOD)
     'GEN': {'sequence': 'PhysicsTools/NanoAOD/nanogen_cff.nanogenSequence',
             'customize': 'PhysicsTools/NanoAOD/nanogen_cff.customizeNanoGEN'},
+    # NANOGENLite (from LHE/GEN/AOD)
+    'GENLite': {'sequence': 'PhysicsTools/NanoAOD/nanogen_cff.nanogenSequence',
+            'customize': 'PhysicsTools/NanoAOD/nanogen_cff.customizeNanoGENLite'},
     # NANOGEN (from MiniAOD)
     'GENFromMini': {'sequence': 'PhysicsTools/NanoAOD/nanogen_cff.nanogenSequence',
                     'customize': 'PhysicsTools/NanoAOD/nanogen_cff.customizeNanoGENFromMini'},
