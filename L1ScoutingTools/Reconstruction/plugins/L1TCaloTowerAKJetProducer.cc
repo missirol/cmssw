@@ -35,14 +35,14 @@ private:
 };
 
 L1TCaloTowerAKJetProducer::L1TCaloTowerAKJetProducer(edm::ParameterSet const& iConfig)
- : srcToken_{consumes(iConfig.getParameter<edm::InputTag>("src"))},
-   bxMin_{iConfig.getParameter<int>("bxMin")},
-   bxMax_{iConfig.getParameter<int>("bxMax")},
-   towerMinHwPt_{iConfig.getParameter<int>("towerMinHwPt")},
-   towerMaxHwPt_{iConfig.getParameter<int>("towerMaxHwPt")},
-   rParam_{iConfig.getParameter<double>("rParam")},
-   jetPtMin_{iConfig.getParameter<double>("jetPtMin")},
-   fjJetDefinition_{fastjet::antikt_algorithm, rParam_} {
+    : srcToken_{consumes(iConfig.getParameter<edm::InputTag>("src"))},
+      bxMin_{iConfig.getParameter<int>("bxMin")},
+      bxMax_{iConfig.getParameter<int>("bxMax")},
+      towerMinHwPt_{iConfig.getParameter<int>("towerMinHwPt")},
+      towerMaxHwPt_{iConfig.getParameter<int>("towerMaxHwPt")},
+      rParam_{iConfig.getParameter<double>("rParam")},
+      jetPtMin_{iConfig.getParameter<double>("jetPtMin")},
+      fjJetDefinition_{fastjet::antikt_algorithm, rParam_} {
   produces<l1t::JetBxCollection>();
 }
 
@@ -61,8 +61,12 @@ void L1TCaloTowerAKJetProducer::produce(edm::StreamID, edm::Event& iEvent, edm::
     fjInputs.reserve(nInputs);
     for (auto idx = 0u; idx < nInputs; ++idx) {
       auto const& input = inputs.at(bx, idx);
-      if ((towerMinHwPt_ < 0 or input.hwPt() >= towerMinHwPt_) and (towerMaxHwPt_ < 0 or input.hwPt() <= towerMaxHwPt_)) {
-        l1t::Jet::PolarLorentzVector const p4{l1ScoutingRun3::calol2::fEt(input.hwPt()), l1ScoutingRun3::calol2::fEta(input.hwEta()), l1ScoutingRun3::calol2::fPhi(input.hwPhi()), 0};
+      if ((towerMinHwPt_ < 0 or input.hwPt() >= towerMinHwPt_) and
+          (towerMaxHwPt_ < 0 or input.hwPt() <= towerMaxHwPt_)) {
+        l1t::Jet::PolarLorentzVector const p4{l1ScoutingRun3::calol2::fEt(input.hwPt()),
+                                              l1ScoutingRun3::calol2::fEta(input.hwEta()),
+                                              l1ScoutingRun3::calol2::fPhi(input.hwPhi()),
+                                              0};
         fjInputs.emplace_back(p4.px(), p4.py(), p4.pz(), p4.energy());
       }
     }
@@ -85,10 +89,13 @@ void L1TCaloTowerAKJetProducer::fillDescriptions(edm::ConfigurationDescriptions&
   desc.add<edm::InputTag>("src")->setComment("Input product (type: l1t::CaloTowerBxCollection)");
   desc.add<int>("bxMin", -2)->setComment("Min BX (inclusive)");
   desc.add<int>("bxMax", 2)->setComment("Max BX (inclusive)");
-  desc.add<int>("towerMinHwPt", 1)->setComment("Min hwPt (inclusive) of l1t::CaloTowers used for jet clustering (ignored if negative)");
-  desc.add<int>("towerMaxHwPt", -1)->setComment("Max hwPt (inclusive) of l1t::CaloTowers used for jet clustering (ignored if negative)");
+  desc.add<int>("towerMinHwPt", 1)
+      ->setComment("Min hwPt (inclusive) of l1t::CaloTowers used for jet clustering (ignored if negative)");
+  desc.add<int>("towerMaxHwPt", -1)
+      ->setComment("Max hwPt (inclusive) of l1t::CaloTowers used for jet clustering (ignored if negative)");
   desc.add<double>("rParam", 0.4)->setComment("R parameter for anti-kT clustering with FastJet");
-  desc.add<double>("jetPtMin", 0)->setComment("Minimum pT of output jets (argument of fastjet::ClusterSequence::inclusive_jets)");
+  desc.add<double>("jetPtMin", 0)
+      ->setComment("Minimum pT of output jets (argument of fastjet::ClusterSequence::inclusive_jets)");
 
   descriptions.add("l1tCaloTowerAKJetProducer", desc);
 }
