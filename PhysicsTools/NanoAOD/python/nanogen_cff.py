@@ -1,26 +1,23 @@
+import FWCore.ParameterSet.Config as cms
+
 from PhysicsTools.NanoAOD.taus_cff import *
 from PhysicsTools.NanoAOD.jetMC_cff import *
-from PhysicsTools.NanoAOD.globals_cff import genTable,genFilterTable
+from PhysicsTools.NanoAOD.globals_cff import genTable, genFilterTable, puTable
 from PhysicsTools.NanoAOD.met_cff import metMCTable
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
 from PhysicsTools.NanoAOD.genWeightsTable_cfi import *
 from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.common_cff import Var,CandVars
+from PhysicsTools.NanoAOD.nano_cff import nanoMetadata
 from PhysicsTools.NanoAOD.simpleSingletonCandidateFlatTableProducer_cfi import simpleSingletonCandidateFlatTableProducer
 from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
-
-nanoMetadata = cms.EDProducer("UniqueStringProducer",
-    strings = cms.PSet(
-        tag = cms.string("untagged"),
-    )
-)
-
-
+from RecoJets.JetProducers.ak8GenJets_cfi import ak8GenJetsSoftDrop, ak8GenJetsConstituents
+from PhysicsTools.PatAlgos.slimming.prunedGenParticles_cfi import prunedGenParticles
 
 nanogenSequence = cms.Sequence(
     nanoMetadata+
-    cms.Sequence(particleLevelTask)+
+    particleLevelSequence+
     genJetTable+
     patJetPartonsNano+
     genJetFlavourAssociation+
@@ -40,7 +37,7 @@ nanogenSequence = cms.Sequence(
     cms.Sequence(genVertexTablesTask)+
     tautagger+
     rivetProducerHTXS+
-    cms.Sequence(particleLevelTablesTask)+
+    particleLevelTablesSequence+
     metMCTable+
     genWeightsTable
 )
@@ -130,6 +127,60 @@ def customizeNanoGEN(process):
     process.nanogenSequence.remove(process.genIso)
     delattr(process.genParticleTable.externalVariables,"iso")
     nanoGenCommonCustomize(process)
+    return process
+
+def customizeNanoGENLite(process):
+    process.metMCTable = simpleSingletonCandidateFlatTableProducer.clone(
+        src = "genMetTrue",
+        name = process.metMCTable.name,
+        doc = process.metMCTable.doc,
+        variables = cms.PSet(PTVars)
+    )
+
+    process.patJetPartonsNano.particles = "genParticles"
+
+    process.genJetTable.src = "ak4GenJetsNoNu"
+    process.genJetAK8Table.src = "ak8GenJetsNoNu"
+    process.tauGenJetsForNano.GenParticles = "genParticles"
+    process.genVisTaus.srcGenParticles = "genParticles"
+
+    process.ak8GenJetsNoNuConstituents = ak8GenJetsConstituents.clone(src = 'ak8GenJetsNoNu')
+    process.ak8GenJetsNoNuSoftDrop = ak8GenJetsSoftDrop.clone(src = 'ak8GenJetsNoNuConstituents:constituents')
+    process.genSubJetAK8Table.src = "ak8GenJetsNoNuSoftDrop:SubJets"
+    process.nanogenSequence.insert(0, process.ak8GenJetsNoNuSoftDrop)
+    process.nanogenSequence.insert(0, process.ak8GenJetsNoNuConstituents)
+
+    delattr(process.genParticleTable.externalVariables,"iso")
+
+    nanoGenCommonCustomize(process)
+
+    # delete unnecessary GEN-related products
+    delattr(process, 'trackGenJetAK4Table')
+    delattr(process, 'HTXSCategoryTable')
+    delattr(process, 'genParticlesForJetsCharged')
+    delattr(process, 'ak4GenJetsChargedOnly')
+    delattr(process, 'tautagger')
+    delattr(process, 'rivetProducerHTXS')
+    delattr(process, 'genIso')
+    delattr(process, 'genFilterTable')
+
+    # remove sequences related to particle-level information
+    process.nanogenSequence.remove(process.particleLevelSequence)
+    process.nanogenSequence.remove(process.particleLevelTablesSequence)
+
+    # restrict list of GenParticles in the output
+    process.genParticleTablesTask.add(process.prunedGenParticles)
+    process.genParticleTablesTask.add(process.finalGenParticles)
+    process.prunedGenParticles.src = 'genParticles'
+    process.genParticleTable.src = 'finalGenParticles'
+
+    # add pileup-related information
+    process.puTable.src = 'addPileupInfo'
+    process.puTable.savePUDensityVars = False
+    process.puTable.pvsrc = ''
+    process.puTable.zbins = []
+    process.nanogenSequence.insert(0, process.puTable)
+
     return process
 
 # Prune gen particles with tight conditions applied in usual NanoAOD

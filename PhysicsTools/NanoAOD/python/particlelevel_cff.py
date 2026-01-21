@@ -131,4 +131,7 @@ lheInfoTable = cms.EDProducer("LHETablesProducer",
  )
 
 particleLevelTask = cms.Task(mergedGenParticles,genParticles2HepMC,particleLevel,tautagger,genParticles2HepMCHiggsVtx,rivetProducerHTXS)
+particleLevelSequence = cms.Sequence(particleLevelTask)
+
 particleLevelTablesTask = cms.Task(rivetLeptonTable,rivetPhotonTable,rivetMetTable,HTXSCategoryTable,lheInfoTable)
+particleLevelTablesSequence = cms.Sequence(particleLevelTablesTask)
