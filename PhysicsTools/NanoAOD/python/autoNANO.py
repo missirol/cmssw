@@ -97,9 +97,6 @@ autoNANO = {
     # NANOGEN (from LHE/GEN/AOD)
     'GEN': {'sequence': 'PhysicsTools/NanoAOD/nanogen_cff.nanogenSequence',
             'customize': 'PhysicsTools/NanoAOD/nanogen_cff.customizeNanoGEN'},
-    # NANOGENLite (from LHE/GEN/AOD)
-    'GENLite': {'sequence': 'PhysicsTools/NanoAOD/nanogen_cff.nanogenSequence',
-            'customize': 'PhysicsTools/NanoAOD/nanogen_cff.customizeNanoGENLite'},
     # NANOGEN (from MiniAOD)
     'GENFromMini': {'sequence': 'PhysicsTools/NanoAOD/nanogen_cff.nanogenSequence',
                     'customize': 'PhysicsTools/NanoAOD/nanogen_cff.customizeNanoGENFromMini'},

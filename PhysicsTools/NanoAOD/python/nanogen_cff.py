@@ -129,60 +129,6 @@ def customizeNanoGEN(process):
     nanoGenCommonCustomize(process)
     return process
 
-def customizeNanoGENLite(process):
-    process.metMCTable = simpleSingletonCandidateFlatTableProducer.clone(
-        src = "genMetTrue",
-        name = process.metMCTable.name,
-        doc = process.metMCTable.doc,
-        variables = cms.PSet(PTVars)
-    )
-
-    process.patJetPartonsNano.particles = "genParticles"
-
-    process.genJetTable.src = "ak4GenJetsNoNu"
-    process.genJetAK8Table.src = "ak8GenJetsNoNu"
-    process.tauGenJetsForNano.GenParticles = "genParticles"
-    process.genVisTaus.srcGenParticles = "genParticles"
-
-    process.ak8GenJetsNoNuConstituents = ak8GenJetsConstituents.clone(src = 'ak8GenJetsNoNu')
-    process.ak8GenJetsNoNuSoftDrop = ak8GenJetsSoftDrop.clone(src = 'ak8GenJetsNoNuConstituents:constituents')
-    process.genSubJetAK8Table.src = "ak8GenJetsNoNuSoftDrop:SubJets"
-    process.nanogenSequence.insert(0, process.ak8GenJetsNoNuSoftDrop)
-    process.nanogenSequence.insert(0, process.ak8GenJetsNoNuConstituents)
-
-    delattr(process.genParticleTable.externalVariables,"iso")
-
-    nanoGenCommonCustomize(process)
-
-    # delete unnecessary GEN-related products
-    delattr(process, 'trackGenJetAK4Table')
-    delattr(process, 'HTXSCategoryTable')
-    delattr(process, 'genParticlesForJetsCharged')
-    delattr(process, 'ak4GenJetsChargedOnly')
-    delattr(process, 'tautagger')
-    delattr(process, 'rivetProducerHTXS')
-    delattr(process, 'genIso')
-    delattr(process, 'genFilterTable')
-
-    # remove sequences related to particle-level information
-    process.nanogenSequence.remove(process.particleLevelSequence)
-    process.nanogenSequence.remove(process.particleLevelTablesSequence)
-
-    # restrict list of GenParticles in the output
-    process.genParticleTablesTask.add(process.prunedGenParticles)
-    process.genParticleTablesTask.add(process.finalGenParticles)
-    process.prunedGenParticles.src = 'genParticles'
-    process.genParticleTable.src = 'finalGenParticles'
-
-    # add pileup-related information
-    process.puTable.src = 'addPileupInfo'
-    process.puTable.savePUDensityVars = False
-    process.puTable.pvsrc = ''
-    process.puTable.zbins = []
-    process.nanogenSequence.insert(0, process.puTable)
-
-    return process
-
 # Prune gen particles with tight conditions applied in usual NanoAOD
 def pruneGenParticlesNano(process):
     process.finalGenParticles.src = process.genParticleTable.src.getModuleLabel()
