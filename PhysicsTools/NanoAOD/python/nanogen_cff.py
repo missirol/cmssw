@@ -1,8 +1,6 @@
-import FWCore.ParameterSet.Config as cms
-
 from PhysicsTools.NanoAOD.taus_cff import *
 from PhysicsTools.NanoAOD.jetMC_cff import *
-from PhysicsTools.NanoAOD.globals_cff import genTable, genFilterTable, puTable
+from PhysicsTools.NanoAOD.globals_cff import genTable,genFilterTable
 from PhysicsTools.NanoAOD.met_cff import metMCTable
 from PhysicsTools.NanoAOD.genparticles_cff import *
 from PhysicsTools.NanoAOD.particlelevel_cff import *
@@ -12,12 +10,10 @@ from PhysicsTools.NanoAOD.common_cff import Var,CandVars
 from PhysicsTools.NanoAOD.nano_cff import nanoMetadata
 from PhysicsTools.NanoAOD.simpleSingletonCandidateFlatTableProducer_cfi import simpleSingletonCandidateFlatTableProducer
 from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
-from RecoJets.JetProducers.ak8GenJets_cfi import ak8GenJetsSoftDrop, ak8GenJetsConstituents
-from PhysicsTools.PatAlgos.slimming.prunedGenParticles_cfi import prunedGenParticles
 
 nanogenSequence = cms.Sequence(
     nanoMetadata+
-    particleLevelSequence+
+    cms.Sequence(particleLevelTask)+
     genJetTable+
     patJetPartonsNano+
     genJetFlavourAssociation+
@@ -37,7 +33,7 @@ nanogenSequence = cms.Sequence(
     cms.Sequence(genVertexTablesTask)+
     tautagger+
     rivetProducerHTXS+
-    particleLevelTablesSequence+
+    cms.Sequence(particleLevelTablesTask)+
     metMCTable+
     genWeightsTable
 )

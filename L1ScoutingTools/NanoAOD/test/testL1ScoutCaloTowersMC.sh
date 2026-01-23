@@ -22,9 +22,7 @@ cat <<@EOF >> "${JOB_LABEL}"_cfg.py
 process.NANOAODoutput.saveTriggerResults = cms.untracked.bool(False)
 @EOF
 
-# --prune
-edmConfigDump \
- "${JOB_LABEL}"_cfg.py > "${JOB_LABEL}"_cfg_dump.py
+edmConfigDump --prune "${JOB_LABEL}"_cfg.py > "${JOB_LABEL}"_cfg_dump.py
 
 rm -rf "${JOB_LABEL}"_cfg.py
 

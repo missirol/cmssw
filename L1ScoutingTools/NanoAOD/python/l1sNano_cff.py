@@ -38,6 +38,7 @@ def customizeNanoForL1ScoutGEN(process):
         'genParticlesForJetsCharged',
         'HTXSCategoryTable',
         'mergedGenParticles',
+        'particleLevel',
         'rivetProducerHTXS',
         'tautagger',
         'trackGenJetAK4Table',
@@ -48,7 +49,6 @@ def customizeNanoForL1ScoutGEN(process):
     try:
         # remove sequences related to particle-level information
         process.nanogenSequence.remove(process.particleLevelSequence)
-        print('YYY', process.nanogenSequence)
         process.nanogenSequence.remove(process.particleLevelTablesSequence)
     except:
         pass
