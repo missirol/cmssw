@@ -38,7 +38,7 @@ samplesMap["Run3Winter25_QCD_PtFlat15to7000_13p6TeV_FlatPU0to120_block0d60974e"]
 # options (JobFlavour and AccountingGroup)
 opts=""
 if [[ ${HOSTNAME} == lxplus* ]]; then
-  opts+="--JobFlavour espresso"
+  opts+="--JobFlavour microcentury"
 fi
 
 COMMON_OPTS=" --filein tmp.root"
@@ -52,7 +52,7 @@ JOB_LABEL=nanoL1TCustom
 cmsDriver.py "${JOB_LABEL}" --process "${JOB_LABEL^^}" ${COMMON_OPTS} \
   --python_filename "${JOB_LABEL}"_cfg.py --fileout file:"${JOB_LABEL}"_out.root \
   -s RAW2DIGI,NANO:@GENLite+@L1ScoutCaloTowersMC \
-  -n 10
+  -n 1
 
 cat <<@EOF >> "${JOB_LABEL}"_cfg.py
 process.NANOAODoutput.saveTriggerResults = cms.untracked.bool(False)
