@@ -18,15 +18,14 @@ JetMETPerformanceAnalysisDriver::JetMETPerformanceAnalysisDriver(const std::stri
 void JetMETPerformanceAnalysisDriver::init() {
   jetCategoryLabels_ = {
       "_EtaIncl", "_EtaInclPt0", "_EtaInclPt1", "_EtaInclPt2", "_EtaInclPt3", "_EtaInclPt4", "_EtaInclPt5",
-
       "_Eta2p5",  "_Eta2p5Pt0",  "_Eta2p5Pt1",  "_Eta2p5Pt2",  "_Eta2p5Pt3",  "_Eta2p5Pt4",  "_Eta2p5Pt5",
-
       "_HB",      "_HBPt0",      "_HBPt1",      "_HBPt2",      "_HBPt3",      "_HBPt4",      "_HBPt5",
-
       "_HE",      "_HEPt0",      "_HEPt1",      "_HEPt2",      "_HEPt3",      "_HEPt4",      "_HEPt5",
-
       "_HF",      "_HFPt0",      "_HFPt1",      "_HFPt2",      "_HFPt3",      "_HFPt4",      "_HFPt5",
   };
+
+  // hard-coded for now..
+  jecA_.init("/eos/cms/store/cmst3/group/daql1scout/run3_calotowers/jet_pt_corrections/mc_qcd_2025/graph_SC.root");
 
   // histogram: events counter
   addTH1D("eventsProcessed", {0, 1});
@@ -34,9 +33,16 @@ void JetMETPerformanceAnalysisDriver::init() {
   addTH1D("nPU", 40, 0, 120);
 
   labelMap_jetAK4_ = {
-      {"GenJet", {{"L1T", "L1EmulJet"}, {"L1CT", "L1EmulAK4CTJet"}}},
+      {"GenJet", {
+        {"L1T", "L1EmulJet"},
+        {"L1CT0", "L1EmulAK4CTJet0"},
+        {"L1CT0CorrA", "L1EmulAK4CTJet0CorrA"},
+        {"L1CT1", "L1EmulAK4CTJet1"}
+      }},
       {"L1EmulJet", {{"GEN", "GenJet"}}},
-      {"L1EmulAK4CTJet", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
+      {"L1EmulAK4CTJet0", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
+      {"L1EmulAK4CTJet0CorrA", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
+      {"L1EmulAK4CTJet1", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
       {"Jet", {}},
 
       //    {"ak4GenJetsNoNu", {
@@ -734,20 +740,45 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
     dirPrefix += "/";
   }
 
+  auto const jetCollRequiresJecA{utils::stringEndsWith(fhData.jetCollection, "CorrA")};
+  auto const jetCollBranchName{jetCollRequiresJecA ? fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5) : fhData.jetCollection};
+
   auto const nPU = this->value<float>("Pileup_nTrueInt");
 
-  if (not hasTTreeReaderValue("n" + fhData.jetCollection)) {
+  if (not hasTTreeReaderValue("n" + jetCollBranchName)) {
     return;
   }
 
-  auto const v_pt_size = this->value<int>("n" + fhData.jetCollection);
+  auto const v_pt_size = this->value<int>("n" + jetCollBranchName);
 
-  auto const& v_pt = this->array<float>(fhData.jetCollection + "_pt");
-  auto const& v_eta = this->array<float>(fhData.jetCollection + "_eta");
-  auto const& v_phi = this->array<float>(fhData.jetCollection + "_phi");
+  std::vector<float> v_pt{};
+  std::vector<float> v_eta{};
+  std::vector<float> v_phi{};
+  std::vector<float> v_mass{};
 
-  auto const v_mass_valid = hasTTreeReaderValue(fhData.jetCollection + "_mass");
-  auto const* v_mass = v_mass_valid ? &(this->array<float>(fhData.jetCollection + "_mass")) : nullptr;
+  v_pt.reserve(v_pt_size);
+  v_eta.reserve(v_pt_size);
+  v_phi.reserve(v_pt_size);
+  v_mass.reserve(v_pt_size);
+
+  auto const& a_pt = this->array<float>(jetCollBranchName + "_pt");
+  auto const& a_eta = this->array<float>(jetCollBranchName + "_eta");
+  auto const& a_phi = this->array<float>(jetCollBranchName + "_phi");
+
+  auto const a_mass_valid = hasTTreeReaderValue(jetCollBranchName + "_mass");
+  auto const* ap_mass = a_mass_valid ? &(this->array<float>(jetCollBranchName + "_mass")) : nullptr;
+
+  for (auto idx = 0; idx < v_pt_size; ++idx) {
+    float corr = 1;
+    if (jetCollRequiresJecA) {
+      corr = jecA_.correction(a_pt[idx], a_eta[idx]);
+    }
+
+    v_pt.emplace_back(a_pt[idx] * corr);
+    v_eta.emplace_back(a_eta[idx]);
+    v_phi.emplace_back(a_phi[idx]);
+    v_mass.emplace_back(ap_mass ? (*ap_mass)[idx] * corr : 0);
+  }
 
   //!!  float const* v_pt = nullptr;
   //!!  float const* v_eta = nullptr;
@@ -832,7 +863,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
       H2(dirPrefix + fhData.jetCollection + catLabel + "_eta__vs__pt")->Fill(v_eta[jetIdx], v_pt[jetIdx], weight);
       H2(dirPrefix + fhData.jetCollection + catLabel + "_eta__vs__nPU")->Fill(v_eta[jetIdx], nPU, weight);
       H1(dirPrefix + fhData.jetCollection + catLabel + "_phi")->Fill(v_phi[jetIdx], weight);
-      H1(dirPrefix + fhData.jetCollection + catLabel + "_mass")->Fill(v_mass_valid ? (*v_mass)[jetIdx] : 0, weight);
+      H1(dirPrefix + fhData.jetCollection + catLabel + "_mass")->Fill(v_mass[jetIdx], weight);
 
       //      if(v_numberOfDaughters          ){ H1(dirPrefix+fhData.jetCollection+catLabel+"_numberOfDaughters"          )->Fill(v_numberOfDaughters          ->at(jetIdx), weight); }
       //      if(v_chargedHadronMultiplicity  ){ H1(dirPrefix+fhData.jetCollection+catLabel+"_chargedHadronMultiplicity"  )->Fill(v_chargedHadronMultiplicity  ->at(jetIdx), weight); }
@@ -865,18 +896,43 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
     auto const matchJetPtMax(fhDataMatch.jetPtMax);
     auto const matchJetDeltaR2Min{fhDataMatch.jetDeltaRMin * fhDataMatch.jetDeltaRMin};
 
-    if (not hasTTreeReaderValue("n" + matchJetColl)) {
+    auto const matchJetCollRequiresJecA{utils::stringEndsWith(matchJetColl, "CorrA")};
+    auto const matchJetCollBranchName{matchJetCollRequiresJecA ? matchJetColl.substr(0, matchJetColl.size() - 5) : matchJetColl};
+
+    if (not hasTTreeReaderValue("n" + matchJetCollBranchName)) {
       continue;
     }
 
-    auto const v_match_pt_size = this->value<int>("n" + matchJetColl);
+    auto const v_match_pt_size = this->value<int>("n" + matchJetCollBranchName);
 
-    auto const& v_match_pt = this->array<float>(matchJetColl + "_pt");
-    auto const& v_match_eta = this->array<float>(matchJetColl + "_eta");
-    auto const& v_match_phi = this->array<float>(matchJetColl + "_phi");
+    std::vector<float> v_match_pt{};
+    std::vector<float> v_match_eta{};
+    std::vector<float> v_match_phi{};
+    std::vector<float> v_match_mass{};
 
-    auto const v_match_mass_valid = hasTTreeReaderValue(matchJetColl + "_mass");
-    auto const* v_match_mass = v_match_mass_valid ? &(this->array<float>(matchJetColl + "_mass")) : nullptr;
+    v_match_pt.reserve(v_match_pt_size);
+    v_match_eta.reserve(v_match_pt_size);
+    v_match_phi.reserve(v_match_pt_size);
+    v_match_mass.reserve(v_match_pt_size);
+
+    auto const& a_match_pt = this->array<float>(matchJetCollBranchName + "_pt");
+    auto const& a_match_eta = this->array<float>(matchJetCollBranchName + "_eta");
+    auto const& a_match_phi = this->array<float>(matchJetCollBranchName + "_phi");
+
+    auto const a_match_mass_valid = hasTTreeReaderValue(matchJetCollBranchName + "_mass");
+    auto const* ap_match_mass = a_match_mass_valid ? &(this->array<float>(matchJetCollBranchName + "_mass")) : nullptr;
+
+    for (auto idx = 0; idx < v_match_pt_size; ++idx) {
+      float corr = 1;
+      if (matchJetCollRequiresJecA) {
+        corr = jecA_.correction(a_match_pt[idx], a_match_eta[idx]);
+      }
+
+      v_match_pt.emplace_back(a_match_pt[idx] * corr);
+      v_match_eta.emplace_back(a_match_eta[idx]);
+      v_match_phi.emplace_back(a_match_phi[idx]);
+      v_match_mass.emplace_back(ap_match_mass ? (*ap_match_mass)[idx] * corr : 0);
+    }
 
     std::map<size_t, size_t> mapMatchIndices;
     std::vector<float> vecMatchMinDeltaR2(v_pt_size, -1.f);
@@ -971,7 +1027,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
         auto const jetPt(v_pt[jetIdx]);
         auto const jetEta(v_eta[jetIdx]);
         auto const jetPhi(v_phi[jetIdx]);
-        auto const jetMass(v_mass_valid ? (*v_mass)[jetIdx] : 0);
+        auto const jetMass(v_mass[jetIdx]);
 
         auto const hasMatch(mapMatchIndices.find(jetIdx) != mapMatchIndices.end());
 
@@ -1013,7 +1069,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
           auto const jetMatchPt(v_match_pt[jetMatchIdx]);
           auto const jetMatchEta(v_match_eta[jetMatchIdx]);
           auto const jetMatchPhi(v_match_phi[jetMatchIdx]);
-          auto const jetMatchMass(v_match_mass_valid ? (*v_match_mass)[jetMatchIdx] : 0);
+          auto const jetMatchMass(v_match_mass[jetMatchIdx]);
 
           H2(dirPrefix + fhData.jetCollection + catLabel + "_pt__vs__" + matchLabel + "_pt")
               ->Fill(jetPt, jetMatchPt, weight);

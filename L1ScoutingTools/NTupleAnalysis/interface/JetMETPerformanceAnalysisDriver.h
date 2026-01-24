@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "L1ScoutingTools/NTupleAnalysis/interface/AnalysisDriverBase.h"
+#include "L1ScoutingTools/NTupleAnalysis/interface/JetCorrectorA.h"
 
 class JetMETPerformanceAnalysisDriver : public AnalysisDriverBase {
 public:
@@ -20,6 +21,8 @@ public:
   void analyze() override;
 
 protected:
+  JetCorrectorA jecA_;
+
   std::vector<std::string> jetCategoryLabels_;
   bool jetBelongsToCategory(const std::string& categLabel, const float jetPt, const float jetAbsEta) const;
 
