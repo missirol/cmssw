@@ -11,12 +11,14 @@
 class JetResponseAnalysisDriver : public JetMETPerformanceAnalysisDriver {
 public:
   explicit JetResponseAnalysisDriver(const std::string& outputFilePath = "",
-                                     const std::string& outputFileMode = "recreate") : JetMETPerformanceAnalysisDriver(outputFilePath, outputFileMode) {}
+                                     const std::string& outputFileMode = "recreate")
+      : JetMETPerformanceAnalysisDriver(outputFilePath, outputFileMode) {}
 
   explicit JetResponseAnalysisDriver(const std::string& tfile,
                                      const std::string& ttree,
                                      const std::string& outputFilePath,
-                                     const std::string& outputFileMode = "recreate") : JetMETPerformanceAnalysisDriver(tfile, ttree, outputFilePath, outputFileMode) {}
+                                     const std::string& outputFileMode = "recreate")
+      : JetMETPerformanceAnalysisDriver(tfile, ttree, outputFilePath, outputFileMode) {}
 
   ~JetResponseAnalysisDriver() override {}
 
@@ -32,7 +34,9 @@ protected:
                            const std::string& jetType,
                            const std::vector<std::string>& matchLabels = {}) override;
 
-  void fillHistograms_Jets(const std::string& dir, const fillHistoDataJets& fhDataJets, float const weight = 1.f) override;
+  void fillHistograms_Jets(const std::string& dir,
+                           const fillHistoDataJets& fhDataJets,
+                           float const weight = 1.f) override;
 };
 
 #endif

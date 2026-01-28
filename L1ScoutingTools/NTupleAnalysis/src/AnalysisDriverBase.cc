@@ -307,7 +307,13 @@ void AnalysisDriverBase::addTH1D(const std::string& name, const std::vector<floa
   outputKeys_.emplace_back(name);
 }
 
-void AnalysisDriverBase::addTH2D(const std::string& name, int const nxbins, float const xmin, float const xmax, int const nybins, float const ymin, float const ymax) {
+void AnalysisDriverBase::addTH2D(const std::string& name,
+                                 int const nxbins,
+                                 float const xmin,
+                                 float const xmax,
+                                 int const nybins,
+                                 float const ymin,
+                                 float const ymax) {
   if (hasTH1D(name)) {
     std::ostringstream oss;
     oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", const std::vector<float>&, const std::vector<float>&) -- "
@@ -345,10 +351,8 @@ void AnalysisDriverBase::addTH2D(const std::string& name, int const nxbins, floa
     throw std::runtime_error(oss.str());
   }
 
-  mapTH2D_.insert(std::make_pair(
-      name,
-      std::make_unique<TH2D>(
-          name.c_str(), name.c_str(), nxbins, xmin, xmax, nybins, ymin, ymax)));
+  mapTH2D_.insert(
+      std::make_pair(name, std::make_unique<TH2D>(name.c_str(), name.c_str(), nxbins, xmin, xmax, nybins, ymin, ymax)));
   mapTH2D_.at(name)->SetDirectory(nullptr);
   mapTH2D_.at(name)->Sumw2();
 

@@ -13,14 +13,14 @@ source env.sh
 
 * Create output directory with one .root for each crab3 task:
 ```
-hadd_ntuples.py -i input_dirs -o out1 -l 0 -s DQM
+hadd_ntuples.py -i input_dirs -o out1 -s DQM -l 0
 ```
 
 #### Submit Analysis Jobs to Batch System (HT-Condor)
 
 * Create scripts for submission of batch jobs:
 ```
-batch_driver.py -i out1/*root -o out2/jobs -n 50000 -l 0 -p JetMETPerformanceAnalysisDriver
+batch_driver.py -i out1/*root -o out2/jobs -n 50000 -p JetMETPerformanceAnalysisDriver -l 0
 ```
 
 * Monitoring and (re)submission of batch jobs:
