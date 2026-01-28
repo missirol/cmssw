@@ -11,7 +11,7 @@ void JetResponseAnalysisDriver::init() {
   jecA_.init("/eos/cms/store/cmst3/group/daql1scout/run3_calotowers/jet_pt_corrections/mc_qcd_2025/graph_SC.root");
 
   std::vector<float> const absEta_v = {0.0f, 0.2f, 0.4f, 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 1.9f, 2.2f, 2.5f};
-  std::vector<unsigned int> const nCTie4_v = {0, 10, 20, 30, 40, 50, 60, 80, 100, 120, 160, 200};
+  std::vector<unsigned int> const nCTie4_v = {0, 10, 20, 30, 40, 50, 60, 100, 100, 160};
 
   auto f_to_str = [](float a) -> std::string {
     std::ostringstream oss;
@@ -73,8 +73,10 @@ void JetResponseAnalysisDriver::init() {
 
   labelMap_jetAK4_ = {
       {"L1EmulJet", {{"GEN", "GenJet"}}},
+      {"L1EmulJet1", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet0", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet0CorrA", {{"GEN", "GenJet"}}},
+      {"L1EmulAK4CTJet1", {{"GEN", "GenJet"}}},
   };
 
   for (auto const& selLabel : {"NoSelection"}) {
@@ -121,19 +123,19 @@ void JetResponseAnalysisDriver::analyze() {
   H2("nPU__vs__nCTie4")->Fill(nPU, nCTie4, wgt);
 
   // AK4 Jets
-  const float minAK4JetPt(10.);
-  const float minAK4JetPtRef(5.);
-  const float maxAK4JetDeltaRmatchRef(0.2);
+  float const minAK4JetPt{10};
+  float const minAK4JetPtRef{7};
+  float const maxAK4JetDeltaRmatchRef{0.2};
 
   for (auto const& jetLabel : labelMap_jetAK4_) {
     fillHistoDataJets fhDataAK4Jets;
     fhDataAK4Jets.jetCollection = jetLabel.first;
     fhDataAK4Jets.jetPtMin = (jetLabel.first == "GenJet") ? minAK4JetPtRef : minAK4JetPt;
-    fhDataAK4Jets.jetPtMax = (jetLabel.first == "L1EmulJet") ? 1023.4 : -1;
+    fhDataAK4Jets.jetPtMax = (jetLabel.first == "L1EmulJet1") ? 1023.4 : -1;
     fhDataAK4Jets.jetAbsEtaMax = 5.0;
     for (auto const& jetLabelRefs : jetLabel.second) {
       auto const jetPtMin2 = (jetLabelRefs.second == "GenJet") ? minAK4JetPtRef : minAK4JetPt;
-      auto const jetPtMax2 = (jetLabelRefs.second == "L1EmulJet") ? 1023.4 : -1;
+      auto const jetPtMax2 = (jetLabelRefs.second == "L1EmulJet1") ? 1023.4 : -1;
       fhDataAK4Jets.matches.emplace_back(fillHistoDataJets::Match(
           jetLabelRefs.first, jetLabelRefs.second, jetPtMin2, jetPtMax2, maxAK4JetDeltaRmatchRef));
     }
@@ -178,9 +180,9 @@ void JetResponseAnalysisDriver::bookHistograms_Jets(const std::string& dir,
     binEdges_nCT.at(idx) = 10 * idx;
   }
 
-  std::vector<float> binEdges_nCTie4(25);
+  std::vector<float> binEdges_nCTie4(49);
   for (uint idx = 0; idx < binEdges_nCTie4.size(); ++idx) {
-    binEdges_nCTie4.at(idx) = 10 * idx;
+    binEdges_nCTie4.at(idx) = 5 * idx;
   }
 
   for (auto const& matchLabel : matchLabels) {
@@ -213,8 +215,13 @@ void JetResponseAnalysisDriver::fillHistograms_Jets(const std::string& dir,
   }
 
   auto const jetCollRequiresJecA{utils::stringEndsWith(fhData.jetCollection, "CorrA")};
-  auto const jetCollBranchName{jetCollRequiresJecA ? fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5)
-                                                   : fhData.jetCollection};
+  auto const jetCollWithPtMax{fhData.jetCollection == "L1EmulJet1"};
+  auto jetCollBranchName{fhData.jetCollection};
+  if (jetCollRequiresJecA) {
+    jetCollBranchName = fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5);
+  } else if (jetCollWithPtMax) {
+    jetCollBranchName = "L1EmulJet";
+  }
 
   auto const nPU = this->value<float>("Pileup_nTrueInt");
   auto const nCT = this->value<int>("nL1EmulCaloTower");
@@ -275,8 +282,13 @@ void JetResponseAnalysisDriver::fillHistograms_Jets(const std::string& dir,
     auto const matchJetDeltaR2Min{fhDataMatch.jetDeltaRMin * fhDataMatch.jetDeltaRMin};
 
     auto const matchJetCollRequiresJecA{utils::stringEndsWith(matchJetColl, "CorrA")};
-    auto const matchJetCollBranchName{matchJetCollRequiresJecA ? matchJetColl.substr(0, matchJetColl.size() - 5)
-                                                               : matchJetColl};
+    auto const matchJetCollWithPtMax{matchJetColl == "L1EmulJet1"};
+    auto matchJetCollBranchName{matchJetColl};
+    if (matchJetCollRequiresJecA) {
+      matchJetCollBranchName = matchJetColl.substr(0, matchJetColl.size() - 5);
+    } else if (matchJetCollWithPtMax) {
+      matchJetCollBranchName = "L1EmulJet";
+    }
 
     if (not hasTTreeReaderValue("n" + matchJetCollBranchName)) {
       continue;
