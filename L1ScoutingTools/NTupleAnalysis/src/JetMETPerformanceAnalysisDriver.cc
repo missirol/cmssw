@@ -339,6 +339,7 @@ void JetMETPerformanceAnalysisDriver::init() {
   addTH1D("weight", 100, -5, 5);
   addTH1D("nPU", 40, 0, 120);
   addTH1D("nCT", 100, 0, 1000);
+  addTH2D("nPU__vs__nCT", 40, 0, 120, 100, 0, 1000);
 
   labelMap_jetAK4_ = {
       {"GenJet",
@@ -656,6 +657,8 @@ void JetMETPerformanceAnalysisDriver::analyze() {
 
   auto const nCT = this->value<int>("nL1EmulCaloTower");
   H1("nCT")->Fill(nCT, wgt);
+
+  H2("nPU__vs__nCT")->Fill(nPU, nCT, wgt);
 
   //// AK4 Jets
   const float minAK4JetPt(30.);

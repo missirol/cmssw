@@ -307,6 +307,54 @@ void AnalysisDriverBase::addTH1D(const std::string& name, const std::vector<floa
   outputKeys_.emplace_back(name);
 }
 
+void AnalysisDriverBase::addTH2D(const std::string& name, int const nxbins, float const xmin, float const xmax, int const nybins, float const ymin, float const ymax) {
+  if (hasTH1D(name)) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", const std::vector<float>&, const std::vector<float>&) -- "
+        << "TH1D object associated to key \"" << name << "\" already exists";
+    throw std::runtime_error(oss.str());
+  } else if (hasTH2D(name)) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", const std::vector<float>&, const std::vector<float>&) -- "
+        << "TH2D object associated to key \"" << name << "\" already exists";
+    throw std::runtime_error(oss.str());
+  } else if (hasTH3D(name)) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", const std::vector<float>&, const std::vector<float>&) -- "
+        << "TH3D object associated to key \"" << name << "\" already exists";
+    throw std::runtime_error(oss.str());
+  } else if (xmin >= xmax) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", ...) -- "
+        << "x-min value is not smaller than x-max value (" << xmin << " >= " << xmax << ")";
+    throw std::runtime_error(oss.str());
+  } else if (nxbins <= 0) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", ...) -- "
+        << "number of x-axis bins is not positive (" << nxbins << " <= 0)";
+    throw std::runtime_error(oss.str());
+  } else if (ymin >= ymax) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", ...) -- "
+        << "y-min value is not smaller than y-max value (" << ymin << " >= " << ymax << ")";
+    throw std::runtime_error(oss.str());
+  } else if (nybins <= 0) {
+    std::ostringstream oss;
+    oss << "AnalysisDriverBase::addTH2D(\"" << name << "\", ...) -- "
+        << "number of y-axis bins is not positive (" << nybins << " <= 0)";
+    throw std::runtime_error(oss.str());
+  }
+
+  mapTH2D_.insert(std::make_pair(
+      name,
+      std::make_unique<TH2D>(
+          name.c_str(), name.c_str(), nxbins, xmin, xmax, nybins, ymin, ymax)));
+  mapTH2D_.at(name)->SetDirectory(nullptr);
+  mapTH2D_.at(name)->Sumw2();
+
+  outputKeys_.emplace_back(name);
+}
+
 void AnalysisDriverBase::addTH2D(const std::string& name,
                                  const std::vector<float>& binEdgesX,
                                  const std::vector<float>& binEdgesY) {
