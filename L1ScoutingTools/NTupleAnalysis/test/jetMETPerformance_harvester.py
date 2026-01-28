@@ -265,10 +265,10 @@ if __name__ == '__main__':
                  hkey_i_den = hkey_i_dirname+hkey_i_den1+hkey_i_den2[hkey_i_den2.find('_'):]
    
               if hkey_i_num not in histograms:
-                 KILL(log_prx+'AAA '+hkey_i_num)
-   
+                 continue
+
               if hkey_i_den not in histograms:
-                 KILL(log_prx+'BBB '+hkey_i_den)
+                 continue
    
               tmp_hnum = histograms[hkey_i_num]
               tmp_hden = histograms[hkey_i_den]
