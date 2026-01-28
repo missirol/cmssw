@@ -1,7 +1,9 @@
 #ifndef L1ScoutingTools_NTupleAnalysis_JetMETPerformanceAnalysisDriver_h
 #define L1ScoutingTools_NTupleAnalysis_JetMETPerformanceAnalysisDriver_h
 
+#include <functional>
 #include <map>
+#include <string>
 #include <vector>
 
 #include "L1ScoutingTools/NTupleAnalysis/interface/AnalysisDriverBase.h"
@@ -21,10 +23,13 @@ public:
   void analyze() override;
 
 protected:
+  std::map<std::string, std::function<bool(float, int)>> jetCategoryForJECFuncMap_;
+
   JetCorrectorA jecA_;
 
   std::vector<std::string> jetCategoryLabels_;
   bool jetBelongsToCategory(const std::string& categLabel, const float jetPt, const float jetAbsEta) const;
+  std::vector<std::string> jetCategoryLabelsForJECHistos(std::string const&, std::string const&) const;
 
   class fillHistoDataJets {
   public:

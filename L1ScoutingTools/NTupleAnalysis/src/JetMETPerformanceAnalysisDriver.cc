@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cmath>
 
 #include "L1ScoutingTools/NTupleAnalysis/interface/JetMETPerformanceAnalysisDriver.h"
@@ -17,28 +18,334 @@ JetMETPerformanceAnalysisDriver::JetMETPerformanceAnalysisDriver(const std::stri
 
 void JetMETPerformanceAnalysisDriver::init() {
   jetCategoryLabels_ = {
-      "_EtaIncl", "_EtaInclPt0", "_EtaInclPt1", "_EtaInclPt2", "_EtaInclPt3", "_EtaInclPt4", "_EtaInclPt5",
-      "_Eta2p5",  "_Eta2p5Pt0",  "_Eta2p5Pt1",  "_Eta2p5Pt2",  "_Eta2p5Pt3",  "_Eta2p5Pt4",  "_Eta2p5Pt5",
-      "_HB",      "_HBPt0",      "_HBPt1",      "_HBPt2",      "_HBPt3",      "_HBPt4",      "_HBPt5",
-      "_HE",      "_HEPt0",      "_HEPt1",      "_HEPt2",      "_HEPt3",      "_HEPt4",      "_HEPt5",
-      "_HF",      "_HFPt0",      "_HFPt1",      "_HFPt2",      "_HFPt3",      "_HFPt4",      "_HFPt5",
+      "_EtaIncl",  //"_EtaInclPt0", "_EtaInclPt1", "_EtaInclPt2", "_EtaInclPt3", "_EtaInclPt4", "_EtaInclPt5",
+      "_Eta2p5",   //"_Eta2p5Pt0",  "_Eta2p5Pt1",  "_Eta2p5Pt2",  "_Eta2p5Pt3",  "_Eta2p5Pt4",  "_Eta2p5Pt5",
+      "_HB",       //"_HBPt0",      "_HBPt1",      "_HBPt2",      "_HBPt3",      "_HBPt4",      "_HBPt5",
+      "_HE",       //"_HEPt0",      "_HEPt1",      "_HEPt2",      "_HEPt3",      "_HEPt4",      "_HEPt5",
+      "_HF",       //"_HFPt0",      "_HFPt1",      "_HFPt2",      "_HFPt3",      "_HFPt4",      "_HFPt5",
   };
 
   // hard-coded for now..
   jecA_.init("/eos/cms/store/cmst3/group/daql1scout/run3_calotowers/jet_pt_corrections/mc_qcd_2025/graph_SC.root");
 
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT000to040"] = [](float a, int b) { return a <= 0.2 and b < 40; };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT000to040"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT000to040"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT000to040"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT000to040"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT000to040"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT000to040"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT000to040"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT000to040"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and b < 40;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT000to040"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and b < 40;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT040to080"] = [](float a, int b) {
+    return a <= 0.2 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT040to080"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT040to080"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT040to080"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT040to080"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT040to080"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT040to080"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT040to080"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT040to080"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 40 <= b and b < 80;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT040to080"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 40 <= b and b < 80;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT080to120"] = [](float a, int b) {
+    return a <= 0.2 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT080to120"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT080to120"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT080to120"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT080to120"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT080to120"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT080to120"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT080to120"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT080to120"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 80 <= b and b < 120;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT080to120"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 80 <= b and b < 120;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT120to160"] = [](float a, int b) {
+    return a <= 0.2 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT120to160"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT120to160"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT120to160"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT120to160"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT120to160"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT120to160"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT120to160"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT120to160"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 120 <= b and b < 160;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT120to160"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 120 <= b and b < 160;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT160to200"] = [](float a, int b) {
+    return a <= 0.2 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT160to200"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT160to200"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT160to200"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT160to200"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT160to200"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT160to200"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT160to200"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT160to200"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 160 <= b and b < 200;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT160to200"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 160 <= b and b < 200;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT200to240"] = [](float a, int b) {
+    return a <= 0.2 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT200to240"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT200to240"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT200to240"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT200to240"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT200to240"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT200to240"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT200to240"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT200to240"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 200 <= b and b < 240;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT200to240"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 200 <= b and b < 240;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT240to300"] = [](float a, int b) {
+    return a <= 0.2 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT240to300"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT240to300"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT240to300"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT240to300"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT240to300"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT240to300"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT240to300"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT240to300"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 240 <= b and b < 300;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT240to300"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 240 <= b and b < 300;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT300to400"] = [](float a, int b) {
+    return a <= 0.2 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT300to400"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT300to400"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT300to400"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT300to400"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT300to400"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT300to400"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT300to400"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT300to400"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 300 <= b and b < 400;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT300to400"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 300 <= b and b < 400;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT400to600"] = [](float a, int b) {
+    return a <= 0.2 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT400to600"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT400to600"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT400to600"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT400to600"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT400to600"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT400to600"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT400to600"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT400to600"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 400 <= b and b < 600;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT400to600"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 400 <= b and b < 600;
+  };
+
+  jetCategoryForJECFuncMap_["_absEta0p0to0p2nCT600toInf"] = [](float a, int b) { return a <= 0.2 and 600 <= b; };
+  jetCategoryForJECFuncMap_["_absEta0p2to0p4nCT600toInf"] = [](float a, int b) {
+    return 0.2 < a and a <= 0.4 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p4to0p6nCT600toInf"] = [](float a, int b) {
+    return 0.4 < a and a <= 0.6 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p6to0p8nCT600toInf"] = [](float a, int b) {
+    return 0.6 < a and a <= 0.8 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta0p8to1p0nCT600toInf"] = [](float a, int b) {
+    return 0.8 < a and a <= 1.0 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p0to1p3nCT600toInf"] = [](float a, int b) {
+    return 1.0 < a and a <= 1.3 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p3to1p6nCT600toInf"] = [](float a, int b) {
+    return 1.3 < a and a <= 1.6 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p6to1p9nCT600toInf"] = [](float a, int b) {
+    return 1.6 < a and a <= 1.9 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta1p9to2p5nCT600toInf"] = [](float a, int b) {
+    return 1.9 < a and a <= 2.5 and 600 <= b;
+  };
+  jetCategoryForJECFuncMap_["_absEta2p5to3p0nCT600toInf"] = [](float a, int b) {
+    return 2.5 < a and a <= 3.0 and 600 <= b;
+  };
+
   // histogram: events counter
   addTH1D("eventsProcessed", {0, 1});
   addTH1D("weight", 100, -5, 5);
   addTH1D("nPU", 40, 0, 120);
+  addTH1D("nCT", 100, 0, 1000);
 
   labelMap_jetAK4_ = {
-      {"GenJet", {
-        {"L1T", "L1EmulJet"},
+      {"GenJet",
+       {{"L1T", "L1EmulJet"},
         {"L1CT0", "L1EmulAK4CTJet0"},
         {"L1CT0CorrA", "L1EmulAK4CTJet0CorrA"},
-        {"L1CT1", "L1EmulAK4CTJet1"}
-      }},
+        {"L1CT1", "L1EmulAK4CTJet1"}}},
       {"L1EmulJet", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet0", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
       {"L1EmulAK4CTJet0CorrA", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
@@ -221,6 +528,25 @@ void JetMETPerformanceAnalysisDriver::init() {
   }
 }
 
+std::vector<std::string> JetMETPerformanceAnalysisDriver::jetCategoryLabelsForJECHistos(
+    const std::string& jetColl, const std::string& matchJetLabel) const {
+  if (matchJetLabel != "GEN") {
+    return {};
+  }
+
+  if (jetColl != "L1EmulAK4CTJet0" and jetColl != "L1EmulAK4CTJet1") {
+    return {};
+  }
+
+  std::vector<std::string> ret;
+  ret.reserve(jetCategoryForJECFuncMap_.size());
+  for (auto const& [key, foo] : jetCategoryForJECFuncMap_) {
+    ret.emplace_back(key);
+  }
+
+  return ret;
+}
+
 bool JetMETPerformanceAnalysisDriver::jetBelongsToCategory(const std::string& categLabel,
                                                            const float jetPt,
                                                            const float jetAbsEta) const {
@@ -327,6 +653,9 @@ void JetMETPerformanceAnalysisDriver::analyze() {
 
   auto const nPU = this->value<float>("Pileup_nTrueInt");
   H1("nPU")->Fill(nPU, wgt);
+
+  auto const nCT = this->value<int>("nL1EmulCaloTower");
+  H1("nCT")->Fill(nCT, wgt);
 
   //// AK4 Jets
   const float minAK4JetPt(30.);
@@ -581,17 +910,25 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
     binEdges_nPU.at(idx) = 3 * idx;
   }
 
+  std::vector<float> binEdges_nCT(101);
+  for (uint idx = 0; idx < binEdges_nCT.size(); ++idx) {
+    binEdges_nCT.at(idx) = 10 * idx;
+  }
+
   for (auto const& catLabel : jetCategoryLabels_) {
     addTH1D(dirPrefix + jetType + catLabel + "_njets", binEdges_njets);
     addTH1D(dirPrefix + jetType + catLabel + "_HT", binEdges_HT);
     addTH1D(dirPrefix + jetType + catLabel + "_MHT", binEdges_MHT);
     addTH1D(dirPrefix + jetType + catLabel + "_pt", binEdges_pt);
     addTH2D(dirPrefix + jetType + catLabel + "_pt__vs__nPU", binEdges_pt, binEdges_nPU);
+    addTH2D(dirPrefix + jetType + catLabel + "_pt__vs__nCT", binEdges_pt, binEdges_nCT);
     addTH1D(dirPrefix + jetType + catLabel + "_pt0", binEdges_pt);
     addTH2D(dirPrefix + jetType + catLabel + "_pt0__vs__nPU", binEdges_pt, binEdges_nPU);
+    addTH2D(dirPrefix + jetType + catLabel + "_pt0__vs__nCT", binEdges_pt, binEdges_nCT);
     addTH1D(dirPrefix + jetType + catLabel + "_eta", binEdges_eta);
     addTH2D(dirPrefix + jetType + catLabel + "_eta__vs__pt", binEdges_eta, binEdges_pt);
     addTH2D(dirPrefix + jetType + catLabel + "_eta__vs__nPU", binEdges_eta, binEdges_nPU);
+    addTH2D(dirPrefix + jetType + catLabel + "_eta__vs__nCT", binEdges_eta, binEdges_nCT);
     addTH1D(dirPrefix + jetType + catLabel + "_phi", binEdges_phi);
     addTH1D(dirPrefix + jetType + catLabel + "_mass", binEdges_mass);
     //    addTH1D(dirPrefix+jetType+catLabel+"_numberOfDaughters", binEdges_numberOfDaughters);
@@ -670,6 +1007,10 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
                   matchLabel + "_nPU",
               binEdges_response,
               binEdges_nPU);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__" +
+                  matchLabel + "_nCT",
+              binEdges_response,
+              binEdges_nCT);
 
       addTH1D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel, binEdges_response);
       addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__" +
@@ -684,6 +1025,10 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
                   matchLabel + "_nPU",
               binEdges_response,
               binEdges_nPU);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__" +
+                  matchLabel + "_nCT",
+              binEdges_response,
+              binEdges_nCT);
 
       addTH1D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel,
               binEdges_response);
@@ -703,6 +1048,10 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
                   matchLabel + "_nPU",
               binEdges_response,
               binEdges_nPU);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__" +
+                  matchLabel + "_nCT",
+              binEdges_response,
+              binEdges_nCT);
 
       addTH1D(dirPrefix + jetType + catLabel + "_NotMatchedTo" + matchLabel + "_njets", binEdges_njets);
       addTH1D(dirPrefix + jetType + catLabel + "_NotMatchedTo" + matchLabel + "_HT", binEdges_HT);
@@ -727,6 +1076,17 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
       //      addTH1D(dirPrefix+jetType+catLabel+"_NotMatchedTo"+matchLabel+"_muonMultiplicity", binEdges_dauMult2);
     }
   }
+
+  for (auto const& matchLabel : matchLabels) {
+    auto const jetCategoryLabelsForJECHistos_v = jetCategoryLabelsForJECHistos(jetType, matchLabel);
+    for (auto const& catLabel : jetCategoryLabelsForJECHistos_v) {
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH1D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_eta", binEdges_eta);
+      addTH1D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_nCT", binEdges_nCT);
+    }
+  }
 }
 
 void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir,
@@ -741,9 +1101,11 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
   }
 
   auto const jetCollRequiresJecA{utils::stringEndsWith(fhData.jetCollection, "CorrA")};
-  auto const jetCollBranchName{jetCollRequiresJecA ? fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5) : fhData.jetCollection};
+  auto const jetCollBranchName{jetCollRequiresJecA ? fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5)
+                                                   : fhData.jetCollection};
 
   auto const nPU = this->value<float>("Pileup_nTrueInt");
+  auto const nCT = this->value<int>("nL1EmulCaloTower");
 
   if (not hasTTreeReaderValue("n" + jetCollBranchName)) {
     return;
@@ -859,9 +1221,11 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
 
       H1(dirPrefix + fhData.jetCollection + catLabel + "_pt")->Fill(v_pt[jetIdx], weight);
       H2(dirPrefix + fhData.jetCollection + catLabel + "_pt__vs__nPU")->Fill(v_pt[jetIdx], nPU, weight);
+      H2(dirPrefix + fhData.jetCollection + catLabel + "_pt__vs__nCT")->Fill(v_pt[jetIdx], nCT, weight);
       H1(dirPrefix + fhData.jetCollection + catLabel + "_eta")->Fill(v_eta[jetIdx], weight);
       H2(dirPrefix + fhData.jetCollection + catLabel + "_eta__vs__pt")->Fill(v_eta[jetIdx], v_pt[jetIdx], weight);
       H2(dirPrefix + fhData.jetCollection + catLabel + "_eta__vs__nPU")->Fill(v_eta[jetIdx], nPU, weight);
+      H2(dirPrefix + fhData.jetCollection + catLabel + "_eta__vs__nCT")->Fill(v_eta[jetIdx], nCT, weight);
       H1(dirPrefix + fhData.jetCollection + catLabel + "_phi")->Fill(v_phi[jetIdx], weight);
       H1(dirPrefix + fhData.jetCollection + catLabel + "_mass")->Fill(v_mass[jetIdx], weight);
 
@@ -886,6 +1250,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
     if (indexMaxPtJet >= 0) {
       H1(dirPrefix + fhData.jetCollection + catLabel + "_pt0")->Fill(v_pt[indexMaxPtJet], weight);
       H2(dirPrefix + fhData.jetCollection + catLabel + "_pt0__vs__nPU")->Fill(v_pt[indexMaxPtJet], nPU, weight);
+      H2(dirPrefix + fhData.jetCollection + catLabel + "_pt0__vs__nCT")->Fill(v_pt[indexMaxPtJet], nCT, weight);
     }
   }
 
@@ -897,7 +1262,8 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
     auto const matchJetDeltaR2Min{fhDataMatch.jetDeltaRMin * fhDataMatch.jetDeltaRMin};
 
     auto const matchJetCollRequiresJecA{utils::stringEndsWith(matchJetColl, "CorrA")};
-    auto const matchJetCollBranchName{matchJetCollRequiresJecA ? matchJetColl.substr(0, matchJetColl.size() - 5) : matchJetColl};
+    auto const matchJetCollBranchName{matchJetCollRequiresJecA ? matchJetColl.substr(0, matchJetColl.size() - 5)
+                                                               : matchJetColl};
 
     if (not hasTTreeReaderValue("n" + matchJetCollBranchName)) {
       continue;
@@ -969,7 +1335,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
         }
       }
 
-      // indices of match-jets with same selection as target jets
+      // indices of match-jets with same selection as target jets (used for HT and MHT)
       std::vector<size_t> jetMatchRefIndices;
       jetMatchRefIndices.reserve(v_match_pt_size);
       for (auto idx = 0; idx < v_match_pt_size; ++idx) {
@@ -1113,6 +1479,9 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
             H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
                "__vs__" + matchLabel + "_nPU")
                 ->Fill(jetPtRatio, nPU, weight);
+            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+               "__vs__" + matchLabel + "_nCT")
+                ->Fill(jetPtRatio, nCT, weight);
           }
 
           if (jetMatchMass != 0.) {
@@ -1131,6 +1500,9 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
             H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
                "__vs__" + matchLabel + "_nPU")
                 ->Fill(jetMassRatio, nPU, weight);
+            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
+               "__vs__" + matchLabel + "_nCT")
+                ->Fill(jetMassRatio, nCT, weight);
           }
         } else {
           ++nJetsNotMatched;
@@ -1219,6 +1591,9 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
           H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
              "__vs__" + matchLabel + "_nPU")
               ->Fill(maxPtJetPtRatio, nPU, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+             "__vs__" + matchLabel + "_nCT")
+              ->Fill(maxPtJetPtRatio, nCT, weight);
         }
       }
 
@@ -1226,6 +1601,41 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
         auto const maxPtJetPt(v_pt[indexMaxPtJetWithNoMatch]);
         H1(dirPrefix + fhData.jetCollection + catLabel + "_NotMatchedTo" + matchLabel + "_pt0")
             ->Fill(maxPtJetPt, weight);
+      }
+    }
+
+    // JEC-related histos
+    auto const jetCategoryLabelsForJECHistos_v = jetCategoryLabelsForJECHistos(fhData.jetCollection, matchLabel);
+    for (auto const& catLabel : jetCategoryLabelsForJECHistos_v) {
+      std::vector<size_t> jetIndices;
+      jetIndices.reserve(fhDataIndices.size());
+      for (auto idx : fhDataIndices) {
+        if (jetCategoryForJECFuncMap_[catLabel](std::abs(v_eta[idx]), nCT)) {
+          jetIndices.emplace_back(idx);
+        }
+      }
+
+      for (auto const jetIdx : jetIndices) {
+        auto mapMatchIndicesIter(mapMatchIndices.find(jetIdx));
+        if (mapMatchIndicesIter == mapMatchIndices.end()) {
+          continue;
+        }
+
+        auto const jetMatchIdx(mapMatchIndicesIter->first);
+        auto const jetMatchPt(v_match_pt[jetMatchIdx]);
+        if (jetMatchPt <= 0) {
+          continue;
+        }
+
+        auto const jetPt(v_pt[jetIdx]);
+        auto const jetPtRatio(jetPt / jetMatchPt);
+        auto const jetEta(v_eta[jetIdx]);
+
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+           "__vs__pt")
+            ->Fill(jetPtRatio, jetPt, weight);
+        H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_eta")->Fill(jetEta, weight);
+        H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_nCT")->Fill(nCT, weight);
       }
     }
   }
