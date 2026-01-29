@@ -137,31 +137,41 @@ if __name__ == '__main__':
 
               # Mean of X, in bins of Y
               h_name0 = i_h2_key_dirname+key_varX+'_Mean_wrt_'+key_varY
-              if h_name0 in histograms: KILL('aaa1 '+h_name0)
-   
+              if h_name0 in histograms:
+                  KILL('aaa1 (mean) '+h_name0)
+
               tmp_h1_xMean = tmp_h2.ProjectionY(h_name0)
-#              tmp_h1_xMean.SetDirectory(0)
               tmp_h1_xMean.Reset()
    
               for _idx in range(1, 1+tmp_h2.GetNbinsY()):
                   _htmp = tmp_h2.ProjectionX('_htmp'+str(_idx), _idx, _idx, 'e')
-#                  _htmp.SetDirectory(0)
-
                   _val = _htmp.GetMean()
                   _err = _htmp.GetMeanError()
-#                  _med, _medQ = ctypes.c_double(0.), ctypes.c_double(0.5)
-#                  _htmp.ComputeIntegral()
-#                  _htmp.GetQuantiles(1, _med, _medQ)
-#                  _val = _med.value
-#                  _err = 1.253 * _htmp.GetMeanError()
-
                   tmp_h1_xMean.SetBinContent(_idx, _val)
                   tmp_h1_xMean.SetBinError(_idx, _err)
-
-#                  histograms[h_name0+'_'+str(_idx)] = _htmp.Clone()
                   del _htmp
    
               histograms[h_name0] = tmp_h1_xMean
+
+              # Median of X, in bins of Y
+              h_name0 = i_h2_key_dirname+key_varX+'_Median_wrt_'+key_varY
+              if h_name0 in histograms:
+                  KILL('aaa1 (median) '+h_name0)
+
+              tmp_h1_xMedian = tmp_h2.ProjectionY(h_name0)
+              tmp_h1_xMedian.Reset()
+
+              for _idx in range(1, 1+tmp_h2.GetNbinsY()):
+                  _htmp = tmp_h2.ProjectionX('_htmp'+str(_idx), _idx, _idx, 'e')
+                  _med, _medQ = ctypes.c_double(0.), ctypes.c_double(0.5)
+                  _htmp.GetQuantiles(1, _med, _medQ)
+                  _val = _med.value
+                  _err = 1.253 * _htmp.GetMeanError()
+                  tmp_h1_xMedian.SetBinContent(_idx, _val)
+                  tmp_h1_xMedian.SetBinError(_idx, _err)
+                  del _htmp
+
+              histograms[h_name0] = tmp_h1_xMedian
           ### -------------------
    
           ### Histograms for profile of RMS
@@ -223,13 +233,32 @@ if __name__ == '__main__':
    
                  tmp_h1_xRMSScaled = tmp_h1_xRMS.Clone()
                  tmp_h1_xRMSScaled.SetName(h_name2)
-#                 tmp_h1_xRMSScaled.SetDirectory(0)
                  tmp_h1_xRMSScaled.Divide(tmp_h1_ratioMeanNoErr)
 
                  histograms[h_name2] = tmp_h1_xRMSScaled
                  del tmp_h1_ratioMeanNoErr
-          ### -------------------
+
+              # RMS of X divided by Median Response, in bins of Y
+              h_name2 = i_h2_key_dirname+key_varX+'_RMSOverMedian_wrt_'+key_varY
+              if h_name2 in histograms: KILL('aaa4 '+h_name2)
+
+              h_name4 = i_h2_key_dirname+key_varX[:key_varX.rfind('_')]+'_over'+compTag+'_Median_wrt_'+key_varY
+              if h_name4 not in histograms:
+                 if opts.verbose:
+                    WARNING('aaa5 '+h_name2+' '+h_name4)
+              else:
+                 tmp_h1_ratioMedianNoErr = histograms[h_name4].Clone()
+                 for _idx in range(tmp_h1_ratioMedianNoErr.GetNbinsX()+2):
+                     tmp_h1_ratioMedianNoErr.SetBinError(_idx, 0)
    
+                 tmp_h1_xRMSScaled2 = tmp_h1_xRMS.Clone()
+                 tmp_h1_xRMSScaled2.SetName(h_name2)
+                 tmp_h1_xRMSScaled2.Divide(tmp_h1_ratioMedianNoErr)
+
+                 histograms[h_name2] = tmp_h1_xRMSScaled2
+                 del tmp_h1_ratioMedianNoErr
+          ### -------------------
+
           ### Matching Efficiencies
           for hkey_i in sorted(histograms.keys()):
    
