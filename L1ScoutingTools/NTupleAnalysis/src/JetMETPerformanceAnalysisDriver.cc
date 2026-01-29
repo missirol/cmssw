@@ -685,8 +685,13 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
   }
 
   auto const jetCollRequiresJecA{utils::stringEndsWith(fhData.jetCollection, "CorrA")};
-  auto const jetCollBranchName{jetCollRequiresJecA ? fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5)
-                                                   : fhData.jetCollection};
+  auto const jetCollWithPtMax{fhData.jetCollection == "L1EmulJet1"};
+  auto jetCollBranchName{fhData.jetCollection};
+  if (jetCollRequiresJecA) {
+    jetCollBranchName = fhData.jetCollection.substr(0, fhData.jetCollection.size() - 5);
+  } else if (jetCollWithPtMax) {
+    jetCollBranchName = "L1EmulJet";
+  }
 
   if (not hasTTreeReaderValue("n" + jetCollBranchName)) {
     return;
@@ -854,8 +859,13 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
     auto const matchJetDeltaR2Min{fhDataMatch.jetDeltaRMin * fhDataMatch.jetDeltaRMin};
 
     auto const matchJetCollRequiresJecA{utils::stringEndsWith(matchJetColl, "CorrA")};
-    auto const matchJetCollBranchName{matchJetCollRequiresJecA ? matchJetColl.substr(0, matchJetColl.size() - 5)
-                                                               : matchJetColl};
+    auto const matchJetCollWithPtMax{matchJetColl == "L1EmulJet1"};
+    auto matchJetCollBranchName{matchJetColl};
+    if (matchJetCollRequiresJecA) {
+      matchJetCollBranchName = matchJetColl.substr(0, matchJetColl.size() - 5);
+    } else if (matchJetCollWithPtMax) {
+      matchJetCollBranchName = "L1EmulJet";
+    }
 
     if (not hasTTreeReaderValue("n" + matchJetCollBranchName)) {
       continue;
