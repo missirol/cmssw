@@ -17,6 +17,8 @@ JetMETPerformanceAnalysisDriver::JetMETPerformanceAnalysisDriver(const std::stri
     : AnalysisDriverBase(outputFilePath, outputFileMode) {}
 
 void JetMETPerformanceAnalysisDriver::init() {
+  jecA_.init(getOption("jecA_filePath"));
+
   jetCategoryLabels_ = {
       "_EtaIncl",  //"_EtaInclPt0", "_EtaInclPt1", "_EtaInclPt2", "_EtaInclPt3", "_EtaInclPt4", "_EtaInclPt5",
       "_Eta2p5",   //"_Eta2p5Pt0",  "_Eta2p5Pt1",  "_Eta2p5Pt2",  "_Eta2p5Pt3",  "_Eta2p5Pt4",  "_Eta2p5Pt5",
@@ -24,9 +26,6 @@ void JetMETPerformanceAnalysisDriver::init() {
       "_HE",       //"_HEPt0",      "_HEPt1",      "_HEPt2",      "_HEPt3",      "_HEPt4",      "_HEPt5",
       "_HF",       //"_HFPt0",      "_HFPt1",      "_HFPt2",      "_HFPt3",      "_HFPt4",      "_HFPt5",
   };
-
-  // hard-coded for now..
-  jecA_.init("/eos/cms/store/cmst3/group/daql1scout/run3_calotowers/jet_pt_corrections/mc_qcd_2025/graph_SC.root");
 
   // histogram: events counter
   addTH1D("eventsProcessed", {0, 1});

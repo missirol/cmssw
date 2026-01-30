@@ -7,11 +7,10 @@
 #include "L1ScoutingTools/NTupleAnalysis/interface/Utils.h"
 
 void JetResponseAnalysisDriver::init() {
-  // hard-coded for now..
-  jecA_.init("/eos/cms/store/cmst3/group/daql1scout/run3_calotowers/jet_pt_corrections/mc_qcd_2025/graph_SC.root");
+  jecA_.init(getOption("jecA_filePath"));
 
   std::vector<float> const absEta_v = {0.0f, 0.2f, 0.4f, 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 1.9f, 2.2f, 2.5f};
-  std::vector<unsigned int> const nCTie4_v = {0, 10, 20, 30, 40, 50, 60, 100, 100, 160};
+  std::vector<unsigned int> const nCTie4_v = {0, 10, 20, 30, 40, 60, 80};
 
   auto f_to_str = [](float a) -> std::string {
     std::ostringstream oss;
@@ -99,6 +98,11 @@ std::vector<std::string> JetResponseAnalysisDriver::jetCategoryLabelsForJECHisto
 }
 
 void JetResponseAnalysisDriver::analyze() {
+  //  auto const run = this->value<unsigned int>("run");
+  //  auto const luminosityBlock = this->value<unsigned int>("luminosityBlock");
+  //  auto const event = this->value<unsigned long long>("event");
+  //  std::cout << run << ":" << luminosityBlock << ":" << event << std::endl;
+
   H1("eventsProcessed")->Fill(0.5);
 
   float const wgt{1.f};
@@ -192,6 +196,13 @@ void JetResponseAnalysisDriver::bookHistograms_Jets(const std::string& dir,
               binEdges_response,
               binEdges_pt);
       addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__" +
+                  matchLabel + "_pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__" +
                   matchLabel + "_pt",
               binEdges_response,
               binEdges_pt);
@@ -309,7 +320,7 @@ void JetResponseAnalysisDriver::fillHistograms_Jets(const std::string& dir,
     auto const& a_match_phi = this->array<float>(matchJetCollBranchName + "_phi");
 
     for (auto idx = 0; idx < v_match_pt_size; ++idx) {
-      float corr = 1;
+      float corr{1.f};
       if (matchJetCollRequiresJecA) {
         corr = jecA_.correction(a_match_pt[idx], a_match_eta[idx]);
       }
@@ -362,22 +373,43 @@ void JetResponseAnalysisDriver::fillHistograms_Jets(const std::string& dir,
           continue;
         }
 
-        auto const jetMatchIdx(mapMatchIndicesIter->first);
-        auto const jetMatchPt(v_match_pt[jetMatchIdx]);
-        if (jetMatchPt <= 0) {
-          continue;
-        }
+        auto const jetMatchIdx(mapMatchIndicesIter->second);
+        auto const jetMatchPt(v_match_pt.at(jetMatchIdx));
 
         auto const jetPt(v_pt[jetIdx]);
-        auto const jetPtRatio(jetPt / jetMatchPt);
         auto const jetEta(v_eta[jetIdx]);
 
-        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
-           "__vs__" + matchLabel + "_pt")
-            ->Fill(jetPtRatio, jetMatchPt, weight);
+        auto const jetPtRatio(jetPt / jetMatchPt);
+        auto const jetPtRatio2(jetMatchPt / jetPt);
+
+        if (std::isnan(jetPtRatio)) {
+          std::cout << "ERROR: ratio jetPt/jetMatchPt is NaN (jetPt=" << jetPt << ", jetMatchPt=" << jetMatchPt << ")"
+                    << " [jetCollection=\"" << fhData.jetCollection << "\", matchJetCollection=\"" << matchJetColl
+                    << "\"]" << std::endl;
+          assert(false);
+        }
+
+        if (std::isnan(jetPtRatio2)) {
+          std::cout << "ERROR: ratio jetMatchPt/jetPt is NaN (jetPt=" << jetPt << ", jetMatchPt=" << jetMatchPt << ")"
+                    << " [jetCollection=\"" << fhData.jetCollection << "\", matchJetCollection=\"" << matchJetColl
+                    << "\"]" << std::endl;
+          assert(false);
+        }
+
         H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
            "__vs__pt")
             ->Fill(jetPtRatio, jetPt, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+           "__vs__" + matchLabel + "_pt")
+            ->Fill(jetPtRatio, jetMatchPt, weight);
+
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+           "overREC__vs__pt")
+            ->Fill(jetPtRatio2, jetPt, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+           "overREC__vs__" + matchLabel + "_pt")
+            ->Fill(jetPtRatio2, jetMatchPt, weight);
+
         H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_eta")->Fill(jetEta, weight);
         H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_nCT")->Fill(nCT, weight);
         H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_nCTie4")->Fill(nCTie4, weight);
