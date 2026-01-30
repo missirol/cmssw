@@ -64,6 +64,9 @@ if __name__ == '__main__':
    parser.add_argument('--copy-only', dest='copy_only', action='store_true', default=False,
                        help='disable addition of new objects (e.g. profiles)')
 
+   parser.add_argument('--profile-mean-stats-per-bin', action='store', type=int, default=0,
+                       help='minimum value of TH1::Integral for the histograms used to extract mean/median/RMS for each entries of profiles')
+
    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False,
                        help='enable verbose mode')
 
@@ -111,6 +114,7 @@ if __name__ == '__main__':
 
        if not opts.copy_only:
           ### Histograms for profile of Mean
+          histos_with_mean_profile = []
           for i_h2_key in sorted(histograms.keys()):
    
               if not histograms[i_h2_key].InheritsFrom('TH2'):
@@ -129,9 +133,13 @@ if __name__ == '__main__':
    
               key_varX = key_vars_split[0]
               key_varY = key_vars_split[1]
-   
-              if not (key_varX.endswith('GEN') or key_varX.endswith('Offline')):
+
+              if not (key_varX.endswith('_overGEN') or \
+                      key_varX.endswith('_GENoverREC') or \
+                      key_varX.endswith('_overOffline')):
                  continue
+
+              histos_with_mean_profile += [i_h2_key]
 
               tmp_h2 = histograms[i_h2_key]
 
@@ -142,15 +150,16 @@ if __name__ == '__main__':
 
               tmp_h1_xMean = tmp_h2.ProjectionY(h_name0)
               tmp_h1_xMean.Reset()
-   
+
               for _idx in range(1, 1+tmp_h2.GetNbinsY()):
                   _htmp = tmp_h2.ProjectionX('_htmp'+str(_idx), _idx, _idx, 'e')
-                  _val = _htmp.GetMean()
-                  _err = _htmp.GetMeanError()
-                  tmp_h1_xMean.SetBinContent(_idx, _val)
-                  tmp_h1_xMean.SetBinError(_idx, _err)
+                  if _htmp.Integral() > opts.profile_mean_stats_per_bin:
+                      _val = _htmp.GetMean()
+                      _err = _htmp.GetMeanError()
+                      tmp_h1_xMean.SetBinContent(_idx, _val)
+                      tmp_h1_xMean.SetBinError(_idx, _err)
                   del _htmp
-   
+
               histograms[h_name0] = tmp_h1_xMean
 
               # Median of X, in bins of Y
@@ -164,65 +173,63 @@ if __name__ == '__main__':
               for _idx in range(1, 1+tmp_h2.GetNbinsY()):
                   _htmp = tmp_h2.ProjectionX('_htmp'+str(_idx), _idx, _idx, 'e')
                   _med, _medQ = ctypes.c_double(0.), ctypes.c_double(0.5)
-                  _htmp.GetQuantiles(1, _med, _medQ)
-                  _val = _med.value
-                  _err = 1.253 * _htmp.GetMeanError()
-                  tmp_h1_xMedian.SetBinContent(_idx, _val)
-                  tmp_h1_xMedian.SetBinError(_idx, _err)
+                  if _htmp.Integral() > opts.profile_mean_stats_per_bin:
+                      _htmp.GetQuantiles(1, _med, _medQ)
+                      _val = _med.value
+                      _err = 1.253 * _htmp.GetMeanError()
+                      tmp_h1_xMedian.SetBinContent(_idx, _val)
+                      tmp_h1_xMedian.SetBinError(_idx, _err)
                   del _htmp
 
               histograms[h_name0] = tmp_h1_xMedian
           ### -------------------
-   
+
           ### Histograms for profile of RMS
-          ### (requires mean-Response histograms created in previous block)
+          ### (requires mean/median-response histograms created in previous block)
           for i_h2_key in sorted(histograms.keys()):
-   
+
+              if i_h2_key not in histos_with_mean_profile:
+                  continue
+
               if not histograms[i_h2_key].InheritsFrom('TH2'):
-                 continue
+                  continue
               elif histograms[i_h2_key].GetEntries() == 0:
-                 continue
-   
+                  continue
+
               i_h2_key_basename = os.path.basename(i_h2_key)
-   
+
               i_h2_key_dirname = os.path.dirname(i_h2_key)
               if i_h2_key_dirname: i_h2_key_dirname += '/'
-   
+
               key_vars_split = i_h2_key_basename.split(opts.separator_2d)
               if len(key_vars_split) != 2:
                  KILL('ZZZ '+i_h2_key_basename)
    
               key_varX = key_vars_split[0]
               key_varY = key_vars_split[1]
-   
-              if key_varX.endswith('GEN'): compTag = 'GEN'
-              elif key_varX.endswith('Offline'): compTag = 'Offline'
-              else: continue
-   
+
               tmp_h2 = histograms[i_h2_key]
-   
+
               # RMS of X, in bins of Y
               h_name1 = i_h2_key_dirname+key_varX+'_RMS_wrt_'+key_varY
               if h_name1 in histograms: KILL('aaa3 '+h_name1)
-   
+
               tmp_h1_xRMS = tmp_h2.ProjectionY(h_name1)
-#              tmp_h1_xRMS.SetDirectory(0)
               tmp_h1_xRMS.Reset()
-   
+
               for _idx in range(1, 1+tmp_h2.GetNbinsY()):
                   _htmp = tmp_h2.ProjectionX('_htmp'+str(_idx), _idx, _idx, 'e')
-#                  _htmp.SetDirectory(0)
                   tmp_h1_xRMS.SetBinContent(_idx, _htmp.GetRMS())
                   tmp_h1_xRMS.SetBinError(_idx, _htmp.GetRMSError())
                   del _htmp
-   
+
               histograms[h_name1] = tmp_h1_xRMS
 
               # RMS of X divided by Mean Response, in bins of Y
               h_name2 = i_h2_key_dirname+key_varX+'_RMSOverMean_wrt_'+key_varY
               if h_name2 in histograms: KILL('aaa4 '+h_name2)
 
-              h_name4 = i_h2_key_dirname+key_varX[:key_varX.rfind('_')]+'_over'+compTag+'_Mean_wrt_'+key_varY
+              h_name4 = i_h2_key_dirname+key_varX+'_Mean_wrt_'+key_varY
               if h_name4 not in histograms:
                  if opts.verbose:
                     WARNING('aaa5 '+h_name2+' '+h_name4)
@@ -242,7 +249,7 @@ if __name__ == '__main__':
               h_name2 = i_h2_key_dirname+key_varX+'_RMSOverMedian_wrt_'+key_varY
               if h_name2 in histograms: KILL('aaa4 '+h_name2)
 
-              h_name4 = i_h2_key_dirname+key_varX[:key_varX.rfind('_')]+'_over'+compTag+'_Median_wrt_'+key_varY
+              h_name4 = i_h2_key_dirname+key_varX+'_Median_wrt_'+key_varY
               if h_name4 not in histograms:
                  if opts.verbose:
                     WARNING('aaa5 '+h_name2+' '+h_name4)

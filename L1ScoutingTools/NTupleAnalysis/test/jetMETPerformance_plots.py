@@ -12,21 +12,14 @@ from common.plot import *
 from common.plot_style import *
 
 def updateDictionary(dictionary, TDirectory, prefix='', matches=[], skip=[], verbose=False):
-
     key_prefix = prefix+'/' if (len(prefix) > 0) else ''
-
     for j_key in TDirectory.GetListOfKeys():
-
         j_key_name = j_key.GetName()
-
         j_obj = TDirectory.Get(j_key_name)
-
         if j_obj.InheritsFrom('TDirectory'):
-
            updateDictionary(dictionary, j_obj, prefix=key_prefix+j_key_name, matches=matches, skip=skip, verbose=verbose)
 
         elif j_obj.InheritsFrom('TH1') or j_obj.InheritsFrom('TGraph'):
-
            out_key = key_prefix+j_key_name
 
            if skip:
@@ -60,7 +53,6 @@ def updateDictionary(dictionary, TDirectory, prefix='', matches=[], skip=[], ver
     return dictionary
 
 def getTH1sFromTFile(path, matches, skip, verbose=False):
-
     input_histos_dict = {}
 
     i_inptfile = ROOT.TFile.Open(path)

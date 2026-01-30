@@ -18,7 +18,6 @@ def get_text(x1ndc, y1ndc, textAlign, textSize, text):
 
 def get_pavetext(x1ndc, y1ndc, x2ndc, y2ndc, textSize, text):
     txt = ROOT.TPaveText(x1ndc, y1ndc, x2ndc, y2ndc, 'NDC')
-#    txt.SetNDC()
     txt.SetTextSize(textSize)
     txt.SetTextFont(42)
     txt.AddText(text)
