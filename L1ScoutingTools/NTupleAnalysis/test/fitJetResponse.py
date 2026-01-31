@@ -73,7 +73,7 @@ class Histogram:
         self.Legend = ''
         self.LegendDraw = ''
 
-def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=False, ratio=False, ratioPadFrac=0.3, xMin=None, xMax=None, yMin=None, yMax=None, xMinFit=None, xMaxFit=None, yMinRatio=None, yMaxRatio=None, logX=False, logY=False, autoRangeX=False, xLabelSize=None, xBinLabels=None):
+def fitAndPlot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=False, ratio=False, ratioPadFrac=0.3, xMin=None, xMax=None, yMin=None, yMax=None, xMinFit=None, xMaxFit=None, yMinRatio=None, yMaxRatio=None, logX=False, logY=False, autoRangeX=False, xLabelSize=None, xBinLabels=None):
 
     xyMinMax = []
     if histograms[0].th1.InheritsFrom('TGraph'):
@@ -165,7 +165,7 @@ def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=Fa
 
         fit_funcs = []
 #        fit_funcs += [(idx, f'pol{idx}') for idx in range(3, 12)]:
-        fit_funcs += [(4, '[0]+[1]*x+[2]*x^2+[3]*log(x)')]
+        fit_funcs += [(4, '[0]+[1]*(x/1000)+[2]*(x/1000)^2+[3]*log(x)')]
 
         XMIN_FIT = xMinFit if xMinFit else XMIN
         XMAX_FIT = xMaxFit if xMaxFit else XMAX
@@ -178,8 +178,6 @@ def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=Fa
                 minChi2OverNdof = chi2OverNdof
                 tfitres = fitfres
                 tf1 = fitf
-#                if minChi2OverNdof < 2:
-#                    break
 
         if tf1 and tfitres:
             tf1.SetLineColor(h0.GetLineColor())
@@ -194,8 +192,10 @@ def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=Fa
             fit_func_str = fit_func_str.replace('[1]', 'B')
             fit_func_str = fit_func_str.replace('[2]', 'C')
             fit_func_str = fit_func_str.replace('[3]', 'D')
-            fitLabel = f'Fit[{XMIN_FIT}-{XMAX_FIT}] ("{fit_func_str}")'
-            fitLabel += ': #chi^{2}/ndf = ' + f'{chi2OverNdof:.1f}'
+            fit_func_str = fit_func_str.replace('^2', '^{2}')
+            fit_func_str = fit_func_str.replace('1000', '10^{3}')
+            fitLabel = f'Fit [{XMIN_FIT}-{XMAX_FIT}]: {fit_func_str}'
+            fitLabel += ' (#chi^{2}/ndf = ' + f'{chi2OverNdof:.1f})'
         else:
             WARNING(f'plot -- fit failed: {h0.GetName()}')
             fitLabel = 'FIT FAILED'
@@ -491,7 +491,7 @@ def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=Fa
        del plot_ratios
        del denom
 
-    return 0
+    return tf1
 
 def getPlotLabels(key, keyword):
 
@@ -779,6 +779,8 @@ if __name__ == '__main__':
 
    ROOT.TGaxis.SetExponentOffset(-Lef+.50*Lef, 0.03, 'y')
 
+   jecOutputLines = []
+
    for _hkey in th1Keys:
        for _keyw in KEYWORDS:
            _plotConfig = getPlotConfig(key=_hkey, keyword=_keyw, inputList=inputList)
@@ -786,7 +788,7 @@ if __name__ == '__main__':
               continue
 
            ## plot
-           plot(**{
+           fitf = fitAndPlot(**{
              'histograms': _plotConfig.hists,
              'title': ';'+_plotConfig.titleX+';'+_plotConfig.titleY,
              'labels': [f'Sample: {opts.label_sample}', f'Jets: {_plotConfig.jetLabel}', f'Selection: {_plotConfig.selLabel}'],
@@ -807,3 +809,25 @@ if __name__ == '__main__':
              'xLabelSize': _plotConfig.xLabelSize,
              'xBinLabels': _plotConfig.xBinLabels,
            })
+
+           jec_str = ''
+           jec_str += f'{_plotConfig.xMinFit: 5.1f} '
+           jec_str += f'{_plotConfig.xMaxFit: 5.1f} '
+
+           sel_match = re.match('.*_absEta(\w+)to(\w+)nCTie4(\w+)to(\w+?)_.*', os.path.basename(_hkey))
+           jec_str += f'{float(sel_match.group(1).replace("p", ".")): 5.3f} '
+           jec_str += f'{float(sel_match.group(2).replace("p", ".")): 5.3f} '
+           jec_str += f'{int(sel_match.group(3)): 4d} '
+           jec_val4 = -1 if sel_match.group(4) == 'Inf' else int(sel_match.group(4))
+           jec_str += f'{jec_val4: 4d} '
+
+           jec_str += f'{fitf.GetFormula().GetTitle():>50} '
+           jec_str += f'{fitf.GetNpar(): 3d}'
+           for parIdx in range(fitf.GetNpar()):
+               jec_str += f' {fitf.GetParameter(parIdx): >8.5f}'
+
+           jecOutputLines += [jec_str]
+
+   with open(f'{OUTDIR}/fits.txt', 'w') as ofile:
+       for line in jecOutputLines:
+           ofile.write(f'{line}\n')
