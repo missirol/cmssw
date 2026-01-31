@@ -9,9 +9,6 @@
 void JetResponseAnalysisDriver::init() {
   jecA_.init(getOption("jecA_filePath"));
 
-  std::vector<float> const absEta_v = {0.0f, 0.2f, 0.4f, 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 1.9f, 2.2f, 2.5f};
-  std::vector<unsigned int> const nCTie4_v = {0, 10, 20, 30, 40, 60, 80};
-
   auto f_to_str = [](float a) -> std::string {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(1) << a;
@@ -27,9 +24,24 @@ void JetResponseAnalysisDriver::init() {
     return ret;
   };
 
+  std::vector<float> const absEta_v = {0.0f, 0.2f, 0.4f, 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 1.9f, 2.2f, 2.5f};
+
   for (auto ai = 0u; (ai + 1) < absEta_v.size(); ++ai) {
     auto const a0 = absEta_v[ai];
     auto const a1 = absEta_v[ai + 1];
+
+    std::vector<unsigned int> nCTie4_v{};
+    if (a0 < 0.4f) {
+      nCTie4_v = {0, 20, 30, 40, 60, 80};
+    } else if (a0 == 1.6f) {
+      nCTie4_v = {0, 10, 20, 30, 40, 60};
+    } else if (a0 == 1.9f) {
+      nCTie4_v = {0, 10, 20, 30, 40, 60};
+    } else if (a0 == 2.2f) {
+      nCTie4_v = {0, 10, 20};
+    } else {
+      nCTie4_v = {0, 10, 20, 30, 40, 60, 80};
+    }
 
     for (auto bi = 0u; bi < nCTie4_v.size(); ++bi) {
       auto const b0 = nCTie4_v[bi];
