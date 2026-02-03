@@ -61,4 +61,6 @@ for sampleKey in ${!samplesMap[@]}; do
 done
 unset sampleKey numEvents sampleName
 
+rm -f "${JOB_LABEL}"_cfg_dump.py
+
 unset opts samplesMap NEVT ODIR #ODIR_cmsRun

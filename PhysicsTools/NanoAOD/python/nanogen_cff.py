@@ -11,14 +11,28 @@ from PhysicsTools.NanoAOD.genVertex_cff import *
 from PhysicsTools.NanoAOD.common_cff import Var,CandVars
 from PhysicsTools.NanoAOD.nano_cff import nanoMetadata
 from PhysicsTools.NanoAOD.simpleSingletonCandidateFlatTableProducer_cfi import simpleSingletonCandidateFlatTableProducer
+
+from PhysicsTools.PatAlgos.slimming.prunedGenParticles_cfi import prunedGenParticles
+
+from RecoJets.Configuration.GenJetParticles_cff import genParticlesForJetsNoMuNoNu
+from RecoJets.Configuration.RecoGenJets_cff import ak4GenJetsNoMuNoNu
+
 from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
 from RecoJets.JetProducers.ak8GenJets_cfi import ak8GenJetsSoftDrop, ak8GenJetsConstituents
-from PhysicsTools.PatAlgos.slimming.prunedGenParticles_cfi import prunedGenParticles
+
+genJetNoMuTable = genJetTable.clone(
+    src = 'ak4GenJetsNoMuNoNu',
+    name = 'GenJetNoMu',
+    cut = 'pt > 7.5'
+)
 
 nanogenSequence = cms.Sequence(
     nanoMetadata+
     puTable+
     cms.Sequence(particleLevelTask)+
+    genParticlesForJetsNoMuNoNu+
+    ak4GenJetsNoMuNoNu+
+    genJetNoMuTable+
     genJetTable+
     patJetPartonsNano+
     genJetFlavourAssociation+
@@ -84,6 +98,11 @@ def customizeNanoGENFromMini(process):
     process.genVisTaus.srcGenParticles = "prunedGenParticles"
 
     nanoGenCommonCustomize(process)
+
+    # remove "NoMu" GenJets
+    process.nanogenSequence.remove(process.genParticlesForJetsNoMuNoNu)
+    process.nanogenSequence.remove(process.ak4GenJetsNoMuNoNu)
+    process.nanogenSequence.remove(process.genJetNoMuTable)
 
     return process
 
@@ -166,7 +185,6 @@ def pruneGenParticlesMini(process):
 #    if process.nanogenSequence.contains(process.mergedGenParticles):
 #        raise ValueError("Applying the MiniAOD genParticle pruner to MiniAOD is redunant. " \
 #            "Use a different customization.")
-    from PhysicsTools.PatAlgos.slimming.prunedGenParticles_cfi import prunedGenParticles
     process.prunedGenParticles = prunedGenParticles.clone()
     process.prunedGenParticles.src = "genParticles"
     process.genParticleTable.src = "prunedGenParticles"
@@ -184,23 +202,27 @@ def setGenFullPrecision(process):
 def setGenPtPrecision(process, precision):
     process.genParticleTable.variables.pt.precision = precision
     process.genJetTable.variables.pt.precision = precision
+    process.genJetNoMuTable.variables.pt.precision = precision
     process.metMCTable.variables.pt.precision = precision
     return process
 
 def setGenEtaPrecision(process, precision):
     process.genParticleTable.variables.eta.precision = precision
     process.genJetTable.variables.eta.precision = precision
+    process.genJetNoMuTable.variables.eta.precision = precision
     return process
 
 def setGenPhiPrecision(process, precision):
     process.genParticleTable.variables.phi.precision = precision
     process.genJetTable.variables.phi.precision = precision
+    process.genJetNoMuTable.variables.phi.precision = precision
     process.metMCTable.variables.phi.precision = precision
     return process
 
 def setGenMassPrecision(process, precision):
     process.genParticleTable.variables.mass.precision = precision
     process.genJetTable.variables.mass.precision = precision
+    process.genJetNoMuTable.variables.mass.precision = precision
     return process
 
 def setLHEFullPrecision(process):

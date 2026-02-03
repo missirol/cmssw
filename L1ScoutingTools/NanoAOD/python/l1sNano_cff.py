@@ -7,11 +7,7 @@ from L1ScoutingTools.Reconstruction.l1sAK4CTJets0Emu_cfi import l1sAK4CTJets0Emu
 from L1ScoutingTools.Reconstruction.l1sAK4CTJets0EmuCorr_cfi import l1sAK4CTJets0EmuCorr
 from L1ScoutingTools.Reconstruction.l1sAK4CTJets1Emu_cfi import l1sAK4CTJets1Emu
 
-from PhysicsTools.NanoAOD.l1trig_cff import l1TablesTask
-from PhysicsTools.NanoAOD.nano_cff import *
-from PhysicsTools.NanoAOD.genparticles_cff import finalGenParticles
-
-from PhysicsTools.PatAlgos.slimming.prunedGenParticles_cfi import prunedGenParticles
+from PhysicsTools.NanoAOD.nano_cff import nanoMetadata
 
 l1sNanoTask = cms.Task(nanoMetadata)
 
