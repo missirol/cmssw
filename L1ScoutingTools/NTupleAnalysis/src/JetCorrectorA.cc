@@ -34,32 +34,31 @@ void JetCorrectorA::init(std::string const& filePath) {
 }
 
 float JetCorrectorA::correction(float const pt, float const eta) const {
-  if (pt < 7.5) {
-    return 0;
+  float pt_corr{0.f};
+
+  if (pt <= 0) {
+    return pt_corr;
   }
 
-  float ret{1.f / pt};
   float const absEta{std::abs(eta)};
 
   if (absEta < 0.3) {
-    ret *= gJEC_pt7p5_eta0p0to0p3_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta0p0to0p3_->Eval(pt);
   } else if (0.3 <= absEta and absEta < 0.6) {
-    ret *= gJEC_pt7p5_eta0p3to0p6_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta0p3to0p6_->Eval(pt);
   } else if (0.6 <= absEta and absEta < 0.9) {
-    ret *= gJEC_pt7p5_eta0p6to0p9_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta0p6to0p9_->Eval(pt);
   } else if (0.9 <= absEta and absEta < 1.2) {
-    ret *= gJEC_pt7p5_eta0p9to1p2_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta0p9to1p2_->Eval(pt);
   } else if (1.2 <= absEta and absEta < 1.5) {
-    ret *= gJEC_pt7p5_eta1p2to1p5_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta1p2to1p5_->Eval(pt);
   } else if (1.5 <= absEta and absEta < 1.8) {
-    ret *= gJEC_pt7p5_eta1p5to1p8_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta1p5to1p8_->Eval(pt);
   } else if (1.8 <= absEta and absEta < 2.1) {
-    ret *= gJEC_pt7p5_eta1p8to2p1_->Eval(pt);
+    pt_corr = gJEC_pt7p5_eta1p8to2p1_->Eval(pt);
   } else if (2.1 <= absEta and absEta < 2.4) {
-    ret *= gJEC_pt7p5_eta2p1to2p4_->Eval(pt);
-  } else {
-    ret *= 0;
+    pt_corr = gJEC_pt7p5_eta2p1to2p4_->Eval(pt);
   }
 
-  return ret;
+  return (pt_corr > 0) ? (pt_corr / pt) : 0.f;
 }
