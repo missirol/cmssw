@@ -658,6 +658,9 @@ def getPlotConfig(key, keyword, inputList):
        cfg.yMinRatio = 0.41
        cfg.yMaxRatio = 1.59
 
+       cfg.doFit = key_basename.endswith('pt_GENoverREC_Median_wrt_pt')
+       cfg.ratio = cfg.doFit
+
        hcolor = ROOT.kBlack
        if 'nCTie4'+'010' in key:
            hcolor = ROOT.kGreen+2
@@ -803,11 +806,11 @@ if __name__ == '__main__':
              'outputs': [OUTDIR+'/'+_plotConfig.outputName+'.'+_tmp for _tmp in EXTS],
              'addLogX': _plotConfig.addLogX,
              'ratio': _plotConfig.ratio,
-             'doFit': _hkey.endswith('pt_GENoverREC_Median_wrt_pt'),
              'logX': _plotConfig.logX,
              'logY': _plotConfig.logY,
              'xMin': _plotConfig.xMin,
              'xMax': _plotConfig.xMax,
+             'doFit': _plotConfig.doFit,
              'xMinFit': _plotConfig.xMinFit,
              'xMaxFit': _plotConfig.xMaxFit,
              'yMin': _plotConfig.yMin,

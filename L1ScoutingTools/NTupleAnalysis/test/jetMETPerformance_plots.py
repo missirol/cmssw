@@ -1666,7 +1666,7 @@ def getPlotConfig(key, keyword, inputList):
        if (key.endswith('_pt') or key.endswith('_pt0')) and ('_vs_' not in key) and ('_over' not in key) and ('_GENover' not in key):
            cfg.logY = True
 
-       if key.endswith('wrt_GEN_pt'):
+       if key.endswith('wrt_GEN_pt') or key.endswith('wrt_pt'):
            cfg.xMax = 400
 
        ## Jets
