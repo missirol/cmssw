@@ -73,7 +73,7 @@ class Histogram:
         self.Legend = ''
         self.LegendDraw = ''
 
-def fitAndPlot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=False, ratio=False, ratioPadFrac=0.3, xMin=None, xMax=None, yMin=None, yMax=None, xMinFit=None, xMaxFit=None, yMinRatio=None, yMaxRatio=None, logX=False, logY=False, autoRangeX=False, xLabelSize=None, xBinLabels=None):
+def fitAndPlot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addLogX=False, doFit=False, ratio=False, ratioPadFrac=0.3, xMin=None, xMax=None, yMin=None, yMax=None, xMinFit=None, xMaxFit=None, yMinRatio=None, yMaxRatio=None, logX=False, logY=False, autoRangeX=False, xLabelSize=None, xBinLabels=None):
 
     xyMinMax = []
     if histograms[0].th1.InheritsFrom('TGraph'):
@@ -156,10 +156,13 @@ def fitAndPlot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addL
     if YMIN is None: YMIN = .0003 if logY else .0001
     if YMAX is None: YMAX = .0003*((HMAX/.0003)**(1./.80)) if logY else .0001+((HMAX-.0001) *(1./.80))
 
-    if len(histograms) == 1:
+    tf1 = None
+    if doFit:
+        if len(histograms) != 1:
+            KILL(f'plot -- (doFit=True) invalid number of input histograms ({len(histograms)})')
+
         h0 = histograms[0].th1.Clone()
 
-        tf1 = None
         tfitres = None
         minChi2OverNdof = -1
 
@@ -207,9 +210,6 @@ def fitAndPlot(histograms, outputs, title, labels, legXY=[], legNColumns=1, addL
         )]
         textPads[-1].SetBorderSize(1)
         textPads[-1].SetFillColor(0)
-
-    else:
-        KILL(f'plot -- invalid number of input histograms ({len(histograms)})')
 
     canvas.cd()
 
@@ -504,6 +504,10 @@ def getPlotLabels(key, keyword):
         _jetLabel = 'L1T Jets (E_{T} < 1023.5 GeV)'
     elif key.startswith('L1EmulAK4CTJet0_'):
         _jetLabel = 'Uncorrected AK4 L1CaloTowerJets'
+    elif key.startswith('L1EmulAK4CTJet0CorrA_'):
+        _jetLabel = 'AK4 L1CaloTowerJets (JEC=A)'
+    elif key.startswith('L1EmulAK4CTJet0Corr_'):
+        _jetLabel = 'AK4 L1CaloTowerJets (Corr)'
     elif key.startswith('L1EmulAK4CTJet1_'):
         _jetLabel = 'Uncorrected AK4 L1CaloTowerJets (no E-saturated towers)'
 
@@ -649,8 +653,8 @@ def getPlotConfig(key, keyword, inputList):
        cfg.xMinFit = 10
        cfg.xMaxFit = 400
 
-       cfg.yMin = 0.4
-       cfg.yMax = 4.0
+       cfg.yMin = 0.1
+       cfg.yMax = 4.4
        cfg.yMinRatio = 0.41
        cfg.yMaxRatio = 1.59
 
@@ -668,7 +672,9 @@ def getPlotConfig(key, keyword, inputList):
        elif 'nCTie4'+'080' in key:
            hcolor = ROOT.kRed
 
-       if 'L1EmulAK4CTJet0_' in key:
+       key_basename = os.path.basename(key)
+
+       if key_basename.split('_')[0] in ['L1EmulAK4CTJet0', 'L1EmulAK4CTJet0CorrA', 'L1EmulAK4CTJet0Corr']:
            for idx, inp in enumerate(inputList):
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key, Legend='', Color=hcolor)]
 
@@ -779,13 +785,13 @@ if __name__ == '__main__':
 
    ROOT.TGaxis.SetExponentOffset(-Lef+.50*Lef, 0.03, 'y')
 
-   jecOutputLines = []
+   jecOutputLinesDict = {}
 
    for _hkey in th1Keys:
        for _keyw in KEYWORDS:
            _plotConfig = getPlotConfig(key=_hkey, keyword=_keyw, inputList=inputList)
            if _plotConfig is None:
-              continue
+               continue
 
            ## plot
            fitf = fitAndPlot(**{
@@ -797,12 +803,15 @@ if __name__ == '__main__':
              'outputs': [OUTDIR+'/'+_plotConfig.outputName+'.'+_tmp for _tmp in EXTS],
              'addLogX': _plotConfig.addLogX,
              'ratio': _plotConfig.ratio,
+             'doFit': _hkey.endswith('pt_GENoverREC_Median_wrt_pt'),
              'logX': _plotConfig.logX,
              'logY': _plotConfig.logY,
              'xMin': _plotConfig.xMin,
              'xMax': _plotConfig.xMax,
              'xMinFit': _plotConfig.xMinFit,
              'xMaxFit': _plotConfig.xMaxFit,
+             'yMin': _plotConfig.yMin,
+             'yMax': _plotConfig.yMax,
              'yMinRatio': _plotConfig.yMinRatio,
              'yMaxRatio': _plotConfig.yMaxRatio,
              'autoRangeX': _plotConfig.autoRangeX,
@@ -810,11 +819,21 @@ if __name__ == '__main__':
              'xBinLabels': _plotConfig.xBinLabels,
            })
 
+           if fitf is None:
+               continue
+
+           key_basename = os.path.basename(_hkey)
+           key_dirname = os.path.dirname(_hkey)
+           jecKey = '_'.join([key_dirname.replace('/', '_'), key_basename.split('_')[0]])
+
+           if jecKey not in jecOutputLinesDict:
+               jecOutputLinesDict[jecKey] = []
+
            jec_str = ''
            jec_str += f'{_plotConfig.xMinFit: 5.1f} '
            jec_str += f'{_plotConfig.xMaxFit: 5.1f} '
 
-           sel_match = re.match('.*_absEta(\w+)to(\w+)nCTie4(\w+)to(\w+?)_.*', os.path.basename(_hkey))
+           sel_match = re.match('.*_absEta(\w+)to(\w+)nCTie4(\w+)to(\w+?)_.*', key_basename)
            jec_str += f'{float(sel_match.group(1).replace("p", ".")): 5.3f} '
            jec_str += f'{float(sel_match.group(2).replace("p", ".")): 5.3f} '
            jec_str += f'{int(sel_match.group(3)): 4d} '
@@ -826,8 +845,9 @@ if __name__ == '__main__':
            for parIdx in range(fitf.GetNpar()):
                jec_str += f' {fitf.GetParameter(parIdx): >8.5f}'
 
-           jecOutputLines += [jec_str]
+           jecOutputLinesDict[jecKey] += [jec_str]
 
-   with open(f'{OUTDIR}/fits.txt', 'w') as ofile:
-       for line in jecOutputLines:
-           ofile.write(f'{line}\n')
+   for jecKey in jecOutputLinesDict:
+       with open(f'{OUTDIR}/fits_{jecKey}.txt', 'w') as ofile:
+           for line in jecOutputLinesDict[jecKey]:
+               ofile.write(f'{line}\n')

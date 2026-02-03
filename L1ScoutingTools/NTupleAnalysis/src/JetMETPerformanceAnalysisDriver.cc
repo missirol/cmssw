@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 
@@ -25,6 +26,8 @@ void JetMETPerformanceAnalysisDriver::init() {
       "_HB",       //"_HBPt0",      "_HBPt1",      "_HBPt2",      "_HBPt3",      "_HBPt4",      "_HBPt5",
       "_HE",       //"_HEPt0",      "_HEPt1",      "_HEPt2",      "_HEPt3",      "_HEPt4",      "_HEPt5",
       "_HF",       //"_HFPt0",      "_HFPt1",      "_HFPt2",      "_HFPt3",      "_HFPt4",      "_HFPt5",
+
+      "_HBTest0",
   };
 
   // histogram: events counter
@@ -41,11 +44,13 @@ void JetMETPerformanceAnalysisDriver::init() {
        {{"L1T", "L1EmulJet"},
         {"L1T1", "L1EmulJet1"},
         {"L1CT0", "L1EmulAK4CTJet0"},
+        {"L1CT0Corr", "L1EmulAK4CTJet0Corr"},
         {"L1CT0CorrA", "L1EmulAK4CTJet0CorrA"},
         {"L1CT1", "L1EmulAK4CTJet1"}}},
       {"L1EmulJet", {{"GEN", "GenJet"}}},
       {"L1EmulJet1", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet0", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
+      {"L1EmulAK4CTJet0Corr", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
       {"L1EmulAK4CTJet0CorrA", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
       {"L1EmulAK4CTJet1", {{"GEN", "GenJet"}, {"L1T", "L1EmulJet"}}},
       {"Jet", {}},
@@ -142,7 +147,8 @@ void JetMETPerformanceAnalysisDriver::init() {
 
 bool JetMETPerformanceAnalysisDriver::jetBelongsToCategory(const std::string& categLabel,
                                                            const float jetPt,
-                                                           const float jetAbsEta) const {
+                                                           const float jetAbsEta,
+                                                           const unsigned int nCTie4) const {
   bool ret{false};
   if (categLabel == "_EtaIncl") {
     ret = (jetAbsEta < 5.0);
@@ -190,6 +196,9 @@ bool JetMETPerformanceAnalysisDriver::jetBelongsToCategory(const std::string& ca
     ret = (jetAbsEta < 1.3) and (400. <= jetPt) and (jetPt < 1023.4);
   } else if (categLabel == "_HBPt5") {
     ret = (jetAbsEta < 1.3) and (1023.4 <= jetPt);
+
+  } else if (categLabel == "_HBTest0") {
+    ret = (jetAbsEta < 0.2) and (20 <= nCTie4) and (nCTie4 < 30);
   }
 
   else if (categLabel == "_HE") {
@@ -252,9 +261,9 @@ void JetMETPerformanceAnalysisDriver::analyze() {
   H2("nPU__vs__nCTie4")->Fill(nPU, nCTie4, wgt);
 
   //// AK4 Jets
-  const float minAK4JetPt(30.);
-  const float minAK4JetPtRef(20.);
-  const float maxAK4JetDeltaRmatchRef(0.2);
+  const float minAK4JetPt{30};
+  const float minAK4JetPtRef{10};
+  const float maxAK4JetDeltaRmatchRef{0.2};
 
   // Single-Jet
   for (auto const& jetLabel : labelMap_jetAK4_) {
@@ -448,7 +457,7 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
 
   std::vector<float> binEdges_pt(104);
   for (uint idx = 0; idx < binEdges_pt.size(); ++idx) {
-    binEdges_pt.at(idx) = 10. * idx;
+    binEdges_pt.at(idx) = std::max(1.f, 10.f * idx);
   }
 
   std::vector<float> binEdges_eta(101);
@@ -597,12 +606,39 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
                   matchLabel + "_eta",
               binEdges_response,
               binEdges_eta);
-      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__" +
-                  matchLabel + "_nPU",
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__nPU",
               binEdges_response,
               binEdges_nPU);
-      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__" +
-                  matchLabel + "_nCTie4",
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel + "__vs__nCTie4",
+              binEdges_response,
+              binEdges_nCTie4);
+
+      addTH1D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC",
+              binEdges_response);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__" +
+                  matchLabel + "_pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__" +
+                  matchLabel + "_eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__nPU",
+              binEdges_response,
+              binEdges_nPU);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC__vs__nCTie4",
               binEdges_response,
               binEdges_nCTie4);
 
@@ -615,12 +651,39 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
                   matchLabel + "_eta",
               binEdges_response,
               binEdges_eta);
-      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__" +
-                  matchLabel + "_nPU",
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__nPU",
               binEdges_response,
               binEdges_nPU);
-      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__" +
-                  matchLabel + "_nCTie4",
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel + "__vs__nCTie4",
+              binEdges_response,
+              binEdges_nCTie4);
+
+      addTH1D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC",
+              binEdges_response);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC__vs__" +
+                  matchLabel + "_pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC__vs__" +
+                  matchLabel + "_eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC__vs__eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC__vs__nPU",
+              binEdges_response,
+              binEdges_nPU);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC__vs__nCTie4",
               binEdges_response,
               binEdges_nCTie4);
 
@@ -638,12 +701,19 @@ void JetMETPerformanceAnalysisDriver::bookHistograms_Jets(const std::string& dir
                   matchLabel + "_mass",
               binEdges_response,
               binEdges_mass);
-      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__" +
-                  matchLabel + "_nPU",
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__pt",
+              binEdges_response,
+              binEdges_pt);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__eta",
+              binEdges_response,
+              binEdges_eta);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__mass",
+              binEdges_response,
+              binEdges_mass);
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__nPU",
               binEdges_response,
               binEdges_nPU);
-      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__" +
-                  matchLabel + "_nCTie4",
+      addTH2D(dirPrefix + jetType + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel + "__vs__nCTie4",
               binEdges_response,
               binEdges_nCTie4);
 
@@ -799,7 +869,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
     int indexMaxPtJet(-1);
     float jetPtMax(-1.);
     for (auto idx : fhDataIndices) {
-      if (jetBelongsToCategory(catLabel, v_pt[idx], std::abs(v_eta[idx]))) {
+      if (jetBelongsToCategory(catLabel, v_pt[idx], std::abs(v_eta[idx]), nCTie4)) {
         jetIndices.emplace_back(idx);
         if ((jetIndices.size() == 1) or (v_pt[idx] > jetPtMax)) {
           jetPtMax = v_pt[idx];
@@ -931,7 +1001,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
       std::vector<size_t> jetIndices;
       jetIndices.reserve(fhDataIndices.size());
       for (auto idx : fhDataIndices) {
-        if (jetBelongsToCategory(catLabel, v_pt[idx], std::abs(v_eta[idx]))) {
+        if (jetBelongsToCategory(catLabel, v_pt[idx], std::abs(v_eta[idx]), nCTie4)) {
           jetIndices.emplace_back(idx);
         }
       }
@@ -948,7 +1018,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
           continue;
         }
 
-        if (jetBelongsToCategory(catLabel, v_match_pt[idx], std::abs(v_match_eta[idx]))) {
+        if (jetBelongsToCategory(catLabel, v_match_pt[idx], std::abs(v_match_eta[idx]), nCTie4)) {
           jetMatchRefIndices.emplace_back(idx);
         }
       }
@@ -1067,26 +1137,52 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
           H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_dRmatch")
               ->Fill(sqrt(dR2match), weight);
 
-          if (jetMatchPt != 0.) {
-            auto const jetPtRatio(jetPt / jetMatchPt);
-            H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel)
-                ->Fill(jetPtRatio, weight);
-            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
-               "__vs__" + matchLabel + "_pt")
-                ->Fill(jetPtRatio, jetMatchPt, weight);
-            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
-               "__vs__" + matchLabel + "_eta")
-                ->Fill(jetPtRatio, jetMatchEta, weight);
-            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
-               "__vs__" + matchLabel + "_nPU")
-                ->Fill(jetPtRatio, nPU, weight);
-            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
-               "__vs__" + matchLabel + "_nCTie4")
-                ->Fill(jetPtRatio, nCTie4, weight);
-          }
+          auto const jetPtRatio{jetPt / jetMatchPt};
+          H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel)
+              ->Fill(jetPtRatio, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+             "__vs__" + matchLabel + "_pt")
+              ->Fill(jetPtRatio, jetMatchPt, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+             "__vs__" + matchLabel + "_eta")
+              ->Fill(jetPtRatio, jetMatchEta, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+             "__vs__pt")
+              ->Fill(jetPtRatio, jetPt, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+             "__vs__eta")
+              ->Fill(jetPtRatio, jetEta, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+             "__vs__nPU")
+              ->Fill(jetPtRatio, nPU, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_over" + matchLabel +
+             "__vs__nCTie4")
+              ->Fill(jetPtRatio, nCTie4, weight);
+
+          auto const jetPtRatio2{jetMatchPt / jetPt};
+          H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel + "overREC")
+              ->Fill(jetPtRatio2, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+             "overREC__vs__" + matchLabel + "_pt")
+              ->Fill(jetPtRatio2, jetMatchPt, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+             "overREC__vs__" + matchLabel + "_eta")
+              ->Fill(jetPtRatio2, jetMatchEta, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+             "overREC__vs__pt")
+              ->Fill(jetPtRatio2, jetPt, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+             "overREC__vs__eta")
+              ->Fill(jetPtRatio2, jetEta, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+             "overREC__vs__nPU")
+              ->Fill(jetPtRatio2, nPU, weight);
+          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt_" + matchLabel +
+             "overREC__vs__nCTie4")
+              ->Fill(jetPtRatio2, nCTie4, weight);
 
           if (jetMatchMass != 0.) {
-            auto const jetMassRatio(jetMass / jetMatchMass);
+            auto const jetMassRatio{jetMass / jetMatchMass};
             H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel)
                 ->Fill(jetMassRatio, weight);
             H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
@@ -1099,10 +1195,19 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
                "__vs__" + matchLabel + "_mass")
                 ->Fill(jetMassRatio, jetMatchMass, weight);
             H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
-               "__vs__" + matchLabel + "_nPU")
+               "__vs__pt")
+                ->Fill(jetMassRatio, jetPt, weight);
+            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
+               "__vs__eta")
+                ->Fill(jetMassRatio, jetEta, weight);
+            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
+               "__vs__mass")
+                ->Fill(jetMassRatio, jetMass, weight);
+            H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
+               "__vs__nPU")
                 ->Fill(jetMassRatio, nPU, weight);
             H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_mass_over" + matchLabel +
-               "__vs__" + matchLabel + "_nCTie4")
+               "__vs__nCTie4")
                 ->Fill(jetMassRatio, nCTie4, weight);
           }
         } else {
@@ -1172,6 +1277,7 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
 
       if (indexMaxPtJetWithMatch >= 0) {
         auto const maxPtJetPt(v_pt[indexMaxPtJetWithMatch]);
+        auto const maxPtJetEta(v_eta[indexMaxPtJetWithMatch]);
         auto const maxPtJetMatchPt(v_match_pt[mapMatchIndices.at(indexMaxPtJetWithMatch)]);
         auto const maxPtJetMatchEta(v_match_eta[mapMatchIndices.at(indexMaxPtJetWithMatch)]);
         H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0")->Fill(maxPtJetPt, weight);
@@ -1179,23 +1285,50 @@ void JetMETPerformanceAnalysisDriver::fillHistograms_Jets(const std::string& dir
             ->Fill(maxPtJetPt, maxPtJetMatchPt, weight);
         H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0__vs__" + matchLabel + "_eta")
             ->Fill(maxPtJetPt, maxPtJetMatchEta, weight);
-        if (maxPtJetMatchPt != 0.) {
-          auto const maxPtJetPtRatio(maxPtJetPt / maxPtJetMatchPt);
-          H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel)
-              ->Fill(maxPtJetPtRatio, weight);
-          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
-             "__vs__" + matchLabel + "_pt")
-              ->Fill(maxPtJetPtRatio, maxPtJetMatchPt, weight);
-          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
-             "__vs__" + matchLabel + "_eta")
-              ->Fill(maxPtJetPtRatio, maxPtJetMatchEta, weight);
-          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
-             "__vs__" + matchLabel + "_nPU")
-              ->Fill(maxPtJetPtRatio, nPU, weight);
-          H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
-             "__vs__" + matchLabel + "_nCTie4")
-              ->Fill(maxPtJetPtRatio, nCTie4, weight);
-        }
+
+        auto const maxPtJetPtRatio{maxPtJetPt / maxPtJetMatchPt};
+        H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel)
+            ->Fill(maxPtJetPtRatio, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+           "__vs__" + matchLabel + "_pt")
+            ->Fill(maxPtJetPtRatio, maxPtJetMatchPt, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+           "__vs__" + matchLabel + "_eta")
+            ->Fill(maxPtJetPtRatio, maxPtJetMatchEta, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+           "__vs__pt")
+            ->Fill(maxPtJetPtRatio, maxPtJetPt, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+           "__vs__eta")
+            ->Fill(maxPtJetPtRatio, maxPtJetEta, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+           "__vs__nPU")
+            ->Fill(maxPtJetPtRatio, nPU, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_over" + matchLabel +
+           "__vs__nCTie4")
+            ->Fill(maxPtJetPtRatio, nCTie4, weight);
+
+        auto const maxPtJetPtRatio2{maxPtJetMatchPt / maxPtJetPt};
+        H1(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel + "overREC")
+            ->Fill(maxPtJetPtRatio2, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel +
+           "overREC__vs__" + matchLabel + "_pt")
+            ->Fill(maxPtJetPtRatio2, maxPtJetMatchPt, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel +
+           "overREC__vs__" + matchLabel + "_eta")
+            ->Fill(maxPtJetPtRatio2, maxPtJetMatchEta, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel +
+           "overREC__vs__pt")
+            ->Fill(maxPtJetPtRatio2, maxPtJetPt, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel +
+           "overREC__vs__eta")
+            ->Fill(maxPtJetPtRatio2, maxPtJetEta, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel +
+           "overREC__vs__nPU")
+            ->Fill(maxPtJetPtRatio2, nPU, weight);
+        H2(dirPrefix + fhData.jetCollection + catLabel + "_MatchedTo" + matchLabel + "_pt0_" + matchLabel +
+           "overREC__vs__nCTie4")
+            ->Fill(maxPtJetPtRatio2, nCTie4, weight);
       }
 
       if (indexMaxPtJetWithNoMatch >= 0) {

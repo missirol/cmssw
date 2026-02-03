@@ -132,7 +132,9 @@ def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, ratio=Fals
     for _tmp in histograms:
         if (_tmp.th1 is not None):
            if hasattr(_tmp.th1, 'GetNbinsX'):
-              for i_bin in range(1, _tmp.th1.GetNbinsX()+1):
+              _tmpb_binMin = max(_tmp.th1.FindBin(XMIN), 1)
+              _tmpb_binMax = min(_tmp.th1.FindBin(XMAX), 1+_tmp.th1.GetNbinsX())
+              for i_bin in range(_tmpb_binMin, _tmpb_binMax):
                   HMAX = max(HMAX, (_tmp.th1.GetBinContent(i_bin) + _tmp.th1.GetBinError(i_bin)))
            else:
               _tmp_xyMinMax = get_xyminmax_from_graph(_tmp.th1)
@@ -325,7 +327,9 @@ def plot(histograms, outputs, title, labels, legXY=[], legNColumns=1, ratio=Fals
        for _tmp in plot_ratios:
            if _tmp.th1 is None: continue
            if hasattr(_tmp.th1, 'GetNbinsX'):
-              for _tmpb in range(1, _tmp.th1.GetNbinsX()+1):
+              _tmpb_binMin = max(_tmp.th1.FindBin(XMIN), 1)
+              _tmpb_binMax = min(_tmp.th1.FindBin(XMAX), 1+_tmp.th1.GetNbinsX())
+              for _tmpb in range(_tmpb_binMin, _tmpb_binMax):
                   if (abs(_tmp.th1.GetBinContent(_tmpb)) > 1e-7) and (abs(_tmp.th1.GetBinError(_tmpb)) > 1e-7):
                      h2max = max(h2max, _tmp.th1.GetBinContent(_tmpb)+_tmp.th1.GetBinError(_tmpb)) if (h2max is not None) else _tmp.th1.GetBinContent(_tmpb)+_tmp.th1.GetBinError(_tmpb)
                      h2min = min(h2min, _tmp.th1.GetBinContent(_tmpb)-_tmp.th1.GetBinError(_tmpb)) if (h2min is not None) else _tmp.th1.GetBinContent(_tmpb)-_tmp.th1.GetBinError(_tmpb)
@@ -374,7 +378,10 @@ def getPlotLabels(key, isProfile, isEfficiency, keyword):
     _objLabel = ''
     if   key.startswith('GenJet_'):                    _objLabel = 'GEN Jets'
     elif key.startswith('L1EmulJet_'):                 _objLabel = 'L1TJets'
-    elif key.startswith('L1EmulAK4CTJet_'):            _objLabel = 'L1CaloTowerJets'
+    elif key.startswith('L1EmulAK4CTJet0_'):           _objLabel = 'L1CaloTowerJets(0)'
+    elif key.startswith('L1EmulAK4CTJet1_'):           _objLabel = 'L1CaloTowerJets(1)'
+    elif key.startswith('L1EmulAK4CTJet0Corr_'):       _objLabel = 'L1CaloTowerJets(0-Corr)'
+    elif key.startswith('L1EmulAK4CTJet0CorrA_'):      _objLabel = 'L1CaloTowerJets(0-CorrA)'
     elif key.startswith('ak4GenJets_'):                _objLabel = 'AK4GenJets'
     elif key.startswith('hltAK4CaloJets_'):            _objLabel = 'HLT AK4CaloJets'
     elif key.startswith('hltAK4CaloJetsCorrected_'):   _objLabel = 'HLT AK4CaloJetsCorrected'
@@ -500,22 +507,38 @@ def getPlotLabels(key, isProfile, isEfficiency, keyword):
              _titleY = 'Entries'
 
     if isEfficiency:
-       _titleY = 'Efficiency'
-       if key.endswith('_eff'):
-         if '_NotMatchedTo' in key: _titleY = '1 - #varepsilon_{Matching}'
-         elif '_MatchedTo' in key: _titleY = '#varepsilon_{Matching}'
+        _titleY = 'Efficiency'
+        if key.endswith('_eff'):
+            if '_NotMatchedTo' in key: _titleY = '1 - #varepsilon_{Matching}'
+            elif '_MatchedTo' in key: _titleY = '#varepsilon_{Matching}'
 
     if   '_pt_overGEN_Mean_' in key: _titleY = '<p_{T} / p_{T}^{GEN}>'
     elif '_pt_overGEN_RMSOverMean_' in key: _titleY = '#sigma(p_{T} / p_{T}^{GEN}) / <p_{T} / p_{T}^{GEN}>'
+    elif '_pt_overGEN_Median_' in key: _titleY = 'Median(p_{T} / p_{T}^{GEN})'
+    elif '_pt_overGEN_RMSOverMedian_' in key: _titleY = '#sigma(p_{T} / p_{T}^{GEN}) / Median(p_{T} / p_{T}^{GEN})'
     elif '_pt_overGEN_RMS_' in key: _titleY = '#sigma(p_{T} / p_{T}^{GEN})'
+
+    elif '_pt_GENoverREC_Mean_' in key: _titleY = '<p_{T}^{GEN} / p_{T}>'
+    elif '_pt_GENoverREC_RMSOverMean_' in key: _titleY = '#sigma(p_{T}^{GEN} / p_{T}) / <p_{T}^{GEN} / p_{T}>'
+    elif '_pt_GENoverREC_Median_' in key: _titleY = 'Median(p_{T}^{GEN} / p_{T})'
+    elif '_pt_GENoverREC_RMSOverMedian_' in key: _titleY = '#sigma(p_{T}^{GEN} / p_{T}) / Median(p_{T}^{GEN} / p_{T})'
+    elif '_pt_GENoverREC_RMS_' in key: _titleY = '#sigma(p_{T}^{GEN} / p_{T})'
 
     elif '_pt_overOffline_Mean_' in key: _titleY = '<p_{T} / p_{T}^{Offl}>'
     elif '_pt_overOffline_RMSOverMean_' in key: _titleY = '#sigma(p_{T} / p_{T}^{Offl}) / <p_{T} / p_{T}^{Offl}>'
     elif '_pt_overOffline_RMS_' in key: _titleY = '#sigma(p_{T} / p_{T}^{Offl})'
 
-    if   '_pt0_overGEN_Mean_' in key: _titleY = '<p_{T} / p_{T}^{GEN}>'
+    elif '_pt0_overGEN_Mean_' in key: _titleY = '<p_{T} / p_{T}^{GEN}>'
     elif '_pt0_overGEN_RMSOverMean_' in key: _titleY = '#sigma(p_{T} / p_{T}^{GEN}) / <p_{T} / p_{T}^{GEN}>'
+    elif '_pt0_overGEN_Median_' in key: _titleY = 'Median(p_{T} / p_{T}^{GEN})'
+    elif '_pt0_overGEN_RMSOverMedian_' in key: _titleY = '#sigma(p_{T} / p_{T}^{GEN}) / Median(p_{T} / p_{T}^{GEN})'
     elif '_pt0_overGEN_RMS_' in key: _titleY = '#sigma(p_{T} / p_{T}^{GEN})'
+
+    elif '_pt0_GENoverREC_Mean_' in key: _titleY = '<p_{T}^{GEN} / p_{T}>'
+    elif '_pt0_GENoverREC_RMSOverMean_' in key: _titleY = '#sigma(p_{T}^{GEN} / p_{T}) / <p_{T}^{GEN} / p_{T}>'
+    elif '_pt0_GENoverREC_Median_' in key: _titleY = 'Median(p_{T}^{GEN} / p_{T})'
+    elif '_pt0_GENoverREC_RMSOverMedian_' in key: _titleY = '#sigma(p_{T}^{GEN} / p_{T}) / Median(p_{T}^{GEN} / p_{T})'
+    elif '_pt0_GENoverREC_RMS_' in key: _titleY = '#sigma(p_{T}^{GEN} / p_{T})'
 
     elif '_pt0_overOffline_Mean_' in key: _titleY = '<p_{T} / p_{T}^{Offl}>'
     elif '_pt0_overOffline_RMSOverMean_' in key: _titleY = '#sigma(p_{T} / p_{T}^{Offl}) / <p_{T} / p_{T}^{Offl}>'
@@ -523,6 +546,8 @@ def getPlotLabels(key, isProfile, isEfficiency, keyword):
 
     elif '_mass_overGEN_Mean_' in key: _titleY = '<mass / mass^{GEN}>'
     elif '_mass_overGEN_RMSOverMean_' in key: _titleY = '#sigma(m / m^{GEN}) / <m / m^{GEN}>'
+    elif '_mass_overGEN_Median_' in key: _titleY = 'Median(mass / mass^{GEN})'
+    elif '_mass_overGEN_RMSOverMedian_' in key: _titleY = '#sigma(m / m^{GEN}) / Median(m / m^{GEN})'
     elif '_mass_overGEN_RMS_' in key: _titleY = '#sigma(mass / mass^{GEN})'
 
     elif '_mass_overOffline_Mean_' in key: _titleY = '<mass / mass^{Offl}>'
@@ -571,8 +596,10 @@ def getPlotLabels(key, isProfile, isEfficiency, keyword):
 
     elif ('Jet' in key) and not (isProfile or isEfficiency):
       if   key.endswith('_pt_overGEN'): _titleX = 'p_{T} / p_{T}^{GEN}'
+      elif key.endswith('_pt_GENoverREC'): _titleX = 'p_{T}^{GEN} / p_{T}'
       elif key.endswith('_pt_overOffline'): _titleX = 'p_{T} / p_{T}^{Offl}'
       elif key.endswith('_pt0_overGEN'): _titleX = 'p_{T} / p_{T}^{GEN}'
+      elif key.endswith('_pt0_GENoverREC'): _titleX = 'p_{T}^{GEN} / p_{T}'
       elif key.endswith('_pt0_overOffline'): _titleX = 'p_{T} / p_{T}^{Offl}'
       elif key.endswith('_mass_overGEN'): _titleX = 'mass / mass^{GEN}'
       elif key.endswith('_mass_overOffline'): _titleX = 'mass / mass^{Offl}'
@@ -1636,8 +1663,11 @@ def getPlotConfig(key, keyword, inputList):
 
        cfg.legXY = [0.30, 0.80, 0.95, 0.90]
        cfg.legNColumns = 3
-       if (key.endswith('_pt') or key.endswith('_pt0')) and ('_vs_' not in key) and ('_over' not in key):
+       if (key.endswith('_pt') or key.endswith('_pt0')) and ('_vs_' not in key) and ('_over' not in key) and ('_GENover' not in key):
            cfg.logY = True
+
+       if key.endswith('wrt_GEN_pt'):
+           cfg.xMax = 400
 
        ## Jets
        if 'L1EmulAK4CTJet0_' in key:
@@ -1645,15 +1675,17 @@ def getPlotConfig(key, keyword, inputList):
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('L1EmulAK4CTJet0_', 'GenJet_'), Legend='GEN Jets', Color=ROOT.kBlack) if idx==0 else None]
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('L1EmulAK4CTJet0_', 'L1EmulJet_'), Legend='L1T Jets', Color=ROOT.kRed) if idx==0 else None]
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key, Legend='AK4CTJet0', Color=ROOT.kBlue)]
+               cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('L1EmulAK4CTJet0_', 'L1EmulAK4CTJet0Corr_'), Legend='AK4CTJet0Corr', Color=ROOT.kGreen+1) if idx==0 else None]
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('L1EmulAK4CTJet0_', 'L1EmulAK4CTJet0CorrA_'), Legend='AK4CTJet0CorrA', Color=ROOT.kViolet) if idx==0 else None]
-               cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('L1EmulAK4CTJet0_', 'L1EmulAK4CTJet1_'), Legend='AK4CTJet1', Color=ROOT.kOrange+2) if idx==0 else None]
+#               cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('L1EmulAK4CTJet0_', 'L1EmulAK4CTJet1_'), Legend='AK4CTJet1', Color=ROOT.kOrange+2) if idx==0 else None]
 
        elif 'MatchedToL1CT0_' in key:
            for idx, inp in enumerate(inputList):
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('MatchedToL1CT0_', 'MatchedToL1T_'), Legend='L1T Jets', Color=ROOT.kRed) if idx==0 else None]
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key, Legend='AK4CTJet0', Color=ROOT.kBlue)]
+               cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('MatchedToL1CT0_', 'MatchedToL1CT0Corr_'), Legend='AK4CTJet0Corr', Color=ROOT.kGreen+1) if idx==0 else None]
                cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('MatchedToL1CT0_', 'MatchedToL1CT0CorrA_'), Legend='AK4CTJet0CorrA', Color=ROOT.kViolet) if idx==0 else None]
-               cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('MatchedToL1CT0_', 'MatchedToL1CT1_'), Legend='AK4CTJet1', Color=ROOT.kOrange+2) if idx==0 else None]
+#               cfg.hists += [getHistogram(plotCfg=cfg, inputDict=inp, key=key.replace('MatchedToL1CT0_', 'MatchedToL1CT1_'), Legend='AK4CTJet1', Color=ROOT.kOrange+2) if idx==0 else None]
 
     ##
     ## Unknown keywords

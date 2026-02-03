@@ -26,7 +26,10 @@ protected:
   JetCorrectorA jecA_;
 
   std::vector<std::string> jetCategoryLabels_;
-  bool jetBelongsToCategory(const std::string& categLabel, const float jetPt, const float jetAbsEta) const;
+  bool jetBelongsToCategory(const std::string& categLabel,
+                            const float jetPt,
+                            const float jetAbsEta,
+                            const unsigned int nCTie4) const;
 
   class fillHistoDataJets {
   public:

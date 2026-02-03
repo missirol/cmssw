@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iomanip>
@@ -38,7 +39,7 @@ void JetResponseAnalysisDriver::init() {
     } else if (a0 == 1.9f) {
       nCTie4_v = {0, 10, 20, 30, 40, 60};
     } else if (a0 == 2.2f) {
-      nCTie4_v = {0, 10, 20};
+      nCTie4_v = {0, 10};
     } else {
       nCTie4_v = {0, 10, 20, 30, 40, 60, 80};
     }
@@ -86,6 +87,7 @@ void JetResponseAnalysisDriver::init() {
       {"L1EmulJet", {{"GEN", "GenJet"}}},
       {"L1EmulJet1", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet0", {{"GEN", "GenJet"}}},
+      {"L1EmulAK4CTJet0Corr", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet0CorrA", {{"GEN", "GenJet"}}},
       {"L1EmulAK4CTJet1", {{"GEN", "GenJet"}}},
   };
@@ -139,8 +141,8 @@ void JetResponseAnalysisDriver::analyze() {
   H2("nPU__vs__nCTie4")->Fill(nPU, nCTie4, wgt);
 
   // AK4 Jets
-  float const minAK4JetPt{10};
-  float const minAK4JetPtRef{7};
+  float const minAK4JetPt{1};
+  float const minAK4JetPtRef{10};
   float const maxAK4JetDeltaRmatchRef{0.2};
 
   for (auto const& jetLabel : labelMap_jetAK4_) {
@@ -173,7 +175,7 @@ void JetResponseAnalysisDriver::bookHistograms_Jets(const std::string& dir,
 
   std::vector<float> binEdges_pt(104);
   for (uint idx = 0; idx < binEdges_pt.size(); ++idx) {
-    binEdges_pt.at(idx) = 10. * idx;
+    binEdges_pt.at(idx) = std::max(1.f, 10.f * idx);
   }
 
   std::vector<float> binEdges_eta(101);
