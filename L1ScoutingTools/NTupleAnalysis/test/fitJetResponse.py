@@ -655,8 +655,8 @@ def getPlotConfig(key, keyword, inputList):
 
        cfg.yMin = 0.1
        cfg.yMax = 4.4
-       cfg.yMinRatio = 0.41
-       cfg.yMaxRatio = 1.59
+       cfg.yMinRatio = 0.81
+       cfg.yMaxRatio = 1.19
 
        cfg.doFit = key_basename.endswith('pt_GENoverREC_Median_wrt_pt')
        cfg.ratio = cfg.doFit
