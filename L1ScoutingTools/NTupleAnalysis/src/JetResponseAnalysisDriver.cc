@@ -142,7 +142,7 @@ void JetResponseAnalysisDriver::analyze() {
 
   // AK4 Jets
   float const minAK4JetPt{1};
-  float const minAK4JetPtRef{10};
+  float const minAK4JetPtRef{7.5f};
   float const maxAK4JetDeltaRmatchRef{0.2};
 
   for (auto const& jetLabel : labelMap_jetAK4_) {

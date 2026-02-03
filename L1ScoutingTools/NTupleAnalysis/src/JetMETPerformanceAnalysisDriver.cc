@@ -262,7 +262,7 @@ void JetMETPerformanceAnalysisDriver::analyze() {
 
   //// AK4 Jets
   const float minAK4JetPt{30};
-  const float minAK4JetPtRef{10};
+  const float minAK4JetPtRef{7.5};
   const float maxAK4JetDeltaRmatchRef{0.2};
 
   // Single-Jet
