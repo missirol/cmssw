@@ -11,4 +11,12 @@ rpcconesrc = cms.ESSource("EmptyESSource",
     firstValid = cms.vuint32(1)
 )
 
+# remove RPCConeBuilder-related ES modules when the modifier stage2L1Trigger is enabled
+def _removeRPCConeBuilderESModules(process):
+    if hasattr(process, 'RPCConeBuilder'):
+        del process.RPCConeBuilder
+    if hasattr(process, 'rpcconesrc'):
+        del process.rpcconesrc
 
+from Configuration.Eras.Modifier_stage2L1Trigger_cff import stage2L1Trigger
+removeRPCConeBuilderESModules_ = stage2L1Trigger.makeProcessModifier( _removeRPCConeBuilderESModules )

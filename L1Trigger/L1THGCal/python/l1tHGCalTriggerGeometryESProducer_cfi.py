@@ -30,3 +30,11 @@ l1tHGCalTriggerGeometryESProducer = cms.ESProducer(
     'HGCalTriggerGeometryESProducer',
     TriggerGeometry = geometry
 )
+
+# remove l1tHGCalTriggerGeometryESProducer when the modifier phase2_trigger is not enabled
+def _removeL1THGCalTriggerGeometryESProducer(process):
+    if hasattr(process, 'l1tHGCalTriggerGeometryESProducer'):
+        del process.l1tHGCalTriggerGeometryESProducer
+
+from Configuration.Eras.Modifier_phase2_trigger_cff import phase2_trigger
+removeL1THGCalTriggerGeometryESProducer_ = (~phase2_trigger).makeProcessModifier( _removeL1THGCalTriggerGeometryESProducer )
