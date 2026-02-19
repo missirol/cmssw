@@ -128,6 +128,7 @@ namespace l1t {
     static l1t::Jet jetP4Demux(l1t::Jet&);
     static l1t::EtSum etSumP4Demux(l1t::EtSum&);
 
+    static math::PtEtaPhiMLorentzVector p4MP(int const hwEt, int const hwEta, int const hwPhi);
     static math::PtEtaPhiMLorentzVector p4MP(l1t::L1Candidate*);
     static l1t::EGamma egP4MP(l1t::EGamma&);
     static l1t::Tau tauP4MP(l1t::Tau&);
