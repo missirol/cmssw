@@ -9,13 +9,8 @@
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "L1TriggerScouting/Utilities/interface/conversion.h"
+#include "L1Trigger/L1TCalorimeter/interface/CaloTools.h"
 
-// ROOT libraries
-#include "Math/Vector4D.h"
-#include "Math/VectorUtil.h"
-
-// fastjet libraries
 #include "fastjet/ClusterSequence.hh"
 
 class ScoutingJetProducer : public edm::global::EDProducer<> {
@@ -78,11 +73,8 @@ void ScoutingJetProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::
         continue;
       }
 
-      ROOT::Math::PtEtaPhiMVector ctLV(l1ScoutingRun3::calol1::fEt(ct.hwEt()),
-                                       l1ScoutingRun3::calol1::fEta(ct.hwEta()),
-                                       l1ScoutingRun3::calol1::fPhi(ct.hwPhi()),
-                                       0);
-      pjCTs.emplace_back(ctLV.px(), ctLV.py(), ctLV.pz(), ctLV.E());
+      auto const ctP4 = l1t::CaloTools::p4MP(ct.hwEt(), ct.hwEta(), ct.hwPhi());
+      pjCTs.emplace_back(ctP4.px(), ctP4.py(), ctP4.pz(), ctP4.E());
     }
 
     // run the jet clustering with the given jet definition
