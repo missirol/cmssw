@@ -366,9 +366,12 @@ l1t::EtSum l1t::CaloTools::etSumP4Demux(l1t::EtSum& etsum) {
 }
 
 //
+math::PtEtaPhiMLorentzVector l1t::CaloTools::p4MP(int const hwPt, int const mpEta, int const hwPhi) {
+  return math::PtEtaPhiMLorentzVector(hwPt * 0.5 + 1.E-6, towerEta(mpEta), towerPhi(mpEta, hwPhi), 0.);
+}
+
 math::PtEtaPhiMLorentzVector l1t::CaloTools::p4MP(l1t::L1Candidate* cand) {
-  return math::PtEtaPhiMLorentzVector(
-      cand->hwPt() * 0.5 + 1.E-6, towerEta(cand->hwEta()), towerPhi(cand->hwEta(), cand->hwPhi()), 0.);
+  return p4MP(cand->hwPt(), cand->hwEta(), cand->hwPhi());
 }
 
 l1t::EGamma l1t::CaloTools::egP4MP(l1t::EGamma& eg) {
