@@ -1,7 +1,6 @@
 #ifndef L1TriggerScouting_Utilities_scales_h
 #define L1TriggerScouting_Utilities_scales_h
 
-#include <cstdint>
 #include <cmath>
 
 namespace l1ScoutingRun3 {
@@ -25,14 +24,6 @@ namespace l1ScoutingRun3 {
       static constexpr float et_scale = 0.5;
     };
   }  // namespace demux
-
-  namespace calol1 {
-    struct scales {
-      static constexpr float phi_scale = 0.0870;
-      static constexpr float eta_scale = 0.0870;
-      static constexpr float et_scale = 0.5;
-    };
-  }  // namespace calol1
 
 }  // namespace l1ScoutingRun3
 #endif  // L1TriggerScouting_Utilities_scales_h
