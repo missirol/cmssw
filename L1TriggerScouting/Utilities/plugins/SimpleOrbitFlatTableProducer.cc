@@ -112,7 +112,7 @@ public:
 
   static void fillDescriptions(edm::ConfigurationDescriptions &descriptions) {
     edm::ParameterSetDescription desc;
-    std::string classname = ClassName<T>::name();
+    const std::string &classname = ClassName<T>::name();
     desc.add<std::string>("name")->setComment("name of the branch in the flat table output for " + classname);
     desc.add<std::string>("doc", "")->setComment("few words of self documentation");
     desc.ifValue(
@@ -294,6 +294,9 @@ typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::EGamma> SimpleL1ScoutingEGa
 typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::Tau> SimpleL1ScoutingTauOrbitFlatTableProducer;
 typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::Jet> SimpleL1ScoutingJetOrbitFlatTableProducer;
 
+#include "DataFormats/L1Scouting/interface/L1ScoutingCaloTower.h"
+typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::CaloTower> SimpleL1ScoutingCaloTowerOrbitFlatTableProducer;
+
 #include "DataFormats/L1Scouting/interface/L1ScoutingBMTFStub.h"
 typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::BMTFStub> SimpleL1ScoutingBMTFStubOrbitFlatTableProducer;
 
@@ -302,4 +305,5 @@ DEFINE_FWK_MODULE(SimpleL1ScoutingMuonOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingEGammaOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingTauOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingJetOrbitFlatTableProducer);
+DEFINE_FWK_MODULE(SimpleL1ScoutingCaloTowerOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingBMTFStubOrbitFlatTableProducer);
