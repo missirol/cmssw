@@ -12,6 +12,7 @@
 <use name="FWCore/Utilities"/>
 <use name="IOPool/Provenance"/>
 <use name="L1TriggerScouting/Utilities"/>
+<use name="L1Trigger/L1TCalorimeter"/>
 <use name="PhysicsTools/NanoAOD"/>
 <use name="Utilities/General"/>
 <flags EDM_PLUGIN="1"/>
