@@ -294,6 +294,9 @@ typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::EGamma> SimpleL1ScoutingEGa
 typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::Tau> SimpleL1ScoutingTauOrbitFlatTableProducer;
 typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::Jet> SimpleL1ScoutingJetOrbitFlatTableProducer;
 
+#include "DataFormats/L1Scouting/interface/L1ScoutingCaloTower.h"
+typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::CaloTower> SimpleL1ScoutingCaloTowerOrbitFlatTableProducer;
+
 #include "DataFormats/L1Scouting/interface/L1ScoutingBMTFStub.h"
 typedef SimpleOrbitFlatTableProducer<l1ScoutingRun3::BMTFStub> SimpleL1ScoutingBMTFStubOrbitFlatTableProducer;
 
@@ -302,4 +305,5 @@ DEFINE_FWK_MODULE(SimpleL1ScoutingMuonOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingEGammaOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingTauOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingJetOrbitFlatTableProducer);
+DEFINE_FWK_MODULE(SimpleL1ScoutingCaloTowerOrbitFlatTableProducer);
 DEFINE_FWK_MODULE(SimpleL1ScoutingBMTFStubOrbitFlatTableProducer);
