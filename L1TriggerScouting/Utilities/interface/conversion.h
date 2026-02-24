@@ -2,7 +2,7 @@
 #define L1TriggerScouting_Utilities_conversion_h
 
 #include "L1TriggerScouting/Utilities/interface/scales.h"
-#include <cmath>
+#include <cstdint>
 
 namespace l1ScoutingRun3 {
 
@@ -35,9 +35,19 @@ namespace l1ScoutingRun3 {
   namespace calol1 {
 
     inline float fEt(int16_t hwEt) { return scales::et_scale * hwEt; };
-    float fEta(int16_t hwEta);
-    float fPhi(int16_t hwPhi);
 
+    static constexpr int16_t kHwEtaAbsMin = 1;
+    static constexpr int16_t kHwEtaAbsMax = 41;
+    static constexpr int16_t kHwEtaAbsHFFirst = 29;
+
+    bool validHwEta(int16_t hwEta);
+    float fEta(int16_t hwEta);
+
+    static constexpr int16_t kHwPhiMin = 1;
+    static constexpr int16_t kHwPhiMax = 72;
+
+    bool validHwPhi(int16_t hwPhi);
+    float fPhi(int16_t hwPhi);
   }  // namespace calol1
 
 }  // namespace l1ScoutingRun3

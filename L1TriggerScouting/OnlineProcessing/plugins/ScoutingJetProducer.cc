@@ -79,6 +79,18 @@ void ScoutingJetProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::
         continue;
       }
 
+      if (not l1ScoutingRun3::calol1::validHwEta(ct.hwEta())) {
+        edm::LogWarning("ScoutingJetProducer") << "CaloTower in BX=" << bx <<
+          " with invalid hwEta value (" << ct.hwEta() << ") will not be used for jet clustering !";
+        continue;
+      }
+
+      if (not l1ScoutingRun3::calol1::validHwPhi(ct.hwPhi())) {
+        edm::LogWarning("ScoutingJetProducer") << "CaloTower in BX=" << bx <<
+          " with invalid hwPhi value (" << ct.hwPhi() << ") will not be used for jet clustering !";
+        continue;
+      }
+
       float const ctEt = l1ScoutingRun3::calol1::fEt(ct.hwEt());
       float const ctEta = l1ScoutingRun3::calol1::fEta(ct.hwEta());
       float const ctPhi = l1ScoutingRun3::calol1::fPhi(ct.hwPhi());
