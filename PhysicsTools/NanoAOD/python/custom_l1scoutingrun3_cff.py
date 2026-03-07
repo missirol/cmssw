@@ -1,13 +1,10 @@
 import FWCore.ParameterSet.Config as cms
+
 from PhysicsTools.NanoAOD.l1scoutingrun3_cff import *
 
-#########################
-# Default Configuration #
-#########################
+from Configuration.Eras.Modifier_run3_l1scouting_2026_cff import run3_l1scouting_2026
 
-# since L1ScoutingNano should be run standalone only,
-# this replace task and sequences in standard NanoAOD
-nanoTableTaskCommon = cms.Task(
+l1scoutingNanoTask = cms.Task(
     l1scoutingMuonPhysicalValueMap,
     l1scoutingEGammaPhysicalValueMap,
     l1scoutingTauPhysicalValueMap,
@@ -20,87 +17,120 @@ nanoTableTaskCommon = cms.Task(
     l1scoutingBMTFStubTable,
 )
 
-nanoSequenceCommon = cms.Sequence(l1scoutingJetPhysicalValueMap + cms.Sequence(nanoTableTaskCommon))
+_l1scoutingNanoTask = l1scoutingNanoTask.copy()
+_l1scoutingNanoTask.add(l1scoutingCaloTowerPhysicalValueMap)
+_l1scoutingNanoTask.add(l1scoutingCaloTowerTable)
+run3_l1scouting_2026.toReplaceWith(l1scoutingNanoTask, _l1scoutingNanoTask)
 
-nanoSequence = cms.Sequence(nanoSequenceCommon)
+l1scoutingNanoSequence = cms.Sequence(l1scoutingNanoTask)
 
-nanoSequenceMC = cms.Sequence(nanoSequenceCommon)
+def _getOutputModuleLabels(process, outputModuleType):
+    return [outModLabel for outModLabel in process.outputModules_() \
+        if process.outputModules_()[outModLabel].type_() == outputModuleType]
 
+def _getPoolOutputModuleLabels(process):
+    return _getOutputModuleLabels(process, 'PoolOutputModule')
+
+def _getNanoAODOutputModuleLabels(process):
+    return _getOutputModuleLabels(process, 'NanoAODOutputModule')
+
+def _getOrbitNanoAODOutputModuleLabels(process):
+    return _getOutputModuleLabels(process, 'OrbitNanoAODOutputModule')
+
+###
+### Customisation to run on the "L1Scouting" primary dataset
+###
 def customiseL1ScoutingNanoAOD(process):
-    # change OutputModule to OrbitNanoAODOutputModule
-    if hasattr(process, "NANOAODoutput"):
-        print("custom_l1scoutingrun3_cff: Change NANOAODoutput to OrbitNanoAODOutputModule")
-        setattr(process, "NANOAODoutput",
-            cms.OutputModule("OrbitNanoAODOutputModule",
-                # copy from standard NanoAOD
-                compressionAlgorithm = process.NANOAODoutput.compressionAlgorithm,
-                compressionLevel = process.NANOAODoutput.compressionLevel,
-                dataset = process.NANOAODoutput.dataset,
-                fileName = process.NANOAODoutput.fileName,
-                # change eventcontent
-                outputCommands = cms.untracked.vstring(
-                    "drop *",
-                    "keep l1ScoutingRun3OrbitFlatTable_*_*_*"),
-                # additional parameters for l1scouting 
-                SelectEvents = cms.untracked.PSet(
-                    SelectEvents = cms.vstring('nanoAOD_step') # l1scouting runs standalone only
-                ),
-                skipEmptyBXs = cms.bool(True), # drop empty bxs
-            )
-        )
+    # NANO: convert instances of NanoAODOutputModule to instances of OrbitNanoAODOutputModule
+    nanoAODOutputModuleLabels = _getNanoAODOutputModuleLabels(process)
+    for outModLabel in nanoAODOutputModuleLabels:
+        outMod = getattr(process, outModLabel)
+        setattr(process, outModLabel, cms.OutputModule("OrbitNanoAODOutputModule",
+            **outMod.parameters_(),
+            skipEmptyBXs = cms.bool(True), # drop empty BXs
+            selectedBx = cms.InputTag('')
+        ))
+
+    # NANO and NANOEDM: customise the event content
+    poolOutputModuleLabels = _getPoolOutputModuleLabels(process)
+    for outModLabel in (nanoAODOutputModuleLabels + poolOutputModuleLabels):
+        outMod = getattr(process, outModLabel)
+        outMod.outputCommands = [
+            "drop *",
+            "keep l1ScoutingRun3OrbitFlatTable_*_*_*",
+        ]
 
     return process
 
-#################
-# Customisation #
-#################
-# these function are designed to be used with --customise flag in cmsDriver.py
-# e.g. --customise PhysicsTools/NanoAOD/python/custom_l1scoutingrun3_cff.dropStub
-
-# configure to run with L1ScoutingSelection dataset
-# should be used with default customiseL1ScoutingNanoAOD
+###
+### Customisation to run on the "L1ScoutingSelection" primary dataset
+###
 def customiseL1ScoutingNanoAODSelection(process):
-    # change sources
-    process.l1scoutingMuonPhysicalValueMap.src = cms.InputTag("FinalBxSelectorMuon", "Muon")
-    process.l1scoutingEGammaPhysicalValueMap.src = cms.InputTag("FinalBxSelectorEGamma", "EGamma")
-    process.l1scoutingJetPhysicalValueMap.src = cms.InputTag("FinalBxSelectorJet", "Jet")
+    process = customiseL1ScoutingNanoAOD(process)
 
-    process.l1scoutingMuonTable.src = cms.InputTag("FinalBxSelectorMuon", "Muon")
-    process.l1scoutingEGammaTable.src = cms.InputTag("FinalBxSelectorEGamma", "EGamma")
-    process.l1scoutingJetTable.src = cms.InputTag("FinalBxSelectorJet", "Jet")
-    process.l1scoutingEtSumTable.src = cms.InputTag("FinalBxSelectorBxSums", "EtSum")
-    process.l1scoutingBMTFStubTable.src = cms.InputTag("FinalBxSelectorBMTFStub", "BMTFStub")
+    # change input collections from the L1SCOUT data tier
+    process.l1scoutingMuonPhysicalValueMap.src = "FinalBxSelectorMuon:Muon"
+    process.l1scoutingEGammaPhysicalValueMap.src = "FinalBxSelectorEGamma:EGamma"
+    process.l1scoutingJetPhysicalValueMap.src = "FinalBxSelectorJet:Jet"
+    process.l1scoutingCaloTowerPhysicalValueMap.src = "FinalBxSelectorCaloTower:CaloTower"
+
+    process.l1scoutingMuonTable.src = "FinalBxSelectorMuon:Muon"
+    process.l1scoutingEGammaTable.src = "FinalBxSelectorEGamma:EGamma"
+    process.l1scoutingJetTable.src = "FinalBxSelectorJet:Jet"
+    process.l1scoutingEtSumTable.src = "FinalBxSelectorBxSums:EtSum"
+    process.l1scoutingBMTFStubTable.src = "FinalBxSelectorBMTFStub:BMTFStub"
+    process.l1scoutingCaloTowerTable.src = "FinalBxSelectorCaloTower:CaloTower"
+
+    # do not throw an exception if CaloTowers are not present in the L1ScoutingSelection dataset
+    process.l1scoutingCaloTowerTable.skipNonExistingSrc = True
 
     # drop L1Tau
-    process.nanoTableTaskCommon.remove(process.l1scoutingTauTable)
+    process.l1scoutingNanoTask.remove(process.l1scoutingTauTable)
 
-    # change parameters in OrbitNanoAODOutputModule
-    process.NANOAODoutput.outputCommands += ["keep uints_*_SelBx_*"] # keep SelBx
-    process.NANOAODoutput.selectedBx = cms.InputTag("FinalBxSelector", "SelBx") # use to select products
+    # NANO: customise instances of OrbitNanoAODOutputModule
+    for outModLabel in _getOrbitNanoAODOutputModuleLabels(process):
+        outMod = getattr(process, outModLabel)
+        outMod.outputCommands += ["keep uints_*_SelBx_*"] # keep SelBx
+        outMod.selectedBx = "FinalBxSelector:SelBx" # use to select products
+
+    # NANOEDM: modify outputCommands of PoolOutputModule instances
+    for outModLabel in _getPoolOutputModuleLabels(process):
+        outMod = getattr(process, outModLabel)
+        outMod.outputCommands += ["keep uints_*_SelBx_*"] # keep SelBx
 
     return process
 
+###
+### Additional customisations
+###
+###  - These functions are designed to be used with the --customise flag of cmsDriver.py,
+###    e.g. "--customise PhysicsTools/NanoAOD/python/custom_l1scoutingrun3_cff.dropStub".
+###
 def addHardwareValues(process):
     # add hardware values to variables
     process.l1scoutingMuonTable.variables = cms.PSet(
-            process.l1scoutingMuonTable.variables,
-            l1scoutingMuonUnconvertedVariables
+        process.l1scoutingMuonTable.variables,
+        l1scoutingMuonUnconvertedVariables
     )
     process.l1scoutingEGammaTable.variables = cms.PSet(
-            process.l1scoutingEGammaTable.variables,
-            l1scoutingCaloObjectUnconvertedVariables
+        process.l1scoutingEGammaTable.variables,
+        l1scoutingCaloObjectUnconvertedVariables
     )
     process.l1scoutingTauTable.variables = cms.PSet(
-            process.l1scoutingTauTable.variables,
-            l1scoutingCaloObjectUnconvertedVariables
+        process.l1scoutingTauTable.variables,
+        l1scoutingCaloObjectUnconvertedVariables
     )
     process.l1scoutingJetTable.variables = cms.PSet(
-            process.l1scoutingJetTable.variables,
-            l1scoutingCaloObjectUnconvertedVariables
+        process.l1scoutingJetTable.variables,
+        l1scoutingCaloObjectUnconvertedVariables
+    )
+    process.l1scoutingCaloTowerTable.variables = cms.PSet(
+        process.l1scoutingCaloTowerTable.variables,
+        l1scoutingCaloTowerUnconvertedVariables
     )
 
     # EtSum uses dedicated EDProducer and can add hardware values by setting a boolean
-    process.l1scoutingEtSumTable.writeHardwareValues = cms.bool(True)
+    process.l1scoutingEtSumTable.writeHardwareValues = True
 
     return process
 
@@ -114,24 +144,27 @@ def keepHardwareValuesOnly(process):
     process.l1scoutingEGammaTable.externalVariables = cms.PSet()
     process.l1scoutingTauTable.externalVariables = cms.PSet()
     process.l1scoutingJetTable.externalVariables = cms.PSet()
+    process.l1scoutingCaloTowerTable.externalVariables = cms.PSet()
 
     # EtSum uses dedicated EDProducer and can remove physical values by setting a boolean
-    process.l1scoutingEtSumTable.writePhysicalValues = cms.bool(False)
+    process.l1scoutingEtSumTable.writePhysicalValues = False
 
     return process
 
 def outputMultipleEtSums(process):
-    process.l1scoutingEtSumTable.singleton = cms.bool(False)
+    process.l1scoutingEtSumTable.singleton = False
     return process
 
 def dropEmptyBXs(process):
-    process.NANOAODoutput.skipEmptyBXs = cms.bool(True)
+    for outModLabel in _getOrbitNanoAODOutputModuleLabels(process):
+        getattr(process, outModLabel).skipEmptyBXs = True
     return process
 
 def keepEmptyBXs(process):
-    process.NANOAODoutput.skipEmptyBXs = cms.bool(False)
+    for outModLabel in _getOrbitNanoAODOutputModuleLabels(process):
+        getattr(process, outModLabel).skipEmptyBXs = False
     return process
 
 def dropBMTFStub(process):
-    process.nanoTableTaskCommon.remove(process.l1scoutingBMTFStubTable)
+    process.l1scoutingNanoTask.remove(process.l1scoutingBMTFStubTable)
     return process
