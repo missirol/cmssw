@@ -52,6 +52,15 @@ void L1ScoutingCaloTowerPhysicalValueMapProducer::produce(edm::StreamID,
   std::vector<float> outv_fEta{};
   std::vector<float> outv_fPhi{};
 
+  //!!!!!!!!!!!!!!!!!!!!!!!
+  //!!!!!!!!!!!!!!!!!!!!!!!
+  //!!!!!!!!!!!!!!!!!!!!!!!
+  //!!!!!!!!!!!!!!!!!!!!!!! An absolute hack, see https://gitlab.cern.ch/scouting-demonstrator/scouting-fm-configuration/-/merge_requests/12
+  //!!!!!!!!!!!!!!!!!!!!!!!
+  //!!!!!!!!!!!!!!!!!!!!!!!
+  //!!!!!!!!!!!!!!!!!!!!!!!
+  int const HACK_INDEX = (iEvent.run() < 402330) ? 1 : 0;
+
   if (src_h.isValid()) {
     auto const& src = *src_h;
     auto const nobjs = src.size();
@@ -64,7 +73,7 @@ void L1ScoutingCaloTowerPhysicalValueMapProducer::produce(edm::StreamID,
       auto const& obj = src[iobj];
       outv_fEt.emplace_back(l1ScoutingRun3::calol1::fEt(obj.hwEt()));
       outv_fEta.emplace_back(l1ScoutingRun3::calol1::fEta(obj.hwEta()));
-      outv_fPhi.emplace_back(l1ScoutingRun3::calol1::fPhi(obj.hwPhi()));
+      outv_fPhi.emplace_back(l1ScoutingRun3::calol1::fPhi(obj.hwPhi() + HACK_INDEX));
     }
 
     putValueMap(iEvent, src_h, outv_fEt, "fEt");
