@@ -184,6 +184,15 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
   // create pseudojet vector to be filled
   std::vector<fastjet::PseudoJet> pjCTs;
 
+//!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!! An absolute hack, see https://gitlab.cern.ch/scouting-demonstrator/scouting-fm-configuration/-/merge_requests/12
+//!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!
+  int const HACK_INDEX = (iEvent.run() < 402330) ? 1 : 0;
+
   // loop over valid bunch crossings
   for (auto const bx : caloTowerCollection.getFilledBxs()) {
     LogTrace("L1ScoutingCaloJetProducer")
@@ -209,15 +218,17 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
         continue;
       }
 
-      if (not l1ScoutingRun3::calol1::validHwPhi(ct.hwPhi())) {
+      auto const ct_hwPhi = ct.hwPhi() + HACK_INDEX;
+
+      if (not l1ScoutingRun3::calol1::validHwPhi(ct_hwPhi)) {
         edm::LogWarning("L1ScoutingCaloJetProducer") << "CaloTower in BX=" << bx << " with invalid hwPhi value ("
-                                                     << ct.hwPhi() << ") will not be used for jet clustering !";
+                                                     << ct_hwPhi << ") will not be used for jet clustering !";
         continue;
       }
 
       float const ctEt = l1ScoutingRun3::calol1::fEt(ct.hwEt());
       float const ctEta = l1ScoutingRun3::calol1::fEta(ct.hwEta());
-      float const ctPhi = l1ScoutingRun3::calol1::fPhi(ct.hwPhi());
+      float const ctPhi = l1ScoutingRun3::calol1::fPhi(ct_hwPhi);
 
       pjCTs.emplace_back(fastjet::PtYPhiM(ctEt, ctEta, ctPhi, 0));
 
