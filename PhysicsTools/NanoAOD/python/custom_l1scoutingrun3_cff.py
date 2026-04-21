@@ -184,3 +184,44 @@ def dropBMTFStub(process):
     """
     process.l1scoutingNanoTask.remove(process.l1scoutingBMTFStubTable)
     return process
+
+def addAK4CaloJets(process):
+    """Customisation to run jet clustering on CaloTowers to produce CaloJets,
+      and include the corresponding NanoAOD tables
+    """
+    from L1TriggerScouting.OnlineProcessing.L1ScoutingCaloJetProducer import L1ScoutingCaloJetProducer
+    process.l1scoutingAK4CaloJets = L1ScoutingCaloJetProducer(
+        src = process.l1scoutingCaloTowerTable.src,
+        akR = 0.4,
+        ptMin = 5,
+        towerMinHwEt = 1,
+        towerMaxHwEt = -1,
+        applyJECs = True,
+        jecFile = 'L1TriggerScouting/OnlineProcessing/data/JEC_AK4CaloTowerL1S_Run3Winter25_v2.txt',
+        jecPUProxyTowerMinHwEt = 1,
+        jecPUProxyTowerMaxHwEt = -1,
+        jecPUProxyTowerMinAbsHwEta = 0,
+        jecPUProxyTowerMaxAbsHwEta = 4,
+        mantissaPrecision = 10
+    )
+
+    process.l1scoutingAK4CaloJetsTable = cms.EDProducer("SimpleL1ScoutingCaloJetOrbitFlatTableProducer",
+        src = cms.InputTag("l1scoutingAK4CaloJets:CaloJet"),
+        name = cms.string("L1CaloJet"),
+        doc = cms.string("AK4 CaloTowerJets"),
+        singleton = cms.bool(False),
+        skipNonExistingSrc = cms.bool(False),
+        variables = cms.PSet(
+            pt = Var("pt()", "float", doc="pt", precision=10),
+            eta = Var("eta()", "float", doc="eta", precision=10),
+            phi = Var("phi()", "float", doc="phi", precision=10),
+            mass = Var("mass()", "float", doc="mass", precision=10),
+            energyCorr = Var("energyCorr()", "float", doc="Energy-scale correction applied to the jet", precision=10),
+            nConst = Var("nConst()", "int", doc="Number of jet constituents (CaloTowers)"),
+        )
+    )
+
+    process.l1scoutingNanoTask.add(process.l1scoutingAK4CaloJets)
+    process.l1scoutingNanoTask.add(process.l1scoutingAK4CaloJetsTable)
+
+    return process
