@@ -2,6 +2,8 @@ import FWCore.ParameterSet.Config as cms
 
 from PhysicsTools.NanoAOD.common_cff import *
 
+l1scout_float_precision_ = -1
+
 ##############################
 # Unconverted Hardware Value #
 ##############################
@@ -103,12 +105,12 @@ l1scoutingMuonTable = cms.EDProducer("SimpleL1ScoutingMuonOrbitFlatTableProducer
         hwDXY = Var("hwDXY()", "uint16", doc="hardware dxy"),
     ),
     externalVariables = cms.PSet(
-        pt = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPt"), "float", doc="pt"),
-        eta = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fEta"), "float", doc="eta"),
-        phi = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPhi"), "float", doc="phi"),
-        ptUnconstrained = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPtUnconstrained"), "float", doc="unconstrained pt"),
-        etaAtVtx = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fEtaAtVtx"), "float", doc="eta extrapolated at beam line"),
-        phiAtVtx = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPhiAtVtx"), "float", doc="phi extrapolated at beam line"),
+        pt = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPt"), "float", precision=l1scout_float_precision_, doc="pt"),
+        eta = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fEta"), "float", precision=l1scout_float_precision_, doc="eta"),
+        phi = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPhi"), "float", precision=l1scout_float_precision_, doc="phi"),
+        ptUnconstrained = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPtUnconstrained"), "float", precision=l1scout_float_precision_, doc="unconstrained pt"),
+        etaAtVtx = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fEtaAtVtx"), "float", precision=l1scout_float_precision_, doc="eta extrapolated at beam line"),
+        phiAtVtx = ExtVar(cms.InputTag("l1scoutingMuonPhysicalValueMap", "fPhiAtVtx"), "float", precision=l1scout_float_precision_, doc="phi extrapolated at beam line"),
     ),
 )
 
@@ -123,9 +125,9 @@ l1scoutingEGammaTable = cms.EDProducer("SimpleL1ScoutingEGammaOrbitFlatTableProd
         hwIso = Var("hwIso()", "int16", doc="hardware isolation (trigger units)")
     ),
     externalVariables = cms.PSet(
-        pt = ExtVar(cms.InputTag("l1scoutingEGammaPhysicalValueMap", "fEt"), "float", doc="pt"),
-        eta = ExtVar(cms.InputTag("l1scoutingEGammaPhysicalValueMap", "fEta"), "float", doc="eta"),
-        phi = ExtVar(cms.InputTag("l1scoutingEGammaPhysicalValueMap", "fPhi"), "float", doc="phi"),
+        pt = ExtVar(cms.InputTag("l1scoutingEGammaPhysicalValueMap", "fEt"), "float", precision=l1scout_float_precision_, doc="pt"),
+        eta = ExtVar(cms.InputTag("l1scoutingEGammaPhysicalValueMap", "fEta"), "float", precision=l1scout_float_precision_, doc="eta"),
+        phi = ExtVar(cms.InputTag("l1scoutingEGammaPhysicalValueMap", "fPhi"), "float", precision=l1scout_float_precision_, doc="phi"),
     ),
 )
 
@@ -140,9 +142,9 @@ l1scoutingTauTable = cms.EDProducer("SimpleL1ScoutingTauOrbitFlatTableProducer",
         hwIso = Var("hwIso()", "int16", doc="hardware isolation (trigger units)")
     ),
     externalVariables = cms.PSet(
-        pt = ExtVar(cms.InputTag("l1scoutingTauPhysicalValueMap", "fEt"), "float", doc="pt"),
-        eta = ExtVar(cms.InputTag("l1scoutingTauPhysicalValueMap", "fEta"), "float", doc="eta"),
-        phi = ExtVar(cms.InputTag("l1scoutingTauPhysicalValueMap", "fPhi"), "float", doc="phi"),
+        pt = ExtVar(cms.InputTag("l1scoutingTauPhysicalValueMap", "fEt"), "float", precision=l1scout_float_precision_, doc="pt"),
+        eta = ExtVar(cms.InputTag("l1scoutingTauPhysicalValueMap", "fEta"), "float", precision=l1scout_float_precision_, doc="eta"),
+        phi = ExtVar(cms.InputTag("l1scoutingTauPhysicalValueMap", "fPhi"), "float", precision=l1scout_float_precision_, doc="phi"),
     ),
 )
 
@@ -158,9 +160,9 @@ l1scoutingJetTable = cms.EDProducer("SimpleL1ScoutingJetOrbitFlatTableProducer",
         hwQual = Var("hwQual()", "int16", doc="hardware quality"),
     ),
     externalVariables = cms.PSet(
-        pt = ExtVar(cms.InputTag("l1scoutingJetPhysicalValueMap", "fEt"), "float", doc="pt"),
-        eta = ExtVar(cms.InputTag("l1scoutingJetPhysicalValueMap", "fEta"), "float", doc="eta"),
-        phi = ExtVar(cms.InputTag("l1scoutingJetPhysicalValueMap", "fPhi"), "float", doc="phi"),
+        pt = ExtVar(cms.InputTag("l1scoutingJetPhysicalValueMap", "fEt"), "float", precision=l1scout_float_precision_, doc="pt"),
+        eta = ExtVar(cms.InputTag("l1scoutingJetPhysicalValueMap", "fEta"), "float", precision=l1scout_float_precision_, doc="eta"),
+        phi = ExtVar(cms.InputTag("l1scoutingJetPhysicalValueMap", "fPhi"), "float", precision=l1scout_float_precision_, doc="phi"),
     ),
 )
 
@@ -211,8 +213,8 @@ l1scoutingCaloTowerTable = cms.EDProducer("SimpleL1ScoutingCaloTowerOrbitFlatTab
         miscBits = Var("miscBits()", "int16", doc="hardware misc-bits"),
     ),
     externalVariables = cms.PSet(
-        pt = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fEt"), "float", doc="pt", precision=10),
-        eta = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fEta"), "float", doc="eta", precision=10),
-        phi = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fPhi"), "float", doc="phi", precision=10),
+        pt = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fEt"), "float", precision=l1scout_float_precision_, doc="pt"),
+        eta = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fEta"), "float", precision=l1scout_float_precision_, doc="eta"),
+        phi = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fPhi"), "float", precision=l1scout_float_precision_, doc="phi"),
     )
 )
