@@ -116,8 +116,8 @@ void L1TdeStage2CaloLayer1::analyze(const edm::Event& event, const edm::EventSet
 
       etCorrelation_->Fill(dataTower.et(), emulTower.et());
 
-      const uint32_t data_fb = dataTower.fb() & 0b1011;
-      const uint32_t emul_fb = emulTower.fb() & 0b1011;
+      const uint32_t data_fb = dataTower.fb() & 0b1111;
+      const uint32_t emul_fb = emulTower.fb() & 0b1111;
       if (abs(dataTower.ieta_) >= 30) {
         fbCorrelationHF_->Fill(data_fb, emul_fb);
       } else {
