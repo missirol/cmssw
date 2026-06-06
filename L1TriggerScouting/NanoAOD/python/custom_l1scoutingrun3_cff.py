@@ -184,3 +184,79 @@ def dropBMTFStub(process):
     """
     process.l1scoutingNanoTask.remove(process.l1scoutingBMTFStubTable)
     return process
+
+def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelection):
+
+    from L1TriggerScouting.OnlineProcessing.modules import L1SCaloTowerReProcessor
+    process.l1ScCaloTowerFixed = L1SCaloTowerReProcessor(
+        src = 'l1ScCaloTowerUnpacker:CaloTower',
+        fixBunchCrossing = False,
+    )
+
+    process.l1scoutingCaloTowerPhysicalValueMap.src = 'l1ScCaloTowerFixed'
+    process.l1scoutingCaloTowerTable.src = 'l1ScCaloTowerFixed'
+
+    from L1TriggerScouting.OnlineProcessing.modules import L1ScoutingCaloJetProducer
+    process.l1ScAK4CaloJets = L1ScoutingCaloJetProducer(
+        src = 'l1ScCaloTowerFixed',
+        akR = 0.4,
+        ptMin = 5,
+        applyJECs = True,
+        jecFile = 'L1TriggerScouting/OnlineProcessing/data/JEC_AK4CaloTowerL1S_Run3Winter25_v2.txt',
+        jecPUProxyTowerMinHwEt = 1,
+        jecPUProxyTowerMaxHwEt = -1,
+        jecPUProxyTowerMinAbsHwEta = 0,
+        jecPUProxyTowerMaxAbsHwEta = 4,
+        mantissaPrecision = 10,
+    )
+
+    process.l1scoutingCaloJetTable.src = 'l1ScAK4CaloJets:CaloJet'
+
+    # add CaloTowers' hardware values for validation purposes
+    process.l1scoutingCaloTowerTable.variables = cms.PSet(
+        process.l1scoutingCaloTowerTable.variables,
+        l1scoutingCaloTowerUnconvertedVariables
+    )
+
+    if isL1ScoutingSelection:
+        process = customiseL1ScoutingNanoAODSelection(process)
+        process.l1ScCaloTowerFixed.src = 'FinalBxSelectorCaloTower:CaloTower'
+
+        from L1TriggerScouting.OnlineProcessing.modules import CaloTowerBxSelector
+        process.l1ScBXsWithCaloTowers = CaloTowerBxSelector(
+            towersTag = 'l1ScCaloTowerFixed',
+            minNTower = 1,
+        )
+        process.l1scoutingNanoTask.add(process.l1ScBXsWithCaloTowers)
+    else:
+        L1SCOUTNanoAODEDMEventContent.outputCommands = [
+            "drop *",
+            "keep l1ScoutingRun3OrbitFlatTable_l1scoutingCaloTowerTable_*_*",
+            "keep l1ScoutingRun3OrbitFlatTable_l1scoutingCaloJetTable_*_*",
+        ]
+        L1SCOUTNANOAODEventContent.outputCommands = L1SCOUTNanoAODEDMEventContent.outputCommands[:]
+        process = customiseL1ScoutingNanoAOD(process)
+        process.l1scoutingNanoTask = cms.Task(
+            process.l1scoutingCaloTowerPhysicalValueMap,
+            process.l1scoutingCaloTowerTable
+        )
+
+    process.l1scoutingNanoTask.add(process.l1ScCaloTowerFixed)
+    process.l1scoutingNanoTask.add(process.l1ScAK4CaloJets)
+    process.l1scoutingNanoTask.add(process.l1scoutingCaloJetTable)
+
+    for outModLabel in _getOrbitNanoAODOutputModuleLabels(process):
+        outMod = getattr(process, outModLabel)
+        outMod.skipEmptyBXs = True
+        outMod.fixOrbitAndBX = cms.untracked.bool(not isL1ScoutingSelection)
+        outMod.selectedBx = 'l1ScBXsWithCaloTowers:SelBx' if isL1ScoutingSelection else ''
+
+    return process
+
+def customiseL1ScoutingNanoAODForCaloTowersReReco(process):
+    process = customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelection=False)
+    return process
+
+def customiseL1ScoutingNanoAODForCaloTowersReRecoSelection(process):
+    process = customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelection=True)
+    return process

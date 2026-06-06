@@ -216,3 +216,20 @@ l1scoutingCaloTowerTable = cms.EDProducer("SimpleL1ScoutingCaloTowerOrbitFlatTab
         phi = ExtVar(cms.InputTag("l1scoutingCaloTowerPhysicalValueMap", "fPhi"), "float", doc="phi", precision=10),
     )
 )
+
+# CaloJets
+l1scoutingCaloJetTable = cms.EDProducer("SimpleL1ScoutingCaloJetOrbitFlatTableProducer",
+    src = cms.InputTag("l1ScAK4CaloJets", "CaloJet"),
+    name = cms.string("L1CaloJet"),
+    doc = cms.string("AK4 Jets based on CaloTowers from Calo Layer-1"),
+    singleton = cms.bool(False),
+    skipNonExistingSrc = cms.bool(False),
+    variables = cms.PSet(
+        pt = Var("pt()", "float", doc="jet pT", precision=10),
+        eta = Var("eta()", "float", doc="jet eta", precision=10),
+        phi = Var("phi()", "float", doc="jet phi", precision=10),
+        mass = Var("mass()", "float", doc="jet mass", precision=10),
+        energyCorr = Var("energyCorr()", "float", doc="correction factor applied to the jet-energy scale"),
+        nConst = Var("nConst()", "int", doc="number of jet constituents"),
+    )
+)
