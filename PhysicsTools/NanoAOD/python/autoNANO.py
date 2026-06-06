@@ -43,6 +43,12 @@ autoNANO = {
                 'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAOD'},
     'L1ScoutSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
                       'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODSelection'},
+
+    'L1ScoutReReco': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
+                      'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReReco'},
+    'L1ScoutReRecoSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
+                            'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoSelection'},
+
     # BPH nano
     'BPH' : {'sequence': '@PHYS',
              'customize': '@PHYS+PhysicsTools/NanoAOD/custom_bph_cff.nanoAOD_customizeBPH'},
