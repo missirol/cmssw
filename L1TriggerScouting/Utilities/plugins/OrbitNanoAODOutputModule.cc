@@ -14,6 +14,7 @@
 // system include files
 #include <algorithm>
 #include <memory>
+#include <unordered_set>
 
 #include "Compression.h"
 #include "TFile.h"
@@ -30,9 +31,11 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/MessageLogger/interface/JobReport.h"
 #include "FWCore/Utilities/interface/GlobalIdentifier.h"
 #include "FWCore/Utilities/interface/Digest.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Provenance/interface/CommonProvenanceFiller.h"
 #include "DataFormats/Provenance/interface/BranchType.h"
 #include "DataFormats/Provenance/interface/BranchDescription.h"
@@ -40,6 +43,8 @@
 #include "DataFormats/NanoAOD/interface/FlatTable.h"
 #include "L1TriggerScouting/Utilities/plugins/OrbitTableOutputBranches.h"
 #include "L1TriggerScouting/Utilities/plugins/SelectedBxTableOutputBranches.h"
+
+#include "L1TriggerScouting/Utilities/interface/L1SCaloTowerRecoFixer.h"
 
 #include "oneapi/tbb/task_arena.h"
 
@@ -67,6 +72,7 @@ private:
   bool m_writeProvenance;
   bool m_fakeName;  //crab workaround, remove after crab is fixed
   int m_autoFlush;
+  bool m_fixOrbitAndBX;
   edm::ProcessHistoryRegistry m_processHistoryRegistry;
   edm::JobReport::Token m_jrToken;
   std::unique_ptr<TFile> m_file;
@@ -86,6 +92,11 @@ private:
       m_run = aux.id().run();
       m_luminosityBlock = aux.id().luminosityBlock();
       m_orbitNumber = aux.id().event();  // in L1Scouting, one processing event is one orbit
+    }
+    void fill(const edm::EventAuxiliary& aux, int const orbitNumber) {
+      m_run = aux.id().run();
+      m_luminosityBlock = aux.id().luminosityBlock();
+      m_orbitNumber = orbitNumber;
     }
     void setBx(unsigned bx) { m_bunchCrossing = bx; }
 
@@ -127,6 +138,7 @@ private:
   std::vector<OrbitTableOutputBranches> m_tables;
   std::vector<SelectedBxTableOutputBranches> m_selbxs;
   unsigned int m_nOrbits;
+  std::unordered_set<int> m_orbitset;
 
   std::vector<std::pair<std::string, edm::EDGetToken>> m_nanoMetadata;
 
@@ -156,6 +168,7 @@ OrbitNanoAODOutputModule::OrbitNanoAODOutputModule(edm::ParameterSet const& pset
       m_writeProvenance(pset.getUntrackedParameter<bool>("saveProvenance", true)),
       m_fakeName(pset.getUntrackedParameter<bool>("fakeNameForCrab", false)),
       m_autoFlush(pset.getUntrackedParameter<int>("autoFlush", -10000000)),
+      m_fixOrbitAndBX(pset.getUntrackedParameter<bool>("fixOrbitAndBX")),
       m_processHistoryRegistry(),
       m_nOrbits(0) {
   edm::InputTag bxMask = pset.getParameter<edm::InputTag>("selectedBx");
@@ -175,7 +188,10 @@ void OrbitNanoAODOutputModule::write(edm::EventForOutput const& iEvent) {
   //Get data from 'e' and write it to the file
   edm::Service<edm::JobReport> jr;
   jr->eventWrittenToFile(m_jrToken, iEvent.id().run(), iEvent.id().event());
-  m_nOrbits++;
+
+  if (not m_fixOrbitAndBX) {
+    m_nOrbits++;
+  }
 
   if (m_autoFlush) {
     int64_t events = m_tree->GetEntriesFast();
@@ -210,7 +226,10 @@ void OrbitNanoAODOutputModule::write(edm::EventForOutput const& iEvent) {
     m_eventsSinceFlush++;
   }
 
-  m_commonBranches.fill(iEvent.eventAuxiliary());
+  if (not m_fixOrbitAndBX) {
+    m_commonBranches.fill(iEvent.eventAuxiliary());
+  }
+
   // fill all tables, starting from main tables and then doing extension tables
   for (unsigned int extensions = 0; extensions <= 1; ++extensions) {
     for (auto& t : m_tables) {
@@ -244,7 +263,19 @@ void OrbitNanoAODOutputModule::write(edm::EventForOutput const& iEvent) {
         }
       }
 
-      m_commonBranches.setBx(bx);
+      if (not m_fixOrbitAndBX) {
+        m_commonBranches.setBx(bx);
+      } else {
+        L1SCaloTowerRecoFixer fixer(iEvent.run(), iEvent.id().event(), bx);
+
+        auto const new_orbit = fixer.orbit_correct();
+        m_commonBranches.fill(iEvent.eventAuxiliary(), new_orbit);
+        m_orbitset.insert(new_orbit);
+
+        auto const new_bx = fixer.bx_correct();
+        m_commonBranches.setBx(new_bx);
+      }
+
       for (auto& t : m_tables) {
         t.fillBx(bx);
       }
@@ -269,13 +300,22 @@ void OrbitNanoAODOutputModule::writeLuminosityBlock(edm::LuminosityBlockForOutpu
   edm::Service<edm::JobReport> jr;
   jr->reportLumiSection(m_jrToken, iLumi.id().run(), iLumi.id().value());
 
-  m_commonLumiBranches.fill(iLumi.id(), m_nOrbits);
+  if (m_fixOrbitAndBX) {
+    m_commonLumiBranches.fill(iLumi.id(), m_orbitset.size());
+  } else {
+    m_commonLumiBranches.fill(iLumi.id(), m_nOrbits);
+  }
 
   tbb::this_task_arena::isolate([&] { m_lumiTree->Fill(); });
 
   m_processHistoryRegistry.registerProcessHistory(iLumi.processHistory());
 
-  m_nOrbits = 0;
+  if (m_fixOrbitAndBX) {
+    std::unordered_set<int> empty;
+    m_orbitset.swap(empty);
+  } else {
+    m_nOrbits = 0;
+  }
 }
 
 void OrbitNanoAODOutputModule::writeRun(edm::RunForOutput const& iRun) {
@@ -393,6 +433,8 @@ void OrbitNanoAODOutputModule::fillDescriptions(edm::ConfigurationDescriptions& 
           "crab "
           "(and publish) till crab is fixed");
   desc.addUntracked<int>("autoFlush", -10000000)->setComment("Autoflush parameter for ROOT file");
+
+  desc.addUntracked<bool>("fixOrbitAndBX", false)->setComment("Fix the orbit and BX values if not correct");
 
   //replace with whatever you want to get from the EDM by default
   const std::vector<std::string> keep = {"drop *", "keep l1ScoutingRun3OrbitFlatTable_*Table_*_*"};
