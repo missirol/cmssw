@@ -425,6 +425,9 @@ namespace l1t {
     int etSumEtaMin(unsigned isum) const;
     int etSumEtaMax(unsigned isum) const;
     double etSumEtThreshold(unsigned isum) const;
+    unsigned int etSumEtaMinSize() const { return etSumEtaMin_.size(); }
+    unsigned int etSumEtaMaxSize() const { return etSumEtaMax_.size(); }
+    unsigned int etSumEtThresholdSize() const { return etSumEtThreshold_.size(); }
     unsigned etSumBypassMetPUS() const { return pnode_[etSumBypassMetPUSFlag].uparams_[0]; }
     unsigned etSumBypassEttPUS() const { return pnode_[etSumBypassEttPUSFlag].uparams_[0]; }
     unsigned etSumBypassEcalSumPUS() const { return pnode_[etSumBypassEcalSumPUSFlag].uparams_[0]; }
