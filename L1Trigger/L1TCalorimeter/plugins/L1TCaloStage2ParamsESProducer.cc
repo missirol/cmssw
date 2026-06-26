@@ -389,6 +389,7 @@ L1TCaloStage2ParamsESProducer::~L1TCaloStage2ParamsESProducer() {
 
 // ------------ method called to produce the data  ------------
 L1TCaloStage2ParamsESProducer::ReturnType L1TCaloStage2ParamsESProducer::produce(const L1TCaloParamsRcd& iRecord) {
+edm::LogPrint("L1TCaloStage2ParamsESProducer") << "ZZZ L1TCaloStage2ParamsESProducer";
   return std::make_unique<CaloParams>(m_params);
 }
 

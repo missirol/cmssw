@@ -177,6 +177,17 @@ bool L1TCaloLayer1FetchLUTs(
   for (uint32_t phiBin = 0; phiBin < numEcalPhiBins; phiBin++) {
     std::array<std::array<std::array<uint32_t, nEtBins>, nCalSideBins>, nCalEtaBins> phiLUT;
 
+    for (uint32_t etaBin = 25; etaBin < 28; etaBin++) {
+        for (uint32_t ecalInput = 0; ecalInput <= 0xFF; ecalInput++) {
+            if (ecalZSF.size() >= 28 && ecalInput < ecalZSF.size() / 28 - 1) {
+
+edm::LogPrint("") << "LUT[" << etaBin+1 << "][" << ecalInput << "] = " << ecalZSF.at(ecalInput * 28 + etaBin);
+
+            }
+        }
+    }
+
+
     for (uint32_t etaBin = 0; etaBin < nCalEtaBins; etaBin++) {
       for (uint32_t fb = 0; fb < nCalSideBins; fb++) {
         for (uint32_t ecalInput = 0; ecalInput <= 0xFF; ecalInput++) {

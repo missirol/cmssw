@@ -25,6 +25,7 @@
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -184,6 +185,11 @@ void L1TCaloLayer1::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     int et = ecalTp.compressedEt();
     bool fgVeto = ecalTp.fineGrain();
     UCTTowerIndex t = UCTTowerIndex(caloEta, caloPhi);
+
+if (et > 0 and std::abs(caloEta) > 25) {
+  edm::LogPrint("") << "ECAL: eta=" << caloEta << " phi=" << caloPhi << " et=" << et;
+}
+
     if (!layer1->setECALData(t, fgVeto, et)) {
       LOG_ERROR << "UCT: Failed loading an ECAL tower" << std::endl;
       return;
@@ -254,6 +260,18 @@ void L1TCaloLayer1::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     caloTower.setHwEtEm(twrList[twr]->getEcalET());   // This is provided as a courtesy - not available to hardware
     caloTower.setHwEtHad(twrList[twr]->getHcalET());  // This is provided as a courtesy - not available to hardware
     towersColl.push_back(theBX, caloTower);
+
+if (caloTower.hwPt() > 0 and std::abs(caloTower.hwEta()) > 25 and std::abs(caloTower.hwEta()) < 29) {
+  edm::LogPrint("") << "CaloTower XXX: hwEta=" << caloTower.hwEta() << " hwPhi=" << caloTower.hwPhi() << " hwPt=" << caloTower.hwPt() << " hwEtEm=" << caloTower.hwEtEm();
+}
+
+if (caloTower.hwPt() > 0) {
+  edm::LogPrint("") << "CaloTower YYY:"
+                    << " hwPt=" << caloTower.hwPt() << " hwEta=" << caloTower.hwEta()
+                    << " hwPhi=" << caloTower.hwPhi() << " hwQual=" << caloTower.hwQual()
+                    << " hwEtEm=" << caloTower.hwEtEm() << " hwEtHad=" << caloTower.hwEtHad()
+                    << " hwEtRatio=" << caloTower.hwEtRatio();
+}
   }
 
   iEvent.emplace(towerPutToken, std::move(towersColl));

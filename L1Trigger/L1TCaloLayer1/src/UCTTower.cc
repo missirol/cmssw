@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <cstdint>
 
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+
 #include "UCTTower.hh"
 #include "UCTLogging.hh"
 
@@ -31,6 +33,13 @@ bool UCTTower::process() {
     uint32_t value = (*ecalLUT)[etaAddress][fbAddress][ecalET];
     calibratedECALET = value & etInputMax;
     logECALET = (value & 0x7000) >> 12;
+
+
+    if (ecalET > 0 and abs(caloEta()) > 25 and abs(caloEta()) < 29 and calibratedECALET > 0) {
+      edm::LogPrint("") << "UCTTower(0): iEta=" << caloEta() << " iPhi=" << iPhi << " calibratedECALET=" << calibratedECALET;
+    }
+
+
   }
   uint32_t calibratedHCALET = hcalET;
   uint32_t logHCALET = (uint32_t)log2((double)hcalET);
@@ -93,6 +102,12 @@ bool UCTTower::process() {
   // Store ecal and hcal calibrated ET in unused upper bits
   towerData |= (calibratedECALET << ecalShift);
   towerData |= (calibratedHCALET << hcalShift);
+
+  if (ecalET > 0 and abs(caloEta()) > 25 and abs(caloEta()) < 29 and calibratedECALET > 0) {
+    edm::LogPrint("") << "UCTTower(1): caloEta()=" << caloEta() << " iPhi=" << iPhi << " calibratedECALET=" << calibratedECALET;
+  }
+
+
   // All done!
   return true;
 }
