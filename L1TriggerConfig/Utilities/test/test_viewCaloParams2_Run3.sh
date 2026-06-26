@@ -75,3 +75,4 @@ exec_data 403937 2026_pp
 
 # 2026 PbPb
 exec_data 404925 2026_PbPb
+exec_cfi caloParamsHI_2026_v0_X_cfi
