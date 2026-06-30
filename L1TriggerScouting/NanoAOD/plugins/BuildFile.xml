@@ -14,4 +14,10 @@
 <use name="L1TriggerScouting/Utilities"/>
 <use name="PhysicsTools/NanoAOD"/>
 <use name="Utilities/General"/>
-<flags EDM_PLUGIN="1"/>
+<library file="*.cc" name="L1TriggerScoutingNanoAODPlugins">
+  <flags EDM_PLUGIN="1"/>
+</library>
+<library file="rntuple/*.cc" name="L1TriggerScoutingNanoAODRNuplePlugins">
+  <use name="rootntuple"/>
+  <flags EDM_PLUGIN="1"/>
+</library>
