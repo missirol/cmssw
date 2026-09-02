@@ -230,6 +230,10 @@ l1scoutingCaloJetTable = cms.EDProducer("SimpleL1ScoutingCaloJetOrbitFlatTablePr
         phi = Var("phi()", "float", doc="jet phi", precision=10),
         mass = Var("mass()", "float", doc="jet mass", precision=10),
         energyCorr = Var("energyCorr()", "float", doc="correction factor applied to the jet-energy scale"),
+        energyFracEm = Var("energyFracEm()", "float", doc="EM fraction of the jet's total energy"),
         nConst = Var("nConst()", "int", doc="number of jet constituents"),
+        nConstSaturatedEnergyECAL = Var("nConstSaturatedEnergyECAL()", "uint16", doc="number of jet constituents with saturated ECAL energy"),
+        nConstSaturatedEnergyHCAL = Var("nConstSaturatedEnergyHCAL()", "uint16", doc="number of jet constituents with saturated HCAL energy"),
+        nConstSaturatedEnergyECALAndHCAL = Var("nConstSaturatedEnergyECALAndHCAL()", "uint16", doc="number of jet constituents with saturated energy in both ECAL and HCAL"),
     )
 )

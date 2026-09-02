@@ -465,6 +465,21 @@ namespace edmtest {
         if (caloJets[i].nConst() != val_int++) {
           throwWithMessage("analyzeCaloJets, nConst() does not match the expected value");
         }
+
+        if (caloJetClassVersion_ > 3) {
+          if (caloJets[i].energyFracEm() != val_flp++) {
+            throwWithMessage("analyzeCaloJets, energyFracEm() does not match the expected value");
+          }
+          if (caloJets[i].nConstSaturatedEnergyECAL() != static_cast<uint32_t>(val_int++)) {
+            throwWithMessage("analyzeCaloJets, nConstSaturatedEnergyECAL() does not match the expected value");
+          }
+          if (caloJets[i].nConstSaturatedEnergyHCAL() != static_cast<uint32_t>(val_int++)) {
+            throwWithMessage("analyzeCaloJets, nConstSaturatedEnergyHCAL() does not match the expected value");
+          }
+          if (caloJets[i].nConstSaturatedEnergyECALAndHCAL() != static_cast<uint32_t>(val_int++)) {
+            throwWithMessage("analyzeCaloJets, nConstSaturatedEnergyECALAndHCAL() does not match the expected value");
+          }
+        }
       }
     }
   }
