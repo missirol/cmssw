@@ -193,9 +193,6 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
         fixBunchCrossing = False,
     )
 
-    process.l1scoutingCaloTowerPhysicalValueMap.src = 'l1ScCaloTowerFixed'
-    process.l1scoutingCaloTowerTable.src = 'l1ScCaloTowerFixed'
-
     from L1TriggerScouting.OnlineProcessing.modules import L1ScoutingCaloJetProducer
     process.l1ScAK4CaloJets = L1ScoutingCaloJetProducer(
         src = 'l1ScCaloTowerFixed',
@@ -207,8 +204,12 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
         jecPUProxyTowerMaxHwEt = -1,
         jecPUProxyTowerMinAbsHwEta = 0,
         jecPUProxyTowerMaxAbsHwEta = 4,
+        produceSortedCaloTowers = True,
         mantissaPrecision = 10,
     )
+
+    process.l1scoutingCaloTowerPhysicalValueMap.src = 'l1ScAK4CaloJets:SortedCaloTowers'
+    process.l1scoutingCaloTowerTable.src = 'l1ScAK4CaloJets:SortedCaloTowers'
 
     process.l1scoutingCaloJetTable.src = 'l1ScAK4CaloJets:CaloJet'
 

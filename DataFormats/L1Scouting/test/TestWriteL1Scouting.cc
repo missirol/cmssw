@@ -11,6 +11,7 @@
 #include "FWCore/Utilities/interface/EDPutToken.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -253,7 +254,16 @@ namespace edmtest {
       for (auto val_idx = 0u; val_idx < caloJetIntegralValues_.size(); ++val_idx) {
         float const val_flp = caloJetFloatingPointValues_.at(val_idx) + val_offset;
         int const val_int = caloJetIntegralValues_[val_idx] + val_offset;
-        orbitBufferCaloJets[bx].emplace_back(val_flp, val_flp + 1, val_flp + 2, val_flp + 3, val_flp + 4, val_int);
+        orbitBufferCaloJets[bx].emplace_back(val_flp,
+                                             val_flp + 1,
+                                             val_flp + 2,
+                                             val_flp + 3,
+                                             val_flp + 4,
+                                             val_flp + 5,
+                                             val_int,
+                                             static_cast<uint32_t>(val_int + 1),
+                                             static_cast<uint32_t>(val_int + 2),
+                                             static_cast<uint32_t>(val_int + 3));
         ++nCaloJets;
       }
     }
