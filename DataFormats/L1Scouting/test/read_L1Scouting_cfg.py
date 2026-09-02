@@ -24,7 +24,7 @@ parser.add_argument("--bmtfStubVersion", type=int, default=3,
 parser.add_argument("--caloTowerVersion", type=int, default=3,
     help="L1ScoutingCaloTower data format version")
 
-parser.add_argument("--caloJetVersion", type=int, default=3,
+parser.add_argument("--caloJetVersion", type=int, default=4,
     help="L1ScoutingCaloJet data format version")
 
 args = parser.parse_args()

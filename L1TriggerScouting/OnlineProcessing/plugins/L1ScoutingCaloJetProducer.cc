@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <memory>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -11,6 +13,7 @@
 #include "DataFormats/L1Scouting/interface/L1ScoutingCaloTower.h"
 #include "DataFormats/L1Scouting/interface/L1ScoutingCaloJet.h"
 #include "DataFormats/Math/interface/libminifloat.h"
+#include "EventFilter/L1ScoutingRawToDigi/interface/masks.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -18,6 +21,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/FileInPath.h"
+#include "L1Trigger/L1TCalorimeter/interface/CaloTools.h"
 #include "L1TriggerScouting/Utilities/interface/conversion.h"
 
 #include "fastjet/ClusterSequence.hh"
@@ -153,6 +157,8 @@ private:
   int const jecPUProxyTowerMinAbsHwEta_;
   int const jecPUProxyTowerMaxAbsHwEta_;
 
+  bool const produceSortedCaloTowers_;
+
   int const mantissaPrecision_;
 };
 
@@ -169,25 +175,32 @@ L1ScoutingCaloJetProducer::L1ScoutingCaloJetProducer(const edm::ParameterSet& iP
       jecPUProxyTowerMaxHwEt_(iPSet.getParameter<int>("jecPUProxyTowerMaxHwEt")),
       jecPUProxyTowerMinAbsHwEta_(iPSet.getParameter<int>("jecPUProxyTowerMinAbsHwEta")),
       jecPUProxyTowerMaxAbsHwEta_(iPSet.getParameter<int>("jecPUProxyTowerMaxAbsHwEta")),
+      produceSortedCaloTowers_(iPSet.getParameter<bool>("produceSortedCaloTowers")),
       mantissaPrecision_(iPSet.getParameter<int>("mantissaPrecision")) {
   produces<l1ScoutingRun3::CaloJetOrbitCollection>("CaloJet").setBranchAlias("CaloJetOrbitCollection");
+  if (produceSortedCaloTowers_) {
+    produces<l1ScoutingRun3::CaloTowerOrbitCollection>("SortedCaloTowers");
+  }
 }
 
 // ------------ method called for each ORBIT  ------------
 void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup&) const {
   auto const& caloTowerCollection = iEvent.get(src_);
 
+  // Output containers for CaloJets
   auto caloJetCollection = std::make_unique<l1ScoutingRun3::CaloJetOrbitCollection>();
   std::vector<std::vector<l1ScoutingRun3::CaloJet>> caloJetBuffer(kNBXPlus1);
   unsigned int nCaloJet = 0;
 
-  // define fastjet algorithm
+  // Output containers for sorted CaloTowers (used only if "produceSortedCaloTowers == True")
+  auto sortedCaloTowerCollection = std::make_unique<l1ScoutingRun3::CaloTowerOrbitCollection>();
+  std::vector<std::vector<l1ScoutingRun3::CaloTower>> sortedCaloTowerBuffer(kNBXPlus1);
+  unsigned int nSortedCaloTower = 0;
+
+  // Define fastjet algorithm
   fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, akR_);
 
-  // create pseudojet vector to be filled
-  std::vector<fastjet::PseudoJet> pjCTs;
-
-  // loop over valid bunch crossings
+  // Loop over valid bunch crossings
   for (auto const bx : caloTowerCollection.getFilledBxs()) {
     LogTrace("L1ScoutingCaloJetProducer")
         << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "] BX = " << bx;
@@ -196,11 +209,21 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
                                           << "]   Inputs (l1ScoutingRun3::CaloTower and fastjet::PseudoJet)";
 
     auto const& cts = caloTowerCollection.bxIterator(bx);
+    nSortedCaloTower += cts.size();
 
-    // prepare PseudoJets to give in input to fastjet
-    pjCTs.clear();
+    // Indices of the CaloTowers that will not be assigned to any jets.
+    // It starts as a vector containing all the values from 0 to "cts.size() - 1",
+    // then the indices of CaloTowers used for jet clustering are removed one at a time.
+    std::vector<int> unclusteredCaloTowerIndices(cts.size());
+    std::iota(unclusteredCaloTowerIndices.begin(), unclusteredCaloTowerIndices.end(), 0);
+
+    // Prepare PseudoJets to give in input to fastjet
+    std::vector<fastjet::PseudoJet> pjCTs;
     pjCTs.reserve(cts.size());
-    for (auto const& ct : cts) {
+
+    for (auto cidx{0u}; cidx < cts.size(); ++cidx) {
+      auto const& ct{cts[cidx]};
+
       if (not((towerMinHwEt_ < 0 or ct.hwEt() >= towerMinHwEt_) and
               (towerMaxHwEt_ < 0 or ct.hwEt() <= towerMaxHwEt_))) {
         continue;
@@ -223,15 +246,17 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
       float const ctPhi = l1ScoutingRun3::calol1::fPhi(ct.hwPhi());
 
       pjCTs.emplace_back(fastjet::PtYPhiM(ctEt, ctEta, ctPhi, 0));
+      pjCTs.back().set_user_index(cidx);
 
       LogTrace("L1ScoutingCaloJetProducer")
           << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "]     [" << (pjCTs.size() - 1)
           << "] hwEt=" << ct.hwEt() << " hwEta=" << ct.hwEta() << " hwPhi=" << ct.hwPhi() << " (PseudoJet: pt=" << ctEt
           << " eta=" << ctEta << " phi=" << ctPhi << " px=" << pjCTs.back().px() << " py=" << pjCTs.back().py()
-          << " pz=" << pjCTs.back().pz() << " E=" << pjCTs.back().E() << ")";
+          << " pz=" << pjCTs.back().pz() << " E=" << pjCTs.back().E() << " user_index=" << pjCTs.back().user_index()
+          << ")";
     }
 
-    // if JECs are applied, compute a per-BX PU proxy used as input to the evaluation of the JECs
+    // If JECs are applied, compute a per-BX PU proxy used as input to the evaluation of the JECs
     // (the PU proxy corresponds to the number of CaloTowers passing predefined cuts on hwEt and |hwEta|)
     int puProxy{0};
     if (applyJECs_) {
@@ -257,25 +282,28 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
     LogTrace("L1ScoutingCaloJetProducer") << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel()
                                           << "]   Running jet clustering and applying JECs";
 
-    // run the jet clustering with the given jet definition
+    // Run the jet clustering with the given jet definition
     fastjet::ClusterSequence clustSeq(pjCTs, jetDef);
 
-    // get the resulting jets ordered in pt
+    // Get the resulting jets ordered in pt
     std::vector<fastjet::PseudoJet> incJets = clustSeq.inclusive_jets();
 
-    // fill l1ScoutingRun3::CaloJet objects buffer
-    auto& bufferThisBX = caloJetBuffer[bx];
-    bufferThisBX.reserve(incJets.size());
+    // Fill l1ScoutingRun3::CaloJet objects buffer
+    std::vector<l1ScoutingRun3::CaloJet> unsortedCaloJets{};
+    unsortedCaloJets.reserve(incJets.size());
+
+    std::vector<std::vector<int>> unsortedCaloJetConstIndices{};
+    unsortedCaloJetConstIndices.reserve(incJets.size());
 
     for (auto idx = 0u; idx < incJets.size(); ++idx) {
       auto const& incJet = incJets[idx];
-      int const nConst = incJet.has_constituents() ? incJet.constituents().size() : 0;
+
       double const energyCorr{applyJECs_ ? jetCorrector_.correction(incJet.pt(), incJet.eta(), puProxy) : 1};
 
       LogTrace("L1ScoutingCaloJetProducer")
           << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "]     [" << idx
           << "] pt=" << incJet.pt() << " eta=" << incJet.eta() << " phi=" << incJet.phi_std() << " mass=" << incJet.m()
-          << " energyCorr=" << energyCorr << " nConst=" << nConst << " (before JECs and pT cut)";
+          << " energyCorr=" << energyCorr << " (before JECs and pT cut)";
 
       if (energyCorr <= 0) {
         continue;
@@ -289,40 +317,187 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
 
       float const jet_mass = incJet.m() * energyCorr;
 
+      // Variables related to jet constituents
+      int nConst{0};
+      int nConstSatECAL{0};
+      int nConstSatHCAL{0};
+      int nConstSatECALAndHCAL{0};
+
+      // "energyEm" ("energyTot") corresponds to the sum of the energies
+      // measured in ECAL (ECAL + HCAL) of the CaloTowers assigned to the jet.
+      // The ratio "energyEm/energyTot" will then be used as the EM fraction of the jet energy.
+      // "energyTot" is used as denominator of this fraction
+      // to guarantee that the fraction is a value between 0 and 1.
+      // Further down in this block, a warning is emitted if "energyTot"
+      // differs by more than 5% from the uncorrected energy of the jet.
+      auto energyEm{0.f};
+      auto energyTot{0.f};
+
+      unsortedCaloJetConstIndices.emplace_back();
+      auto& jetConstIndices{unsortedCaloJetConstIndices.back()};
+
+      if (incJet.has_constituents()) {
+        nConst = incJet.constituents().size();
+        jetConstIndices.reserve(nConst);
+
+        for (auto const& jet_const : incJet.constituents()) {
+          auto const ct_idx{jet_const.user_index()};
+          auto const& ct{cts[ct_idx]};
+
+          jetConstIndices.emplace_back(ct_idx);
+          unclusteredCaloTowerIndices.erase(
+              std::remove(unclusteredCaloTowerIndices.begin(), unclusteredCaloTowerIndices.end(), ct_idx),
+              unclusteredCaloTowerIndices.end());
+
+          // CaloTower transverse energy (hardware value)
+          auto const ctHwEt{ct.hwEt()};
+
+          // Counters of CaloTowers with saturated energy in ECAL and/or HCAL
+          if (ctHwEt == l1t::CaloTools::kSatEcal) {
+            ++nConstSatECAL;
+          } else if (ctHwEt == l1t::CaloTools::kSatHcal) {
+            ++nConstSatHCAL;
+          } else if (ctHwEt == l1t::CaloTools::kSatTower) {
+            ++nConstSatECAL;
+            ++nConstSatHCAL;
+            ++nConstSatECALAndHCAL;
+          }
+
+          // Energy-ratio bits
+          uint8_t const ctHwEtRatio = ct.erBits() & l1ScoutingRun3::calol1::masksCaloTowers::erBits;
+
+          // Special bits for "zero flag" and "e over h"
+          bool const ctZeroFlag = ct.miscBits() & 0b01;
+          bool const ctEohrFlag = ct.miscBits() & 0b10;
+
+          // CaloTower energy (physical value)
+          float const ctEnergy{l1ScoutingRun3::calol1::fEt(ctHwEt) *
+                               std::cosh(l1ScoutingRun3::calol1::fEta(ct.hwEta()))};
+
+          // ctEFracEm: EM/ECAL fraction of the CaloTower's energy
+          //  - The criteria below to determine the value of "ctEFracEm" from the "zero flag" and "eoh flag"
+          //    of the CaloTower's "miscBits" are based on the implementation of the L1T CaloLayer1 emulation.
+          //    https://github.com/cms-sw/cmssw/blob/e3685ee38b3c50d33912a6e6817dc468e4ca1812/L1Trigger/L1TCaloLayer1/src/UCTTower.cc#L65-L84
+          auto ctEFracEm{0.f};
+          if (ctZeroFlag) {
+            ctEFracEm = ctEohrFlag ? 1.f : 0.f;
+          } else {
+            float const frac{1.f / (1.f + (1 << ctHwEtRatio))};
+            float const antifrac{1.f - frac};
+            ctEFracEm = ctEohrFlag ? antifrac : frac;
+          }
+
+          energyEm += ctEnergy * ctEFracEm;
+          energyTot += ctEnergy;
+        }
+      }
+
+      float const energyFracEm{energyTot > 0 ? energyEm / energyTot : 0.f};
+
+      // Order indices of the jet's constituents by hwEt, and
+      // append them to the vector of indices of the output CaloTowers
+      if (produceSortedCaloTowers_) {
+        std::stable_sort(jetConstIndices.begin(), jetConstIndices.end(), [&cts](auto const idx1, auto const idx2) {
+          return cts[idx1].hwEt() > cts[idx2].hwEt();
+        });
+      }
+
       LogTrace("L1ScoutingCaloJetProducer")
           << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "]     [" << idx << "] pt=" << jet_pt
           << " eta=" << incJet.eta() << " phi=" << incJet.phi_std() << " mass=" << jet_mass
-          << " energyCorr=" << energyCorr << " nConst=" << nConst << " (after JECs and pT cut)";
+          << " energyCorr=" << energyCorr << " energyFracEm=" << energyFracEm
+          << " (Eem+Ehad)/E=" << energyTot / incJet.E() << " nConst=" << nConst << " nConstSatECAL=" << nConstSatECAL
+          << " nConstSatHCAL=" << nConstSatHCAL << " nConstSatECALAndHCAL=" << nConstSatECALAndHCAL
+          << " (after JECs and pT cut)";
 
-      bufferThisBX.emplace_back(MiniFloatConverter::reduceMantissaToNbitsRounding(jet_pt, mantissaPrecision_),
-                                MiniFloatConverter::reduceMantissaToNbitsRounding(incJet.eta(), mantissaPrecision_),
-                                MiniFloatConverter::reduceMantissaToNbitsRounding(incJet.phi_std(), mantissaPrecision_),
-                                MiniFloatConverter::reduceMantissaToNbitsRounding(jet_mass, mantissaPrecision_),
-                                MiniFloatConverter::reduceMantissaToNbitsRounding(energyCorr, mantissaPrecision_),
-                                nConst);
+      // Emit a warning if the denominator of the EM energy fraction
+      // differs by more than 5% from the uncorrected energy of the jet
+      if (std::abs(energyTot - incJet.E()) > 1.05f * incJet.E()) {
+        edm::LogWarning("L1ScoutingCaloJetProducer")
+            << "sum of estimated ECAL+HCAL CaloTowers' energies (" << energyTot
+            << ") differs from total uncorrected jet energy (" << incJet.E() << ") by more than 5%!";
+      }
+
+      unsortedCaloJets.emplace_back(
+          MiniFloatConverter::reduceMantissaToNbitsRounding(jet_pt, mantissaPrecision_),
+          MiniFloatConverter::reduceMantissaToNbitsRounding(incJet.eta(), mantissaPrecision_),
+          MiniFloatConverter::reduceMantissaToNbitsRounding(incJet.phi_std(), mantissaPrecision_),
+          MiniFloatConverter::reduceMantissaToNbitsRounding(jet_mass, mantissaPrecision_),
+          MiniFloatConverter::reduceMantissaToNbitsRounding(energyCorr, mantissaPrecision_),
+          MiniFloatConverter::reduceMantissaToNbitsRounding(energyFracEm, mantissaPrecision_),
+          nConst,
+          nConstSatECAL,
+          nConstSatHCAL,
+          nConstSatECALAndHCAL);
       ++nCaloJet;
     }
 
-    std::sort(bufferThisBX.begin(), bufferThisBX.end(), [](auto const& a, auto const& b) { return a.pt() > b.pt(); });
+    std::vector<int> caloJetIndices(unsortedCaloJets.size());
+    std::iota(caloJetIndices.begin(), caloJetIndices.end(), 0);
+
+    std::stable_sort(
+        caloJetIndices.begin(), caloJetIndices.end(), [&unsortedCaloJets](auto const idx1, auto const idx2) {
+          return unsortedCaloJets[idx1].pt() > unsortedCaloJets[idx2].pt();
+        });
 
     LogTrace("L1ScoutingCaloJetProducer") << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel()
                                           << "]   Final outputs (l1ScoutingRun3::CaloJet)";
 
+    auto& bxCaloJetBuffer = caloJetBuffer[bx];
+    bxCaloJetBuffer.reserve(caloJetIndices.size());
+
+    for (auto const idx : caloJetIndices) {
+      bxCaloJetBuffer.emplace_back(unsortedCaloJets[idx]);
+    }
+
+    if (produceSortedCaloTowers_) {
+      auto& bxSortedCaloTowerBuffer = sortedCaloTowerBuffer[bx];
+      bxSortedCaloTowerBuffer.reserve(cts.size());
+
+      for (auto const idx : caloJetIndices) {
+        for (auto const idx2 : unsortedCaloJetConstIndices[idx]) {
+          bxSortedCaloTowerBuffer.emplace_back(cts[idx2]);
+        }
+      }
+
+      for (auto const idx2 : unclusteredCaloTowerIndices) {
+        bxSortedCaloTowerBuffer.emplace_back(cts[idx2]);
+      }
+    }
+
 #ifdef EDM_ML_DEBUG
-    for (auto idx = 0u; idx < bufferThisBX.size(); ++idx) {
-      auto const& obj = bufferThisBX[idx];
+    for (auto idx0{0u}; idx0 < caloJetIndices.size(); ++idx0) {
+      auto const idx = caloJetIndices[idx0];
+      auto const& obj = unsortedCaloJets[idx];
       LogTrace("L1ScoutingCaloJetProducer")
-          << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "]     [" << idx
-          << "] pt=" << obj.pt() << " eta=" << obj.eta() << " phi=" << obj.phi() << " mass=" << obj.mass()
-          << " energyCorr=" << obj.energyCorr() << " nConst=" << obj.nConst();
+          << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "]     [" << idx0
+          << "] index=" << idx << " pt=" << obj.pt() << " eta=" << obj.eta() << " phi=" << obj.phi()
+          << " mass=" << obj.mass() << " energyCorr=" << obj.energyCorr() << " energyFracEm=" << obj.energyFracEm()
+          << " nConst=" << obj.nConst() << " nConstSatEnergyECAL=" << obj.nConstSaturatedEnergyECAL()
+          << " nConstSatEnergyHCAL=" << obj.nConstSaturatedEnergyHCAL()
+          << " nConstSatEnergyECALAndHCAL=" << obj.nConstSaturatedEnergyECALAndHCAL();
+
+      if (produceSortedCaloTowers_) {
+        for (auto const idx2 : unsortedCaloJetConstIndices[idx]) {
+          auto const& ct{cts[idx2]};
+          LogTrace("L1ScoutingCaloJetProducer")
+              << "[L1ScoutingCaloJetProducer:" << moduleDescription().moduleLabel() << "]          CaloTower[" << idx2
+              << "] hwEt=" << ct.hwEt() << " hwEta=" << ct.hwEta() << " hwPhi=" << ct.hwPhi()
+              << " erBits=" << ct.erBits() << " miscBits=" << ct.miscBits();
+        }
+      }
     }
 #endif
   }
 
   // fill orbit collection with reconstructed jets
   caloJetCollection->fillAndClear(caloJetBuffer, nCaloJet);
-
   iEvent.put(std::move(caloJetCollection), "CaloJet");
+
+  if (produceSortedCaloTowers_) {
+    sortedCaloTowerCollection->fillAndClear(sortedCaloTowerBuffer, nSortedCaloTower);
+    iEvent.put(std::move(sortedCaloTowerCollection), "SortedCaloTowers");
+  }
 }
 
 void L1ScoutingCaloJetProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -358,6 +533,9 @@ void L1ScoutingCaloJetProducer::fillDescriptions(edm::ConfigurationDescriptions&
       ->setComment(
           "Max CaloTower |hwEta| (inclusive) used when computing the CaloTower multiplicity taken as PU proxy to "
           "evaluate JECs (used only if applyJECs==True, and ignored if negative)");
+
+  desc.add<bool>("produceSortedCaloTowers", false)
+      ->setComment("Output a copy of the l1ScoutingRun3::CaloTowerOrbitCollection in \"src\" with a custom sorting");
 
   desc.add<int>("mantissaPrecision", 10)->setComment("default float16, change to 23 for float32");
 
