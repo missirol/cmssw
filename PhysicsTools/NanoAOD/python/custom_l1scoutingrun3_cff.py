@@ -208,9 +208,6 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
         mantissaPrecision = 10,
     )
 
-    process.l1scoutingCaloTowerPhysicalValueMap.src = 'l1ScAK4CaloJets:SortedCaloTowers'
-    process.l1scoutingCaloTowerTable.src = 'l1ScAK4CaloJets:SortedCaloTowers'
-
     process.l1scoutingCaloJetTable.src = 'l1ScAK4CaloJets:CaloJet'
 
     # add CaloTowers' hardware values for validation purposes
@@ -241,6 +238,12 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
             process.l1scoutingCaloTowerPhysicalValueMap,
             process.l1scoutingCaloTowerTable
         )
+
+    outputCaloTowersLabel = 'l1ScAK4CaloJets:SortedCaloTowers' \
+        if process.l1ScAK4CaloJets.produceSortedCaloTowers else 'l1ScCaloTowerFixed'
+
+    process.l1scoutingCaloTowerPhysicalValueMap.src = outputCaloTowersLabel
+    process.l1scoutingCaloTowerTable.src = outputCaloTowersLabel
 
     process.l1scoutingNanoTask.add(process.l1ScCaloTowerFixed)
     process.l1scoutingNanoTask.add(process.l1ScAK4CaloJets)
