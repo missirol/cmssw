@@ -1,0 +1,13 @@
+<use name="CommonTools/Utils"/>
+<use name="DataFormats/L1Scouting"/>
+<use name="DataFormats/Math"/>
+<use name="EventFilter/L1ScoutingRawToDigi"/>
+<use name="FWCore/MessageLogger"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/Utilities"/>
+<use name="L1Trigger/L1TCalorimeter"/>
+<use name="L1TriggerScouting/Utilities"/>
+<use name="fastjet"/>
+<export>
+  <lib name="1"/>
+</export>
