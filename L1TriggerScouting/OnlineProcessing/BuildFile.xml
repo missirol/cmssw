@@ -1,15 +1,13 @@
-<use name="CommonTools/UtilAlgos"/>
+<use name="CommonTools/Utils"/>
 <use name="DataFormats/L1Scouting"/>
-<use name="DataFormats/L1Trigger"/>
 <use name="DataFormats/Math"/>
-<use name="DataFormats/Provenance"/>
 <use name="EventFilter/L1ScoutingRawToDigi"/>
-<use name="FWCore/Framework"/>
 <use name="FWCore/MessageLogger"/>
 <use name="FWCore/ParameterSet"/>
 <use name="FWCore/Utilities"/>
 <use name="L1Trigger/L1TCalorimeter"/>
-<use name="L1TriggerScouting/OnlineProcessing"/>
 <use name="L1TriggerScouting/Utilities"/>
 <use name="fastjet"/>
-<flags EDM_PLUGIN="1"/>
+<export>
+  <lib name="1"/>
+</export>
