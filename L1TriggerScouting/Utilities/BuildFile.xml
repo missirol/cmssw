@@ -1,5 +1,8 @@
+<use name="DataFormats/Common"/>
 <use name="DataFormats/L1Scouting"/>
+<use name="DataFormats/L1TCalorimeter"/>
 <use name="DataFormats/L1Trigger"/>
+<use name="FWCore/Utilities"/>
 <export>
   <lib name="1"/>
 </export>

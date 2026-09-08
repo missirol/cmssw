@@ -1,0 +1,25 @@
+<lcgdict>
+  <class name="l1ScoutingRun3::BMTFStubBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::BMTFStubBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::BxSumsBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::BxSumsBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::CaloJetBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::CaloJetBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::CaloTowerBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::CaloTowerBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::EGammaBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::EGammaBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::JetBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::JetBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::MuonBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::MuonBxCollection>" persistent="false"/>
+
+  <class name="l1ScoutingRun3::TauBxCollection" persistent="false"/>
+  <class name="edm::Wrapper<l1ScoutingRun3::TauBxCollection>" persistent="false"/>
+</lcgdict>

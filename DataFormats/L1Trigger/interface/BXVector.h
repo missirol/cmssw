@@ -9,6 +9,7 @@
 #include "DataFormats/Common/interface/fillPtrVector.h"
 #include "DataFormats/Common/interface/setPtr.h"
 #include "DataFormats/Common/interface/traits.h"
+#include <span>
 #include <vector>
 
 template <class T>
@@ -66,6 +67,11 @@ public:
 
   // get N objects for a given BX
   unsigned size(int bx) const;
+
+  // span covering all the elements of one BX
+  std::span<const T> bxIterator(int bx) const {
+    return isEmpty(bx) ? std::span<const T>() : std::span<const T>(begin(bx), end(bx));
+  }
 
   // get N objects for all BXs together
   unsigned size() const { return data_.size(); }

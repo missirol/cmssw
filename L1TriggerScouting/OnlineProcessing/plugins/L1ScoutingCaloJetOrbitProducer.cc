@@ -11,10 +11,10 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "L1TriggerScouting/OnlineProcessing/interface/L1ScoutingCaloJetClusterizer.h"
 
-class L1ScoutingCaloJetProducer : public edm::global::EDProducer<> {
+class L1ScoutingCaloJetOrbitProducer : public edm::global::EDProducer<> {
 public:
-  explicit L1ScoutingCaloJetProducer(const edm::ParameterSet&);
-  ~L1ScoutingCaloJetProducer() override = default;
+  explicit L1ScoutingCaloJetOrbitProducer(const edm::ParameterSet&);
+  ~L1ScoutingCaloJetOrbitProducer() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -29,7 +29,7 @@ private:
   L1ScoutingCaloJetClusterizer const l1sCaloJetClusterizer_;
 };
 
-L1ScoutingCaloJetProducer::L1ScoutingCaloJetProducer(const edm::ParameterSet& iPSet)
+L1ScoutingCaloJetOrbitProducer::L1ScoutingCaloJetOrbitProducer(const edm::ParameterSet& iPSet)
     : src_(consumes(iPSet.getParameter<edm::InputTag>("src"))),
       produceSortedCaloTowers_{iPSet.getParameter<bool>("produceSortedCaloTowers")},
       l1sCaloJetClusterizer_{iPSet} {
@@ -39,7 +39,7 @@ L1ScoutingCaloJetProducer::L1ScoutingCaloJetProducer(const edm::ParameterSet& iP
   }
 }
 
-void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup&) const {
+void L1ScoutingCaloJetOrbitProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup&) const {
   // Input collection of CaloTowers
   auto const& caloTowerCollection{iEvent.get(src_)};
 
@@ -80,7 +80,7 @@ void L1ScoutingCaloJetProducer::produce(edm::StreamID, edm::Event& iEvent, const
   LogTrace(moduleName) << "[" << moduleName << ":" << moduleLabel << "] === End of produce() method ==";
 }
 
-void L1ScoutingCaloJetProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void L1ScoutingCaloJetOrbitProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
 
   desc.add<edm::InputTag>("src")->setComment(
@@ -95,4 +95,4 @@ void L1ScoutingCaloJetProducer::fillDescriptions(edm::ConfigurationDescriptions&
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
-DEFINE_FWK_MODULE(L1ScoutingCaloJetProducer);
+DEFINE_FWK_MODULE(L1ScoutingCaloJetOrbitProducer);
