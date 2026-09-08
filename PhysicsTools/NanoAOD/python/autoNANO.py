@@ -63,9 +63,9 @@ autoNANO = {
                                       'DPGAnalysis/L1TNanoAOD/l1tNano_cff.addCaloFull',
                                       'L1Trigger/Configuration/customiseReEmul.L1TReEmulFromRAW'])},
     # L1Scouting - CaloTowers-related studies
-    'L1ScoutCaloTowersMC' : {'sequence': 'L1ScoutingTools/NanoAOD/l1sNano_cff.l1sNanoSequence',
+    'L1ScoutCaloTowersMC' : {'sequence': 'L1TriggerScouting/NanoAOD/l1sNanoMC_cff.l1sNanoMCSequence',
                              'customize': ','.join(['L1Trigger/Configuration/customiseReEmul.L1TReEmulFromRAW',
-                                                    'L1ScoutingTools/NanoAOD/l1sNano_cff.customiseNanoForL1ScoutCaloTowersMC'])},
+                                                    'L1TriggerScouting/NanoAOD/l1sNanoMC_cff.customiseL1ScoutNanoMCWithCaloTowers'])},
     # Phase-2 L1 DPG (from RAW/DIGI)
     'Phase2L1DPG' : {'sequence': 'DPGAnalysis/Phase2L1TNanoAOD/l1tPh2Nano_cff.l1tPh2NanoSequence',
                      'customize': ','.join([
