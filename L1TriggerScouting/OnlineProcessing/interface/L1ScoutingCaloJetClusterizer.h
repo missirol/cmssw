@@ -50,6 +50,7 @@ private:
   double const ptMin_;
   int const towerMinHwEt_;
   int const towerMaxHwEt_;
+  int const towerMaxHwEtaAbs_;
 
   bool const applyJECs_;
   JetCorrector const jetCorrector_;

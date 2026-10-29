@@ -112,6 +112,7 @@ L1ScoutingCaloJetClusterizer::L1ScoutingCaloJetClusterizer(const edm::ParameterS
       ptMin_{iPSet.getParameter<double>("ptMin")},
       towerMinHwEt_{iPSet.getParameter<int>("towerMinHwEt")},
       towerMaxHwEt_{iPSet.getParameter<int>("towerMaxHwEt")},
+      towerMaxHwEtaAbs_{iPSet.getParameter<int>("towerMaxHwEtaAbs")},
       applyJECs_{iPSet.getParameter<bool>("applyJECs")},
       jetCorrector_{applyJECs_ ? JetCorrector(iPSet.getParameter<edm::FileInPath>("jecFile").fullPath())
                                : JetCorrector{}},
@@ -138,13 +139,18 @@ void L1ScoutingCaloJetClusterizer::run(std::span<const l1ScoutingRun3::CaloTower
   for (auto cidx{0u}; cidx < cts.size(); ++cidx) {
     auto const& ct{cts[cidx]};
 
-    if (not((towerMinHwEt_ < 0 or ct.hwEt() >= towerMinHwEt_) and (towerMaxHwEt_ < 0 or ct.hwEt() <= towerMaxHwEt_))) {
+    auto const ctHwEt{ct.hwEt()};
+    auto const ctHwEta{ct.hwEta()};
+    auto const ctHwEtaAbs{std::abs(ctHwEta)};
+
+    if (not((towerMinHwEt_ < 0 or ctHwEt >= towerMinHwEt_) and (towerMaxHwEt_ < 0 or ctHwEt <= towerMaxHwEt_) and
+            (towerMaxHwEtaAbs_ < 0 or ctHwEtaAbs <= towerMaxHwEtaAbs_))) {
       continue;
     }
 
-    if (not l1ScoutingRun3::calol1::validHwEta(ct.hwEta())) {
+    if (not l1ScoutingRun3::calol1::validHwEta(ctHwEta)) {
       edm::LogWarning("L1ScoutingCaloJetClusterizer")
-          << "CaloTower with invalid hwEta value (" << ct.hwEta() << ") will not be used for jet clustering!";
+          << "CaloTower with invalid hwEta value (" << ctHwEta << ") will not be used for jet clustering!";
       continue;
     }
 
@@ -154,18 +160,18 @@ void L1ScoutingCaloJetClusterizer::run(std::span<const l1ScoutingRun3::CaloTower
       continue;
     }
 
-    float const ctEt = l1ScoutingRun3::calol1::fEt(ct.hwEt());
-    float const ctEta = l1ScoutingRun3::calol1::fEta(ct.hwEta());
+    float const ctEt = l1ScoutingRun3::calol1::fEt(ctHwEt);
+    float const ctEta = l1ScoutingRun3::calol1::fEta(ctHwEta);
     float const ctPhi = l1ScoutingRun3::calol1::fPhi(ct.hwPhi());
 
     pjCTs.emplace_back(fastjet::PtYPhiM(ctEt, ctEta, ctPhi, 0));
     pjCTs.back().set_user_index(cidx);
 
     LogTrace("L1ScoutingCaloJetClusterizer")
-        << "     [" << (pjCTs.size() - 1) << "] hwEt=" << ct.hwEt() << " hwEta=" << ct.hwEta()
-        << " hwPhi=" << ct.hwPhi() << " (PseudoJet: pt=" << ctEt << " eta=" << ctEta << " phi=" << ctPhi
-        << " px=" << pjCTs.back().px() << " py=" << pjCTs.back().py() << " pz=" << pjCTs.back().pz()
-        << " E=" << pjCTs.back().E() << " user_index=" << pjCTs.back().user_index() << ")";
+        << "     [" << (pjCTs.size() - 1) << "] hwEt=" << ctHwEt << " hwEta=" << ctHwEta << " hwPhi=" << ct.hwPhi()
+        << " (PseudoJet: pt=" << ctEt << " eta=" << ctEta << " phi=" << ctPhi << " px=" << pjCTs.back().px()
+        << " py=" << pjCTs.back().py() << " pz=" << pjCTs.back().pz() << " E=" << pjCTs.back().E()
+        << " user_index=" << pjCTs.back().user_index() << ")";
   }
 
   // If JECs are applied, compute a per-BX PU proxy used as input to the evaluation of the JECs
@@ -406,6 +412,8 @@ void L1ScoutingCaloJetClusterizer::fillDescription(edm::ParameterSetDescription&
       ->setComment("Min hwEt (inclusive) of CaloTowers used for jet clustering (ignored if negative)");
   desc.add<int>("towerMaxHwEt", -1)
       ->setComment("Max hwEt (inclusive) of CaloTowers used for jet clustering (ignored if negative)");
+  desc.add<int>("towerMaxHwEtaAbs", -1)
+      ->setComment("Max abs(hwEta) (inclusive) of CaloTowers used for jet clustering (ignored if negative)");
 
   desc.add<bool>("applyJECs", false)
       ->setComment("Apply jet-energy-scale corrections (and output corrected jets, ordered by their corrected pT)");

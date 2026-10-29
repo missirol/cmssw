@@ -44,10 +44,12 @@ autoNANO = {
     'L1ScoutSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
                       'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODSelection'},
 
-    'L1ScoutReReco': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
-                      'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReReco'},
-    'L1ScoutReRecoSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
-                            'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoSelection'},
+#    'L1ScoutReReco': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
+#                      'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReReco'},
+#    'L1ScoutReRecoSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
+#                            'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoSelection'},
+    'L1ScoutReRecoOnlyJetsSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
+                                    'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoOnlyJetsSelection'},
 
     # BPH nano
     'BPH' : {'sequence': '@PHYS',
@@ -66,6 +68,9 @@ autoNANO = {
     'L1ScoutCaloTowersMC' : {'sequence': 'L1TriggerScouting/NanoAOD/l1sNanoMC_cff.l1sNanoMCSequence',
                              'customize': ','.join(['L1Trigger/Configuration/customiseReEmul.L1TReEmulFromRAW',
                                                     'L1TriggerScouting/NanoAOD/l1sNanoMC_cff.customiseL1ScoutNanoMCWithCaloTowers'])},
+    'L1ScoutCaloTowersMCOnlyJets' : {'sequence': 'L1TriggerScouting/NanoAOD/l1sNanoMC_cff.l1sNanoMCSequence',
+                                     'customize': ','.join(['L1Trigger/Configuration/customiseReEmul.L1TReEmulFromRAW',
+                                                            'L1TriggerScouting/NanoAOD/l1sNanoMC_cff.customiseL1ScoutNanoMCWithCaloTowersOnlyJets'])},
     # Phase-2 L1 DPG (from RAW/DIGI)
     'Phase2L1DPG' : {'sequence': 'DPGAnalysis/Phase2L1TNanoAOD/l1tPh2Nano_cff.l1tPh2NanoSequence',
                      'customize': ','.join([
