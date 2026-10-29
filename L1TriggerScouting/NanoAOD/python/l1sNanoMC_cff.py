@@ -20,6 +20,10 @@ def customiseL1ScoutNanoMCWithCaloTowers(process):
     process.l1JetTable.src = "simCaloStage2Digis"
     process.l1EtSumTable.src = "simCaloStage2Digis"
 
+    _jetPtMin = 20.
+
+    process.l1JetTable.cut = f"pt > {_jetPtMin}"
+
     from L1TriggerScouting.Utilities.modules import L1ScoutingCaloTowerBXVecConverter
     process.l1sCaloTowerBXVec = L1ScoutingCaloTowerBXVecConverter(
         src = "simCaloStage2Layer1Digis",
@@ -29,7 +33,10 @@ def customiseL1ScoutNanoMCWithCaloTowers(process):
     process.l1sCaloJetBXVec = L1ScoutingCaloJetBXVecProducer(
         src = "l1sCaloTowerBXVec",
         akR = 0.4,
-        ptMin = 5,
+        ptMin = _jetPtMin,
+        towerMinHwEt = 1,
+        towerMaxHwEt = -1,
+        towerMaxHwEtaAbs = 28, # exclude HF towers (were not included in 2026 L1S data)
         applyJECs = True,
         jecFile = "L1TriggerScouting/OnlineProcessing/data/JEC_AK4CaloTowerL1S_Run3Winter25_v2.txt",
         jecPUProxyTowerMinHwEt = 1,
@@ -83,5 +90,16 @@ def customiseL1ScoutNanoMCWithCaloTowers(process):
     process.l1sNanoMCSequence += process.l1sCaloJetBXVec
     process.l1sNanoMCSequence += process.l1sCaloTowerTable
     process.l1sNanoMCSequence += process.l1sCaloJetTable
+
+    return process
+
+def customiseL1ScoutNanoMCWithCaloTowersOnlyJets(process):
+    process = customiseL1ScoutNanoMCWithCaloTowers(process)
+
+    process.l1sNanoMCSequence.remove(process.l1MuTable)
+    process.l1sNanoMCSequence.remove(process.l1EGTable)
+    process.l1sNanoMCSequence.remove(process.l1TauTable)
+    process.l1sNanoMCSequence.remove(process.l1EtSumTable)
+    process.l1sNanoMCSequence.remove(process.l1sCaloTowerTable)
 
     return process
