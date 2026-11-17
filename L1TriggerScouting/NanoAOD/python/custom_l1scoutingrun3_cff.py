@@ -232,35 +232,21 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
         L1SCOUTNanoAODEDMEventContent.outputCommands += [
             "drop l1ScoutingRun3OrbitFlatTable_*_*_*",
             "keep l1ScoutingRun3OrbitFlatTable_l1scoutingCaloJetTable_*_*",
-        ]
-        if isL1ScoutingSelection:
-            L1SCOUTNanoAODEDMEventContent.outputCommands += [
-                "keep l1ScoutingRun3OrbitFlatTable_l1scoutingJetTable_*_*",
-            ]
-        L1SCOUTNANOAODEventContent.outputCommands = L1SCOUTNanoAODEDMEventContent.outputCommands[:]
-    elif not isL1ScoutingSelection:
-        L1SCOUTNanoAODEDMEventContent.outputCommands += [
-            "drop l1ScoutingRun3OrbitFlatTable_*_*_*",
-            "keep l1ScoutingRun3OrbitFlatTable_l1scoutingCaloTowerTable_*_*",
-            "keep l1ScoutingRun3OrbitFlatTable_l1scoutingCaloJetTable_*_*",
+            "keep l1ScoutingRun3OrbitFlatTable_l1scoutingJetTable_*_*",
         ]
         L1SCOUTNANOAODEventContent.outputCommands = L1SCOUTNanoAODEDMEventContent.outputCommands[:]
 
     if isL1ScoutingSelection:
         process = customiseL1ScoutingNanoAODSelection(process)
-
-        from L1TriggerScouting.OnlineProcessing.modules import CaloTowerBxSelector
-        process.l1ScBXsWithCaloTowers = CaloTowerBxSelector(
-            towersTag = caloTowersLabel,
-            minNTower = 1,
-        )
-        process.l1scoutingNanoTask.add(process.l1ScBXsWithCaloTowers)
     else:
         process = customiseL1ScoutingNanoAOD(process)
-        process.l1scoutingNanoTask = cms.Task(
-            process.l1scoutingCaloTowerPhysicalValueMap,
-            process.l1scoutingCaloTowerTable
-        )
+
+    from L1TriggerScouting.OnlineProcessing.modules import CaloTowerBxSelector
+    process.l1ScBXsWithCaloTowers = CaloTowerBxSelector(
+        towersTag = caloTowersLabel,
+        minNTower = 1,
+    )
+    process.l1scoutingNanoTask.add(process.l1ScBXsWithCaloTowers)
 
     # If produceSortedCaloTowers==True, change the CaloTowers collection stored in NanoAOD output
     if process.l1ScCaloJets.produceSortedCaloTowers:
@@ -272,9 +258,13 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
     for outModLabel in _getOrbitNanoAODOutputModuleLabels(process):
         outMod = getattr(process, outModLabel)
         outMod.skipEmptyBXs = True
-        outMod.fixOrbitAndBX = cms.untracked.bool(not isL1ScoutingSelection)
-        outMod.selectedBx = 'l1ScBXsWithCaloTowers:SelBx' if isL1ScoutingSelection else ''
+#!!        outMod.fixOrbitAndBX = cms.untracked.bool(not isL1ScoutingSelection)
+        outMod.selectedBx = 'l1ScBXsWithCaloTowers:SelBx'
 
+    return process
+
+def customiseL1ScoutingNanoAODForCaloTowersReRecoOnlyJets(process):
+    process = customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelection=False, fixCaloTowers=False, jetPtMin=20., keepOnlyJets=True)
     return process
 
 def customiseL1ScoutingNanoAODForCaloTowersReRecoOnlyJetsSelection(process):

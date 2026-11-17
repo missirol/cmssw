@@ -48,6 +48,8 @@ autoNANO = {
 #                      'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReReco'},
 #    'L1ScoutReRecoSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
 #                            'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoSelection'},
+    'L1ScoutReRecoOnlyJets': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
+                              'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoOnlyJets'},
     'L1ScoutReRecoOnlyJetsSelect': {'sequence': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.l1scoutingNanoSequence',
                                     'customize': 'L1TriggerScouting/NanoAOD/custom_l1scoutingrun3_cff.customiseL1ScoutingNanoAODForCaloTowersReRecoOnlyJetsSelection'},
 
