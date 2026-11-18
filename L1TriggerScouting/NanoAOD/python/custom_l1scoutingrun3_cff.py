@@ -258,9 +258,17 @@ def customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelec
     for outModLabel in _getOrbitNanoAODOutputModuleLabels(process):
         outMod = getattr(process, outModLabel)
         outMod.skipEmptyBXs = True
-#!!        outMod.fixOrbitAndBX = cms.untracked.bool(not isL1ScoutingSelection)
+        outMod.fixOrbitAndBX = cms.untracked.bool(fixCaloTowers and not isL1ScoutingSelection)
         outMod.selectedBx = 'l1ScBXsWithCaloTowers:SelBx'
 
+    return process
+
+def customiseL1ScoutingNanoAODForCaloTowersReReco(process):
+    process = customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelection=False, fixCaloTowers=False, jetPtMin=20., keepOnlyJets=False)
+    return process
+
+def customiseL1ScoutingNanoAODForCaloTowersReRecoSelection(process):
+    process = customiseL1ScoutingNanoAODForCaloTowersReRecoBase(process, isL1ScoutingSelection=True, fixCaloTowers=False, jetPtMin=20., keepOnlyJets=False)
     return process
 
 def customiseL1ScoutingNanoAODForCaloTowersReRecoOnlyJets(process):
